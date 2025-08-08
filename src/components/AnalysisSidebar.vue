@@ -58,7 +58,7 @@
     </div>
 
     <!-- Analysis control and execution button group -->
-    <div class="button-group">
+    <div v-if="!isMatchMode" class="button-group">
       <v-btn
         @click="handleAnalysisButtonClick"
         :disabled="!isEngineLoaded"
