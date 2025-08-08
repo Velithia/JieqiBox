@@ -17,7 +17,7 @@
           }"
           :style="rcStyle(p.row, p.col, p.zIndex)"
         />
-        <!-- Each piece's zIndex: cannon capture > checked king/general > lower row pieces > others -->
+        <!-- zIndex priority: moving piece (highest) > checked king/general > lower row pieces > others -->
       </div>
 
       <!-- Last move highlights -->
@@ -282,7 +282,7 @@
       import.meta.url
     ).href
   // rcStyle: calculate the style for each piece, including zIndex
-  // zIndex priority: checked king/general (1100) > cannon capture (1000) > lower row pieces > others
+  // zIndex priority: moving piece (2000) > checked king/general (1100) > lower row pieces > others
   const rcStyle = (r: number, c: number, zIndex?: number) => {
     const { x, y } = percentFromRC(r, c)
     return {

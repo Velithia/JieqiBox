@@ -18,7 +18,7 @@ export interface Piece {
   initialRole: string
   initialRow: number
   initialCol: number
-  zIndex?: number // for controlling piece layering, cannon pieces are brought to top when capturing
+  zIndex?: number // controls layering; moving piece is temporarily brought to the top
 }
 
 export type HistoryEntry = {
@@ -832,17 +832,14 @@ export function useChessGame() {
     pieces.value.forEach(p => (p.zIndex = undefined))
     updateAllPieceZIndexes()
 
-    // If the revealed piece is a cannon and was revealed during capture, bring to top
+    // Ensure the revealed piece stacks correctly above row-based layers immediately after reveal
     const movePositions = calculateMovePositions(uciMove)
-    if (chosenPieceName.includes('cannon') && movePositions) {
-      // Check if it was a capture move (piece was captured at target position)
-      const wasCapture =
+    if (movePositions) {
+      // If the reveal happened on the destination (i.e., capture or move complete), prioritize temporarily
+      const revealedOnDestination =
         piece.row === movePositions.to.row && piece.col === movePositions.to.col
-
-      if (wasCapture) {
-        // Set cannon's zIndex to highest
-        piece.zIndex = 1000
-        // Update other pieces' zIndex based on position
+      if (revealedOnDestination) {
+        piece.zIndex = 2000
         updateAllPieceZIndexes()
       }
     }
@@ -1379,26 +1376,11 @@ export function useChessGame() {
     piece.row = targetRow
     piece.col = targetCol
 
-    // Cannon's zIndex management logic
-    const isCannon = piece.isKnown
-      ? piece.name.includes('cannon')
-      : piece.initialRole === 'cannon'
-    if (isCannon) {
-      if (targetPiece) {
-        // Bring cannon to top on capture (highest priority)
-        pieces.value.forEach(p => (p.zIndex = undefined))
-        piece.zIndex = 1000
-        // Update other pieces' zIndex based on position
-        updateAllPieceZIndexes()
-      } else {
-        // Reset zIndex on cannon move and update all pieces
-        piece.zIndex = undefined
-        updateAllPieceZIndexes()
-      }
-    } else {
-      // For non-cannon pieces, update all zIndexes based on position
-      updateAllPieceZIndexes()
-    }
+    // Temporarily bring the moving piece to the highest z-index during its move
+    pieces.value.forEach(p => (p.zIndex = undefined))
+    piece.zIndex = 2000
+    // Update other pieces' zIndex based on position
+    updateAllPieceZIndexes()
 
     if (wasDarkPiece && !skipFlipLogic && !isMatchMode) {
       console.log(`[DEBUG] movePiece: Dark piece move detected.`)
@@ -1457,33 +1439,32 @@ export function useChessGame() {
 
   // Calculate zIndex based on piece position and special conditions
   const calculatePieceZIndex = (piece: Piece): number | undefined => {
-    // Base zIndex calculation: pieces in lower rows (higher row numbers) have higher priority
-    // Row 9 (bottom) has highest priority, Row 0 (top) has lowest priority
-    const baseZIndex = piece.row * 10 // Each row difference = 10 zIndex units
+    // Base z-index: lower rows (visually closer) stack above higher rows
+    // Row 9 (bottom) has higher priority; Row 0 (top) has lower priority
+    const baseZIndex = piece.row * 10 // each row difference = 10 z-index units
 
-    // Special conditions that override base zIndex
+    // Keep explicitly assigned zIndex (e.g., while moving)
     if (piece.zIndex !== undefined) {
-      // If piece already has a special zIndex (e.g., cannon after capture), keep it
       return piece.zIndex
     }
 
-    // Check if piece is in check (highest priority)
+    // Checked king/general should float above others
     if (piece.isKnown && piece.name.includes('king')) {
       const side = getPieceSide(piece)
       if (isCurrentPositionInCheck(side)) {
-        return 1100 // Highest priority for checked king/general
+        return 1100
       }
     }
 
-    // Return base zIndex based on position
+    // Default layering based on position
     return baseZIndex
   }
 
-  // Update zIndex for all pieces based on current position
+  // Update z-index for all pieces based on current position
   const updateAllPieceZIndexes = () => {
     pieces.value.forEach(piece => {
-      // Only update if piece doesn't have a special zIndex (like cannon after capture)
-      if (piece.zIndex === undefined || piece.zIndex < 1000) {
+      // Only compute when piece does not have an explicit zIndex (e.g., moving piece)
+      if (piece.zIndex === undefined) {
         piece.zIndex = calculatePieceZIndex(piece)
       }
     })
