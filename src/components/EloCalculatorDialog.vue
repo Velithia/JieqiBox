@@ -153,9 +153,7 @@
                   <span class="label"
                     >{{ $t('eloCalculator.scoreRate') }}:</span
                   >
-                  <span class="value"
-                    >{{ (eloResult.scoreRate * 100).toFixed(2) }}%</span
-                  >
+                  <span class="value">{{ scoreRateIntervalDisplay }}</span>
                 </div>
                 <div class="result-item">
                   <span class="label">{{ $t('eloCalculator.los') }}:</span>
@@ -255,7 +253,6 @@
     EloRatingResult,
     calculateEloRatingFromPTNML,
     computeLOSFromMeanAndSE,
-    drawRatioFromWDL,
     drawRatioBoundsFromPTNML,
   } from '@/utils/eloCalculator'
   import { calculateLLR_normalized } from '@/utils/sprt'
@@ -397,15 +394,33 @@
     return `${(los * 100).toFixed(2)}%`
   })
 
-  // Draw ratio display
+  // Score rate display: point estimate with 95% CI [lower, upper]
+  const scoreRateIntervalDisplay = computed<string | null>(() => {
+    if (!eloResult.value) return null
+    const mu = eloResult.value.scoreRate
+    const se = eloResult.value.standardError
+    if (!isFinite(mu) || !isFinite(se)) return null
+    const z = 1.959963984540054
+    const muMin = Math.max(0, Math.min(1, mu - z * se))
+    const muMax = Math.max(0, Math.min(1, mu + z * se))
+    return `${(mu * 100).toFixed(2)}% [${(muMin * 100).toFixed(2)}%, ${(muMax * 100).toFixed(2)}%]`
+  })
+
+  // Draw ratio display: point estimate with interval
   const drawRatioDisplay = computed<string | null>(() => {
     if (totalGames.value === 0) return null
     if (resultsFormat.value === 'wdl') {
       const w = Number(wins.value) || 0
       const l = Number(losses.value) || 0
       const d = Number(draws.value) || 0
-      const r = drawRatioFromWDL(w, l, d)
-      return `${(r * 100).toFixed(2)}%`
+      const N = w + l + d
+      if (N <= 0) return null
+      const p = d / N
+      const z = 1.959963984540054
+      const se = Math.sqrt(Math.max(p * (1 - p) / N, 0))
+      const pMin = Math.max(0, Math.min(1, p - z * se))
+      const pMax = Math.max(0, Math.min(1, p + z * se))
+      return `${(p * 100).toFixed(2)}% [${(pMin * 100).toFixed(2)}%, ${(pMax * 100).toFixed(2)}%]`
     } else {
       const ll = Number(pt_ll.value) || 0
       const lddl = Number(pt_lddl.value) || 0
@@ -413,7 +428,11 @@
       const dwwd = Number(pt_dwwd.value) || 0
       const ww = Number(pt_ww.value) || 0
       const [minR, maxR] = drawRatioBoundsFromPTNML(ll, lddl, center, dwwd, ww)
-      return `${(minR * 100).toFixed(2)}% - ${(maxR * 100).toFixed(2)}%`
+      const P = ll + lddl + center + dwwd + ww
+      if (P <= 0) return null
+      // Point estimate uses the midpoint of bounds, which equals assuming 1 draw in each center pair
+      const point = (lddl + dwwd + center) / (2 * P)
+      return `${(point * 100).toFixed(2)}% [${(minR * 100).toFixed(2)}%, ${(maxR * 100).toFixed(2)}%]`
     }
   })
 
@@ -528,6 +547,15 @@
         .value {
           font-weight: 500;
           color: rgb(var(--v-theme-primary));
+          // Prefer a stack close to Computer Modern and Times New Roman
+          font-family: 'Latin Modern Math', 'Latin Modern Roman', 'CMU Serif',
+            'STIX Two Math', 'XITS Math', 'TeX Gyre Termes', 'Times New Roman',
+            Times, serif;
+          // Enable lining and tabular numerals where supported
+          font-variant-numeric: lining-nums tabular-nums;
+          -webkit-font-feature-settings: 'lnum' 1, 'tnum' 1;
+          -moz-font-feature-settings: 'lnum' 1, 'tnum' 1;
+          font-feature-settings: 'lnum' 1, 'tnum' 1;
           &.performance {
             font-weight: 700;
             font-size: 1.1em;
