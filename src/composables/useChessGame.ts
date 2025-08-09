@@ -8,6 +8,7 @@ import {
 import { isAndroidPlatform as checkAndroidPlatform } from '../utils/platform'
 import { useInterfaceSettings } from './useInterfaceSettings'
 import { useGameSettings } from './useGameSettings'
+import { convertXQFToJieqiNotation } from '@/utils/xqf'
 
 export interface Piece {
   id: number
@@ -1823,11 +1824,25 @@ export function useChessGame() {
     }
   }
 
-  // Load game notation from a file
+  // Load game notation from a file (supports both JSON and XQF formats)
   const loadGameNotation = async (file: File) => {
     try {
-      const text = await file.text()
-      const notation: GameNotation = JSON.parse(text)
+      let notation: GameNotation
+
+      // Check file extension to determine format
+      const fileName = file.name.toLowerCase()
+      const isXQF = fileName.endsWith('.xqf')
+
+      if (isXQF) {
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = new Uint8Array(arrayBuffer)
+        notation = convertXQFToJieqiNotation(buffer, { flipMode: flipMode.value })
+        console.log('Loaded XQF (Jieqi) notation:', notation)
+      } else {
+        // Handle JSON format (existing logic)
+        const text = await file.text()
+        notation = JSON.parse(text)
+      }
 
       // Validate the game notation format
       if (!notation.metadata || !notation.moves) {
@@ -1896,7 +1911,7 @@ export function useChessGame() {
   const openGameNotation = () => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.json'
+    input.accept = '.json,.xqf'
     input.onchange = async event => {
       const target = event.target as HTMLInputElement
       if (target.files && target.files[0]) {
@@ -2219,5 +2234,6 @@ export function useChessGame() {
     updateAllPieceZIndexes,
     updateMoveComment,
     determineGameResult,
+    loadGameNotation,
   }
 }
