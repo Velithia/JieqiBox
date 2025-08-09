@@ -290,11 +290,26 @@ export default {
     settingsCleared: 'JAI选项配置已清除',
     // JAI 选项描述
     optionDescriptions: {
-      Engine1Path: '比赛对战的第一个引擎路径。',
-      Engine2Path: '比赛对战的第二个引擎路径。',
-      TotalRounds: '比赛中要进行的总轮数。',
+      Engine1Path: '第一个兼容 UCI 的揭棋引擎可执行文件的完整路径。',
+      Engine1Options:
+        'Engine 1 的 UCI "setoption" 命令字符串。每个选项必须使用 "name <选项名> value <值>" 格式；多个选项用空格分隔。该解析器可正确处理包含空格的选项名和值。示例："name Threads value 4 name Hash value 256"',
+      Engine2Path: '第二个兼容 UCI 的揭棋引擎可执行文件的完整路径。',
+      Engine2Options:
+        'Engine 2 的 UCI "setoption" 命令字符串。格式与 "Engine1Options" 相同。',
+      TotalRounds:
+        '要进行的成对对局数。由于每轮交换先后手，总局数为 "TotalRounds * 2"。',
+      Concurrency: '并行运行的对局数量。',
+      BookFile:
+        '开局库文件路径。文件应每行包含一个 FEN 局面。每轮开始时，将从该文件随机选择一个 FEN，用于该轮的两盘对局。若路径为空、无效，或文件不含 FEN，则使用默认起始局面。',
+      MainTimeMs: '每位棋手的基础思考时间，单位毫秒。',
+      IncTimeMs: '每步走子后增加到棋钟的增益时间，单位毫秒。',
+      TimeoutBufferMs:
+        '用于进程与通信开销的宽限时间（毫秒）。仅当棋钟低于 "-(TimeoutBufferMs)" 时才判定超时。',
+      Logging:
+        '若启用（"true"），比赛引擎将为每个引擎进程创建详细日志文件，记录所有 UCI 通信。',
+      SaveNotation: '是否保存每盘对局的棋谱文件的开关。',
+      SaveNotationDir: '开启保存后，用于存放棋谱文件的目录路径。',
       TimeControl: '每个引擎的时间控制设置。',
-      BookFile: '比赛使用的开局库文件。',
       AdjudicationRule: '裁决和棋或决定性局面的规则。',
     },
   },

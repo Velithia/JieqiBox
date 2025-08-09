@@ -383,11 +383,26 @@ export default {
     settingsCleared: 'JAIオプション設定をクリアしました',
     // JAIオプション説明
     optionDescriptions: {
-      Engine1Path: 'マッチ対戦の最初のエンジンパス。',
-      Engine2Path: 'マッチ対戦の二番目のエンジンパス。',
-      TotalRounds: 'マッチで行う総ラウンド数。',
+      Engine1Path: 'UCI 互換の揭棋エンジン実行ファイル（Engine 1）のフルパス。',
+      Engine1Options:
+        'Engine 1 用の UCI "setoption" コマンド文字列。各オプションは "name <オプション名> value <値>" 形式に従う必要があります。複数オプションは空白で区切ります。本パーサは空白を含むオプション名・値も正しく処理します。例: "name Threads value 4 name Hash value 256"',
+      Engine2Path: 'UCI 互換の揭棋エンジン実行ファイル（Engine 2）のフルパス。',
+      Engine2Options:
+        'Engine 2 用の UCI "setoption" コマンド文字列。形式と例は "Engine1Options" を参照してください。',
+      TotalRounds:
+        'プレイするペアゲーム数。各ラウンドで先後を入れ替えるため、総対局数は "TotalRounds * 2" になります。',
+      Concurrency: '並行実行する対局数。',
+      BookFile:
+        '序盤ブックファイルのパス。ファイルには1行につき1つの FEN を含めます。各ラウンド開始時に、このファイルからランダムに FEN を選び、そのラウンドの2局に使用します。パスが空・無効、または FEN が存在しない場合は既定の初期局面を使用します。',
+      MainTimeMs: '各プレイヤーの基礎持ち時間（ミリ秒）。',
+      IncTimeMs: '各手後に加算される持ち時間のインクリメント（ミリ秒）。',
+      TimeoutBufferMs:
+        'プロセスや通信オーバーヘッドを考慮した猶予時間（ミリ秒）。時計が "-(TimeoutBufferMs)" を下回った場合のみ時間切れと判定します。',
+      Logging:
+        '有効（"true"）の場合、各エンジンプロセスの詳細なログ（すべての UCI 通信）を作成します。',
+      SaveNotation: '各対局の棋譜ファイルを保存するかどうかのスイッチ。',
+      SaveNotationDir: '保存を有効にした場合の棋譜ファイルの保存先ディレクトリ。',
       TimeControl: '各エンジンの時間制御設定。',
-      BookFile: 'マッチで使用する開局ライブラリファイル。',
       AdjudicationRule: '和棋や決定的な局面の裁定ルール。',
     },
   },
@@ -429,7 +444,8 @@ export default {
     drawRatio: '引分率',
     standardError: '標準誤差',
     noResults: '対局結果を入力してください。',
-    basicRequiresWDL: '基本モードでは WDL 入力が必要です。WDL に切り替えるか、SPRT モードを使用してください。',
+    basicRequiresWDL:
+      '基本モードでは WDL 入力が必要です。WDL に切り替えるか、SPRT モードを使用してください。',
     close: '閉じる',
     basicMode: '基本',
     proMode: 'SPRT (LLR)',

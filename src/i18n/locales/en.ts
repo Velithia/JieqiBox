@@ -296,11 +296,32 @@ export default {
     settingsCleared: 'JAI option configurations cleared',
     // JAI option descriptions
     optionDescriptions: {
-      Engine1Path: 'Path to the first engine for match competition.',
-      Engine2Path: 'Path to the second engine for match competition.',
-      TotalRounds: 'Total number of rounds to play in the match.',
+      Engine1Path:
+        'The full path to the first UCI-compatible Jieqi engine executable.',
+      Engine1Options:
+        'A string of UCI "setoption" commands for Engine 1. Each option must follow the format "name <Option Name> value <Value>". Multiple options are separated by spaces. This parser correctly handles option names and values that contain spaces. Example: "name Threads value 4 name Hash value 256"',
+      Engine2Path:
+        'The full path to the second UCI-compatible Jieqi engine executable.',
+      Engine2Options:
+        'A string of UCI "setoption" commands for Engine 2. See "Engine1Options" for format and examples.',
+      TotalRounds:
+        'The number of pairs of games to be played. The total number of games will be "TotalRounds * 2", as engines switch colors for each round.',
+      Concurrency: 'The number of games to run in parallel.',
+      BookFile:
+        "Path to an opening book file. The file should contain one FEN position per line. At the start of each round, a FEN is chosen randomly from this file to be used for that round's pair of games. If the path is empty, invalid, or the file contains no FENs, the default starting position is used.",
+      MainTimeMs:
+        'The base thinking time for each player in a game, specified in milliseconds.',
+      IncTimeMs:
+        "The time increment added to a player's clock after each move, specified in milliseconds.",
+      TimeoutBufferMs:
+        'A grace period in milliseconds to account for process and communication overhead. A player is only declared lost on time if their clock falls below "-(TimeoutBufferMs)".',
+      Logging:
+        'If enabled ("true"), the match engine will create detailed log files for each engine process, capturing all UCI communication.',
+      SaveNotation:
+        'Switch to enable saving game notation files for each game.',
+      SaveNotationDir:
+        'Directory path where notation files will be saved when saving is enabled.',
       TimeControl: 'Time control settings for each engine.',
-      BookFile: 'Opening book file to use for the match.',
       AdjudicationRule: 'Rules for adjudicating drawn or decisive positions.',
     },
   },
@@ -341,7 +362,8 @@ export default {
     drawRatio: 'Draw Ratio',
     standardError: 'Standard Error',
     noResults: 'Enter match results to see calculations.',
-    basicRequiresWDL: 'Basic mode requires WDL input. Switch to WDL or use SPRT mode.',
+    basicRequiresWDL:
+      'Basic mode requires WDL input. Switch to WDL or use SPRT mode.',
     close: 'Close',
     basicMode: 'Basic',
     proMode: 'SPRT (LLR)',

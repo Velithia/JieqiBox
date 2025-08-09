@@ -616,7 +616,11 @@
   } from '@/composables/useConfigManager'
   import DraggablePanel from './DraggablePanel.vue'
   import { usePanelManager } from '@/composables/usePanelManager'
-  import { calculateEloRating, formatEloRating, formatErrorMargin } from '@/utils/eloCalculator'
+  import {
+    calculateEloRating,
+    formatEloRating,
+    formatErrorMargin,
+  } from '@/utils/eloCalculator'
 
   const { t } = useI18n()
 

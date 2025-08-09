@@ -12,12 +12,25 @@
             <h4>{{ $t('eloCalculator.inputSection') }}</h4>
 
             <!-- Results format selector -->
-            <v-radio-group v-model="resultsFormat" inline hide-details class="mb-2">
+            <v-radio-group
+              v-model="resultsFormat"
+              inline
+              hide-details
+              class="mb-2"
+            >
               <template #label>
-                <div class="mb-1 font-weight-bold">{{ $t('eloCalculator.resultsFormat') }}</div>
+                <div class="mb-1 font-weight-bold">
+                  {{ $t('eloCalculator.resultsFormat') }}
+                </div>
               </template>
-              <v-radio :label="$t('eloCalculator.formatWDL')" value="wdl"></v-radio>
-              <v-radio :label="$t('eloCalculator.formatPTNML')" value="ptnml"></v-radio>
+              <v-radio
+                :label="$t('eloCalculator.formatWDL')"
+                value="wdl"
+              ></v-radio>
+              <v-radio
+                :label="$t('eloCalculator.formatPTNML')"
+                value="ptnml"
+              ></v-radio>
             </v-radio-group>
 
             <!-- WDL inputs -->
@@ -125,23 +138,33 @@
               <div v-if="eloResult" class="results-section">
                 <h4>{{ $t('eloCalculator.resultsSection') }}</h4>
                 <div class="result-item">
-                  <span class="label">{{ $t('eloCalculator.performance') }}:</span>
+                  <span class="label"
+                    >{{ $t('eloCalculator.performance') }}:</span
+                  >
                   <span class="value performance">{{ mergedEloDisplay }}</span>
                 </div>
                 <div class="result-item">
-                  <span class="label">{{ $t('eloCalculator.neloPerformance') }}:</span>
+                  <span class="label"
+                    >{{ $t('eloCalculator.neloPerformance') }}:</span
+                  >
                   <span class="value">{{ mergedNEloDisplay }}</span>
                 </div>
                 <div class="result-item">
-                  <span class="label">{{ $t('eloCalculator.scoreRate') }}:</span>
-                  <span class="value">{{ (eloResult.scoreRate * 100).toFixed(2) }}%</span>
+                  <span class="label"
+                    >{{ $t('eloCalculator.scoreRate') }}:</span
+                  >
+                  <span class="value"
+                    >{{ (eloResult.scoreRate * 100).toFixed(2) }}%</span
+                  >
                 </div>
                 <div class="result-item">
                   <span class="label">{{ $t('eloCalculator.los') }}:</span>
                   <span class="value">{{ losDisplay }}</span>
                 </div>
                 <div class="result-item">
-                  <span class="label">{{ $t('eloCalculator.drawRatio') }}:</span>
+                  <span class="label"
+                    >{{ $t('eloCalculator.drawRatio') }}:</span
+                  >
                   <span class="value">{{ drawRatioDisplay }}</span>
                 </div>
               </div>
@@ -155,9 +178,16 @@
               <div class="sprt-section">
                 <!-- SPRT Inputs -->
                 <div class="sprt-inputs">
-                  <v-radio-group v-model="hypoType" inline hide-details class="mb-2">
+                  <v-radio-group
+                    v-model="hypoType"
+                    inline
+                    hide-details
+                    class="mb-2"
+                  >
                     <template #label>
-                      <div class="mb-1 font-weight-bold">{{ $t('eloCalculator.hypothesisType') }}</div>
+                      <div class="mb-1 font-weight-bold">
+                        {{ $t('eloCalculator.hypothesisType') }}
+                      </div>
                     </template>
                     <v-radio label="nElo (Normalized)" value="nelo"></v-radio>
                     <v-radio label="Elo (Logistic)" value="elo"></v-radio>
@@ -188,15 +218,17 @@
                 <div v-if="totalGames > 0" class="results-section mt-4">
                   <h4>{{ $t('eloCalculator.llrResults') }}</h4>
                   <div v-if="llrResult !== null" class="result-item">
-                     <span class="label">LLR (H0 vs H1):</span>
-                     <span class="value performance">{{ llrResult.toFixed(2) }}</span>
+                    <span class="label">LLR (H0 vs H1):</span>
+                    <span class="value performance">{{
+                      llrResult.toFixed(2)
+                    }}</span>
                   </div>
                   <div v-else class="no-results">
-                      {{ $t('eloCalculator.llrError') }}
+                    {{ $t('eloCalculator.llrError') }}
                   </div>
                 </div>
-                 <div v-else class="no-results">
-                    {{ $t('eloCalculator.noResults') }}
+                <div v-else class="no-results">
+                  {{ $t('eloCalculator.noResults') }}
                 </div>
               </div>
             </v-window-item>
@@ -215,275 +247,301 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import {
-  calculateEloRating,
-  formatEloRating,
-  formatErrorMargin,
-  EloRatingResult,
-  calculateEloRatingFromPTNML,
-  computeLOSFromMeanAndSE,
-  drawRatioFromWDL,
-  drawRatioBoundsFromPTNML,
-} from '@/utils/eloCalculator';
-import { calculateLLR_normalized } from '@/utils/sprt';
-import { calculateLLR_logistic } from '@/utils/sprt';
-import { NELO_DIVIDED_BY_NT, summarizeResults } from '@/utils/sprt';
+  import { ref, computed, watch } from 'vue'
+  import {
+    calculateEloRating,
+    formatEloRating,
+    formatErrorMargin,
+    EloRatingResult,
+    calculateEloRatingFromPTNML,
+    computeLOSFromMeanAndSE,
+    drawRatioFromWDL,
+    drawRatioBoundsFromPTNML,
+  } from '@/utils/eloCalculator'
+  import { calculateLLR_normalized } from '@/utils/sprt'
+  import { calculateLLR_logistic } from '@/utils/sprt'
+  import { NELO_DIVIDED_BY_NT, summarizeResults } from '@/utils/sprt'
 
-// Props
-interface Props {
-  modelValue: boolean;
-  initialWins?: number;
-  initialLosses?: number;
-  initialDraws?: number;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  initialWins: 0,
-  initialLosses: 0,
-  initialDraws: 0,
-});
-
-// Emits
-const emit = defineEmits<{
-  'update:modelValue': [value: boolean];
-}>();
-
-// Reactive data
-const wins = ref(props.initialWins);
-const losses = ref(props.initialLosses);
-const draws = ref(props.initialDraws);
-const mode = ref<'basic' | 'pro'>('basic');
-
-// Results format: WDL or PTNML
-const resultsFormat = ref<'wdl' | 'ptnml'>('wdl');
-// PTNML inputs: [LL, LD+DL, LW+DD+WL, DW+WD, WW]
-const pt_ll = ref<number>(0);
-const pt_lddl = ref<number>(0);
-const pt_center = ref<number>(0);
-const pt_dwwd = ref<number>(0);
-const pt_ww = ref<number>(0);
-
-// SPRT specific data
-const h0 = ref<number>(0);
-const h1 = ref<number>(5);
-const hypoType = ref<'nelo' | 'elo'>('nelo');
-
-// Computed properties
-const dialogVisible = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
-});
-
-const totalGames = computed(() => {
-  if (resultsFormat.value === 'wdl') {
-    const w = Number(wins.value) || 0;
-    const l = Number(losses.value) || 0;
-    const d = Number(draws.value) || 0;
-    return w + l + d;
-  } else {
-    const ll = Number(pt_ll.value) || 0;
-    const lddl = Number(pt_lddl.value) || 0;
-    const center = Number(pt_center.value) || 0;
-    const dwwd = Number(pt_dwwd.value) || 0;
-    const ww = Number(pt_ww.value) || 0;
-    return 2 * (ll + lddl + center + dwwd + ww);
-  }
-});
-
-// Basic mode result
-const eloResult = computed<EloRatingResult | null>(() => {
-  if (totalGames.value === 0) return null;
-  if (resultsFormat.value === 'wdl') {
-    const w = Number(wins.value) || 0;
-    const l = Number(losses.value) || 0;
-    const d = Number(draws.value) || 0;
-    return calculateEloRating(w, l, d);
-  } else {
-    const ll = Number(pt_ll.value) || 0;
-    const lddl = Number(pt_lddl.value) || 0;
-    const center = Number(pt_center.value) || 0;
-    const dwwd = Number(pt_dwwd.value) || 0;
-    const ww = Number(pt_ww.value) || 0;
-    return calculateEloRatingFromPTNML(ll, lddl, center, dwwd, ww);
-  }
-});
-
-// Derived display values: merged Elo and nElo with 95% error margins
-const mergedEloDisplay = computed<string | null>(() => {
-  if (!eloResult.value) return null;
-  const perf = formatEloRating(eloResult.value);
-  const err = formatErrorMargin(eloResult.value);
-  return `${perf} ${err}`.trim();
-});
-
-const mergedNEloDisplay = computed<string | null>(() => {
-  if (!eloResult.value) return null;
-  // Build results array from current inputs
-  let results: number[];
-  if (resultsFormat.value === 'wdl') {
-    const w = Number(wins.value) || 0;
-    const l = Number(losses.value) || 0;
-    const d = Number(draws.value) || 0;
-    results = [l, d, w];
-  } else {
-    const ll = Number(pt_ll.value) || 0;
-    const lddl = Number(pt_lddl.value) || 0;
-    const center = Number(pt_center.value) || 0;
-    const dwwd = Number(pt_dwwd.value) || 0;
-    const ww = Number(pt_ww.value) || 0;
-    results = [ll, lddl, center, dwwd, ww];
+  // Props
+  interface Props {
+    modelValue: boolean
+    initialWins?: number
+    initialLosses?: number
+    initialDraws?: number
   }
 
-  const { mu, sigma_pg, games } = summarizeResults(results);
-  // Standard error of mu: sqrt(Var/N). We do not have Var directly, but sigma_pg^2 is per-game variance.
-  const variance_pg = sigma_pg * sigma_pg;
-  const sigmaMu = Math.sqrt(variance_pg / games);
-  const muMin = mu - 1.959963984540054 * sigmaMu;
-  const muMax = mu + 1.959963984540054 * sigmaMu;
+  const props = withDefaults(defineProps<Props>(), {
+    initialWins: 0,
+    initialLosses: 0,
+    initialDraws: 0,
+  })
 
-  const nt = (mu - 0.5) / sigma_pg;
-  const ntMin = (muMin - 0.5) / sigma_pg;
-  const ntMax = (muMax - 0.5) / sigma_pg;
+  // Emits
+  const emit = defineEmits<{
+    'update:modelValue': [value: boolean]
+  }>()
 
-  const nElo = nt * NELO_DIVIDED_BY_NT;
-  const nEloMin = ntMin * NELO_DIVIDED_BY_NT;
-  const nEloMax = ntMax * NELO_DIVIDED_BY_NT;
+  // Reactive data
+  const wins = ref(props.initialWins)
+  const losses = ref(props.initialLosses)
+  const draws = ref(props.initialDraws)
+  const mode = ref<'basic' | 'pro'>('basic')
 
-  const err = (nEloMax - nEloMin) / 2;
-  const sign = nElo > 0 ? '+' : '';
-  return `${sign}${nElo.toFixed(2)} ± ${err.toFixed(2)}`;
-});
+  // Results format: WDL or PTNML
+  const resultsFormat = ref<'wdl' | 'ptnml'>('wdl')
+  // PTNML inputs: [LL, LD+DL, LW+DD+WL, DW+WD, WW]
+  const pt_ll = ref<number>(0)
+  const pt_lddl = ref<number>(0)
+  const pt_center = ref<number>(0)
+  const pt_dwwd = ref<number>(0)
+  const pt_ww = ref<number>(0)
 
-// LOS display
-const losDisplay = computed<string | null>(() => {
-  if (!eloResult.value) return null;
-  const mu = eloResult.value.scoreRate;
-  const se = eloResult.value.standardError;
-  const los = computeLOSFromMeanAndSE(mu, se);
-  if (!isFinite(los)) return null;
-  return `${(los * 100).toFixed(2)}%`;
-});
+  // SPRT specific data
+  const h0 = ref<number>(0)
+  const h1 = ref<number>(5)
+  const hypoType = ref<'nelo' | 'elo'>('nelo')
 
-// Draw ratio display
-const drawRatioDisplay = computed<string | null>(() => {
-  if (totalGames.value === 0) return null;
-  if (resultsFormat.value === 'wdl') {
-    const w = Number(wins.value) || 0;
-    const l = Number(losses.value) || 0;
-    const d = Number(draws.value) || 0;
-    const r = drawRatioFromWDL(w, l, d);
-    return `${(r * 100).toFixed(2)}%`;
-  } else {
-    const ll = Number(pt_ll.value) || 0;
-    const lddl = Number(pt_lddl.value) || 0;
-    const center = Number(pt_center.value) || 0;
-    const dwwd = Number(pt_dwwd.value) || 0;
-    const ww = Number(pt_ww.value) || 0;
-    const [minR, maxR] = drawRatioBoundsFromPTNML(ll, lddl, center, dwwd, ww);
-    return `${(minR * 100).toFixed(2)}% - ${(maxR * 100).toFixed(2)}%`;
-  }
-});
+  // Computed properties
+  const dialogVisible = computed({
+    get: () => props.modelValue,
+    set: value => emit('update:modelValue', value),
+  })
 
-// Professional mode result
-const llrResult = computed<number | null>(() => {
-    if (totalGames.value === 0) return null;
-
-    let results: number[];
+  const totalGames = computed(() => {
     if (resultsFormat.value === 'wdl') {
-      const w = Number(wins.value) || 0;
-      const l = Number(losses.value) || 0;
-      const d = Number(draws.value) || 0;
-      // LLR expects [L, D, W]
-      results = [l, d, w];
+      const w = Number(wins.value) || 0
+      const l = Number(losses.value) || 0
+      const d = Number(draws.value) || 0
+      return w + l + d
     } else {
-      const ll = Number(pt_ll.value) || 0;
-      const lddl = Number(pt_lddl.value) || 0;
-      const center = Number(pt_center.value) || 0;
-      const dwwd = Number(pt_dwwd.value) || 0;
-      const ww = Number(pt_ww.value) || 0;
-      // Order: [LL, LD+DL, LW+DD+WL, DW+WD, WW]
-      results = [ll, lddl, center, dwwd, ww];
+      const ll = Number(pt_ll.value) || 0
+      const lddl = Number(pt_lddl.value) || 0
+      const center = Number(pt_center.value) || 0
+      const dwwd = Number(pt_dwwd.value) || 0
+      const ww = Number(pt_ww.value) || 0
+      return 2 * (ll + lddl + center + dwwd + ww)
+    }
+  })
+
+  // Basic mode result
+  const eloResult = computed<EloRatingResult | null>(() => {
+    if (totalGames.value === 0) return null
+    if (resultsFormat.value === 'wdl') {
+      const w = Number(wins.value) || 0
+      const l = Number(losses.value) || 0
+      const d = Number(draws.value) || 0
+      return calculateEloRating(w, l, d)
+    } else {
+      const ll = Number(pt_ll.value) || 0
+      const lddl = Number(pt_lddl.value) || 0
+      const center = Number(pt_center.value) || 0
+      const dwwd = Number(pt_dwwd.value) || 0
+      const ww = Number(pt_ww.value) || 0
+      return calculateEloRatingFromPTNML(ll, lddl, center, dwwd, ww)
+    }
+  })
+
+  // Derived display values: merged Elo and nElo with 95% error margins
+  const mergedEloDisplay = computed<string | null>(() => {
+    if (!eloResult.value) return null
+    const perf = formatEloRating(eloResult.value)
+    const err = formatErrorMargin(eloResult.value)
+    return `${perf} ${err}`.trim()
+  })
+
+  const mergedNEloDisplay = computed<string | null>(() => {
+    if (!eloResult.value) return null
+    // Build results array from current inputs
+    let results: number[]
+    if (resultsFormat.value === 'wdl') {
+      const w = Number(wins.value) || 0
+      const l = Number(losses.value) || 0
+      const d = Number(draws.value) || 0
+      results = [l, d, w]
+    } else {
+      const ll = Number(pt_ll.value) || 0
+      const lddl = Number(pt_lddl.value) || 0
+      const center = Number(pt_center.value) || 0
+      const dwwd = Number(pt_dwwd.value) || 0
+      const ww = Number(pt_ww.value) || 0
+      results = [ll, lddl, center, dwwd, ww]
     }
 
-    const h0_val = Number(h0.value) ?? 0;
-    const h1_val = Number(h1.value) ?? 5;
+    const { mu, sigma_pg, games } = summarizeResults(results)
+    // Standard error of mu: sqrt(Var/N). We do not have Var directly, but sigma_pg^2 is per-game variance.
+    const variance_pg = sigma_pg * sigma_pg
+    const sigmaMu = Math.sqrt(variance_pg / games)
+    const muMin = mu - 1.959963984540054 * sigmaMu
+    const muMax = mu + 1.959963984540054 * sigmaMu
+
+    const nt = (mu - 0.5) / sigma_pg
+    const ntMin = (muMin - 0.5) / sigma_pg
+    const ntMax = (muMax - 0.5) / sigma_pg
+
+    const nElo = nt * NELO_DIVIDED_BY_NT
+    const nEloMin = ntMin * NELO_DIVIDED_BY_NT
+    const nEloMax = ntMax * NELO_DIVIDED_BY_NT
+
+    const err = (nEloMax - nEloMin) / 2
+    const sign = nElo > 0 ? '+' : ''
+    return `${sign}${nElo.toFixed(2)} ± ${err.toFixed(2)}`
+  })
+
+  // LOS display
+  const losDisplay = computed<string | null>(() => {
+    if (!eloResult.value) return null
+    const mu = eloResult.value.scoreRate
+    const se = eloResult.value.standardError
+    const los = computeLOSFromMeanAndSE(mu, se)
+    if (!isFinite(los)) return null
+    return `${(los * 100).toFixed(2)}%`
+  })
+
+  // Draw ratio display
+  const drawRatioDisplay = computed<string | null>(() => {
+    if (totalGames.value === 0) return null
+    if (resultsFormat.value === 'wdl') {
+      const w = Number(wins.value) || 0
+      const l = Number(losses.value) || 0
+      const d = Number(draws.value) || 0
+      const r = drawRatioFromWDL(w, l, d)
+      return `${(r * 100).toFixed(2)}%`
+    } else {
+      const ll = Number(pt_ll.value) || 0
+      const lddl = Number(pt_lddl.value) || 0
+      const center = Number(pt_center.value) || 0
+      const dwwd = Number(pt_dwwd.value) || 0
+      const ww = Number(pt_ww.value) || 0
+      const [minR, maxR] = drawRatioBoundsFromPTNML(ll, lddl, center, dwwd, ww)
+      return `${(minR * 100).toFixed(2)}% - ${(maxR * 100).toFixed(2)}%`
+    }
+  })
+
+  // Professional mode result
+  const llrResult = computed<number | null>(() => {
+    if (totalGames.value === 0) return null
+
+    let results: number[]
+    if (resultsFormat.value === 'wdl') {
+      const w = Number(wins.value) || 0
+      const l = Number(losses.value) || 0
+      const d = Number(draws.value) || 0
+      // LLR expects [L, D, W]
+      results = [l, d, w]
+    } else {
+      const ll = Number(pt_ll.value) || 0
+      const lddl = Number(pt_lddl.value) || 0
+      const center = Number(pt_center.value) || 0
+      const dwwd = Number(pt_dwwd.value) || 0
+      const ww = Number(pt_ww.value) || 0
+      // Order: [LL, LD+DL, LW+DD+WL, DW+WD, WW]
+      results = [ll, lddl, center, dwwd, ww]
+    }
+
+    const h0_val = Number(h0.value) ?? 0
+    const h1_val = Number(h1.value) ?? 5
 
     if (hypoType.value === 'nelo') {
-        return calculateLLR_normalized(h0_val, h1_val, results);
+      return calculateLLR_normalized(h0_val, h1_val, results)
     } else if (hypoType.value === 'elo') {
-        return calculateLLR_logistic(h0_val, h1_val, results);
+      return calculateLLR_logistic(h0_val, h1_val, results)
     }
-    return null;
-});
+    return null
+  })
 
+  // Methods
+  const closeDialog = () => {
+    dialogVisible.value = false
+  }
 
-// Methods
-const closeDialog = () => {
-  dialogVisible.value = false;
-};
-
-// Watch for prop changes and update local values
-watch(
-  () => props.initialWins,
-  (newValue) => { wins.value = newValue; }
-);
-watch(
-  () => props.initialLosses,
-  (newValue) => { losses.value = newValue; }
-);
-watch(
-  () => props.initialDraws,
-  (newValue) => { draws.value = newValue; }
-);
+  // Watch for prop changes and update local values
+  watch(
+    () => props.initialWins,
+    newValue => {
+      wins.value = newValue
+    }
+  )
+  watch(
+    () => props.initialLosses,
+    newValue => {
+      losses.value = newValue
+    }
+  )
+  watch(
+    () => props.initialDraws,
+    newValue => {
+      draws.value = newValue
+    }
+  )
 </script>
 
 <style lang="scss" scoped>
-.elo-calculator {
-  .input-section {
-    margin-bottom: 24px;
-    h4 { margin-bottom: 16px; color: rgb(var(--v-theme-primary)); }
-    .input-row { display: flex; gap: 12px; margin-bottom: 12px; }
-    .input-field { flex: 1; }
-    .total-games { font-weight: 600; color: rgb(var(--v-theme-primary)); }
-  }
+  .elo-calculator {
+    .input-section {
+      margin-bottom: 24px;
+      h4 {
+        margin-bottom: 16px;
+        color: rgb(var(--v-theme-primary));
+      }
+      .input-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .input-field {
+        flex: 1;
+      }
+      .total-games {
+        font-weight: 600;
+        color: rgb(var(--v-theme-primary));
+      }
+    }
 
-  .tab-item {
+    .tab-item {
       padding-top: 24px;
-  }
-  
-  .sprt-inputs {
+    }
+
+    .sprt-inputs {
       padding: 12px;
       border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
       border-radius: 4px;
-  }
+    }
 
-  .results-section {
-    h4 { margin-bottom: 16px; color: rgb(var(--v-theme-primary)); }
-    .result-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      padding: 8px;
-      border-radius: 4px;
-      background-color: rgba(var(--v-theme-surface), 0.8);
-
-      .label { font-weight: 600; color: rgb(var(--v-theme-on-surface)); }
-      .value {
-        font-weight: 500;
+    .results-section {
+      h4 {
+        margin-bottom: 16px;
         color: rgb(var(--v-theme-primary));
-        &.performance { font-weight: 700; font-size: 1.1em; }
+      }
+      .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        padding: 8px;
+        border-radius: 4px;
+        background-color: rgba(var(--v-theme-surface), 0.8);
+
+        .label {
+          font-weight: 600;
+          color: rgb(var(--v-theme-on-surface));
+        }
+        .value {
+          font-weight: 500;
+          color: rgb(var(--v-theme-primary));
+          &.performance {
+            font-weight: 700;
+            font-size: 1.1em;
+          }
+        }
       }
     }
-  }
 
-  .no-results {
-    text-align: center;
-    padding: 20px;
-    color: rgb(var(--v-theme-on-surface));
-    opacity: 0.6;
-    font-style: italic;
+    .no-results {
+      text-align: center;
+      padding: 20px;
+      color: rgb(var(--v-theme-on-surface));
+      opacity: 0.6;
+      font-style: italic;
+    }
   }
-}
 </style>

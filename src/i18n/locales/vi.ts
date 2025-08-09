@@ -385,11 +385,28 @@ export default {
     settingsCleared: 'Đã xóa cấu hình tùy chọn JAI',
     // Mô tả tùy chọn JAI
     optionDescriptions: {
-      Engine1Path: 'Đường dẫn engine đầu tiên cho trận đấu.',
-      Engine2Path: 'Đường dẫn engine thứ hai cho trận đấu.',
-      TotalRounds: 'Tổng số ván trong trận đấu.',
+      Engine1Path:
+        'Đường dẫn đầy đủ tới tệp thực thi engine Jieqi tương thích UCI (Engine 1).',
+      Engine1Options:
+        'Chuỗi lệnh UCI "setoption" cho Engine 1. Mỗi tùy chọn phải theo định dạng "name <Tên tùy chọn> value <Giá trị>". Nhiều tùy chọn được phân tách bằng khoảng trắng. Trình phân tích xử lý đúng tên/giá trị có chứa khoảng trắng. Ví dụ: "name Threads value 4 name Hash value 256"',
+      Engine2Path:
+        'Đường dẫn đầy đủ tới tệp thực thi engine Jieqi tương thích UCI (Engine 2).',
+      Engine2Options:
+        'Chuỗi lệnh UCI "setoption" cho Engine 2. Xem "Engine1Options" về định dạng và ví dụ.',
+      TotalRounds:
+        'Số cặp ván sẽ chơi. Tổng số ván là "TotalRounds * 2" vì hai engine đổi màu mỗi vòng.',
+      Concurrency: 'Số ván chạy song song.',
+      BookFile:
+        'Đường dẫn tới tệp khai cuộc. Tệp chứa một FEN trên mỗi dòng. Đầu mỗi vòng sẽ chọn ngẫu nhiên một FEN để dùng cho cặp ván của vòng đó. Nếu đường dẫn rỗng/không hợp lệ hoặc tệp không có FEN, sẽ dùng vị trí xuất phát mặc định.',
+      MainTimeMs: 'Thời gian suy nghĩ cơ bản cho mỗi người chơi (mili giây).',
+      IncTimeMs: 'Thời gian cộng thêm sau mỗi nước đi (mili giây).',
+      TimeoutBufferMs:
+        'Khoảng đệm (mili giây) để bù chi phí tiến trình và truyền thông. Chỉ xử thua do hết giờ khi đồng hồ xuống dưới "-(TimeoutBufferMs)".',
+      Logging:
+        'Nếu bật ("true"), engine trận đấu sẽ tạo tệp nhật ký chi tiết cho mỗi tiến trình engine, ghi lại toàn bộ giao tiếp UCI.',
+      SaveNotation: 'Công tắc bật/tắt lưu biên bản cho từng ván.',
+      SaveNotationDir: 'Thư mục lưu biên bản khi tính năng lưu được bật.',
       TimeControl: 'Cài đặt kiểm soát thời gian cho mỗi engine.',
-      BookFile: 'Tệp thư viện khai cuộc sử dụng trong trận đấu.',
       AdjudicationRule: 'Quy tắc phân xử hòa hoặc vị thế quyết định.',
     },
   },
@@ -431,7 +448,8 @@ export default {
     drawRatio: 'Tỷ lệ hòa',
     standardError: 'Sai số chuẩn',
     noResults: 'Nhập kết quả để xem tính toán.',
-    basicRequiresWDL: 'Chế độ Cơ bản cần WDL. Hãy chuyển sang WDL hoặc dùng chế độ SPRT.',
+    basicRequiresWDL:
+      'Chế độ Cơ bản cần WDL. Hãy chuyển sang WDL hoặc dùng chế độ SPRT.',
     close: 'Đóng',
     basicMode: 'Cơ bản',
     proMode: 'SPRT (LLR)',

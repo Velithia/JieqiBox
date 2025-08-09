@@ -138,7 +138,8 @@ export function calculateEloRatingFromPTNML(
   const mu = meanPair / 2
 
   // Variance of pair sums, then standard error of per-game mean
-  const meanPairSq = counts.reduce((acc, c, i) => acc + (sVals[i] ** 2) * c, 0) / P
+  const meanPairSq =
+    counts.reduce((acc, c, i) => acc + sVals[i] ** 2 * c, 0) / P
   const varPair = Math.max(meanPairSq - meanPair ** 2, 0)
   const sigmaMu = Math.sqrt(varPair / P) / 2
 
@@ -271,7 +272,7 @@ function erfApprox(x: number): number {
       // term_{n} = term_{n-1} * x^2 * (2n-1) / (n * (2n+1))
       term *= (xx * (2 * n - 1)) / (n * (2 * n + 1))
       // Alternating signs: subtract on odd n, add on even n
-      sum += (n % 2 === 1 ? -term : term)
+      sum += n % 2 === 1 ? -term : term
       if (Math.abs(term) * twoDivSqrtPi < 1e-16) break
     }
     return sign * twoDivSqrtPi * sum
@@ -303,7 +304,8 @@ function erfApprox(x: number): number {
   const a5 = 1.061405429
   const p = 0.3275911
   const t = 1 / (1 + p * ax)
-  const y = 1 - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t) * Math.exp(-ax * ax)
+  const y =
+    1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-ax * ax)
   return sign * y
 }
 
@@ -332,7 +334,11 @@ export function computeLOSFromMeanAndSE(mu: number, sigmaMu: number): number {
 /**
  * Exact draw ratio from WDL.
  */
-export function drawRatioFromWDL(wins: number, losses: number, draws: number): number {
+export function drawRatioFromWDL(
+  wins: number,
+  losses: number,
+  draws: number
+): number {
   const W = wins || 0
   const L = losses || 0
   const D = draws || 0
