@@ -317,6 +317,10 @@
                 }}-{{ jaiEngine.matchDraws.value }}</span
               >
             </div>
+            <div v-if="matchEloDisplay" class="status-line">
+              <span class="label">{{ $t('analysis.eloRating') }}:</span>
+              <span class="value">{{ matchEloDisplay }}</span>
+            </div>
 
             <div
               v-if="
@@ -612,6 +616,7 @@
   } from '@/composables/useConfigManager'
   import DraggablePanel from './DraggablePanel.vue'
   import { usePanelManager } from '@/composables/usePanelManager'
+  import { calculateEloRating, formatEloRating, formatErrorMargin } from '@/utils/eloCalculator'
 
   const { t } = useI18n()
 
@@ -690,6 +695,18 @@
   const currentJaiEngineId = computed(
     () => jaiEngine?.currentEngine?.value?.id || ''
   )
+
+  // Elo display computed from current WLD
+  const matchEloDisplay = computed<string | null>(() => {
+    const w = jaiEngine?.matchWins?.value || 0
+    const l = jaiEngine?.matchLosses?.value || 0
+    const d = jaiEngine?.matchDraws?.value || 0
+    const res = calculateEloRating(w, l, d)
+    if (!res) return null
+    const perf = formatEloRating(res)
+    const err = formatErrorMargin(res)
+    return `${perf} ${err}`.trim()
+  })
 
   /* ---------- Auto Play ---------- */
   const isRedAi = ref(false)
