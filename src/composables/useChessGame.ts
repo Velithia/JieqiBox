@@ -78,6 +78,16 @@ export function useChessGame() {
 
   const isFenInputDialogVisible = ref(false)
   const isAnimating = ref(true) // Control piece movement animation switch
+  // Keep this in sync with .piece.animated { transition: all 0.2s ease; }
+  const MOVE_ANIMATION_DURATION_MS = 200
+
+  // Schedule resetting z-indexes back to positional values after move animation completes
+  const scheduleZIndexResetAfterAnimation = () => {
+    window.setTimeout(() => {
+      pieces.value.forEach(p => (p.zIndex = undefined))
+      updateAllPieceZIndexes()
+    }, MOVE_ANIMATION_DURATION_MS + 30) // small buffer beyond CSS duration
+  }
 
   // Store the initial FEN for replay functionality
   const initialFen = ref<string>(START_FEN)
@@ -755,10 +765,8 @@ export function useChessGame() {
         lastMovePositions.value = movePositions
       }
 
-      // Update z-index for all pieces after move completion
-      // Reset zIndex for all pieces and update based on new positions
-      pieces.value.forEach(p => (p.zIndex = undefined))
-      updateAllPieceZIndexes()
+      // Do not immediately reset z-index here; allow moving piece to stay on top
+      // until the CSS transition completes. The reset is scheduled at move time.
     }
     selectedPieceId.value = null
   }
@@ -871,6 +879,9 @@ export function useChessGame() {
         ponderState.handlePonderAfterMove(uciMove, true)
       }
     }
+
+    // Ensure z-index gets restored after any reveal-related highlighting
+    scheduleZIndexResetAfterAnimation()
   }
 
   /**
@@ -1435,6 +1446,9 @@ export function useChessGame() {
       )
       recordAndFinalize('move', uciMove)
     }
+
+    // Ensure the moving piece stays on top during the CSS transition
+    scheduleZIndexResetAfterAnimation()
   }
 
   // Calculate zIndex based on piece position and special conditions
