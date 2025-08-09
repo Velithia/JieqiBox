@@ -1836,7 +1836,9 @@ export function useChessGame() {
       if (isXQF) {
         const arrayBuffer = await file.arrayBuffer()
         const buffer = new Uint8Array(arrayBuffer)
-        notation = convertXQFToJieqiNotation(buffer, { flipMode: flipMode.value })
+        notation = convertXQFToJieqiNotation(buffer, {
+          flipMode: flipMode.value,
+        })
         console.log('Loaded XQF (Jieqi) notation:', notation)
       } else {
         // Handle JSON format (existing logic)

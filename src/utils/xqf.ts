@@ -67,9 +67,10 @@ interface XQFKeys {
 }
 
 // Chess piece mapping for 32 pieces in order
-const FEN_PIECES = "RNBAKABNRCCPPPPPrnbakabnrccppppp"
+const FEN_PIECES = 'RNBAKABNRCCPPPPPrnbakabnrccppppp'
 
 // Board coordinate system - a9 to i0 mapping
+// prettier-ignore
 const COORD_MAP = [
   'a9', 'b9', 'c9', 'd9', 'e9', 'f9', 'g9', 'h9', 'i9',
   'a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8', 'i8',
@@ -104,7 +105,11 @@ function indexToCoord(index: number): string {
 /**
  * Convert position code to board coordinates
  */
-function positionCodeToCoord(posCode: number): { x: number; y: number; index: number } {
+function positionCodeToCoord(posCode: number): {
+  x: number
+  y: number
+  index: number
+} {
   const x = Math.floor(posCode / 10)
   const y = 9 - (posCode % 10)
   const index = y * 9 + x
@@ -130,33 +135,35 @@ function readLE16(buffer: Uint8Array, offset: number): number {
  * Read little-endian 32-bit integer
  */
 function readLE32(buffer: Uint8Array, offset: number): number {
-  return buffer[offset] | 
-         (buffer[offset + 1] << 8) | 
-         (buffer[offset + 2] << 16) | 
-         (buffer[offset + 3] << 24)
+  return (
+    buffer[offset] |
+    (buffer[offset + 1] << 8) |
+    (buffer[offset + 2] << 16) |
+    (buffer[offset + 3] << 24)
+  )
 }
 
 /**
  * Write little-endian 16-bit integer
  */
 function writeLE16(buffer: Uint8Array, offset: number, value: number): void {
-  buffer[offset] = value & 0xFF
-  buffer[offset + 1] = (value >> 8) & 0xFF
+  buffer[offset] = value & 0xff
+  buffer[offset + 1] = (value >> 8) & 0xff
 }
 
 /**
  * Write little-endian 32-bit integer
  */
 function writeLE32(buffer: Uint8Array, offset: number, value: number): void {
-  buffer[offset] = value & 0xFF
-  buffer[offset + 1] = (value >> 8) & 0xFF
-  buffer[offset + 2] = (value >> 16) & 0xFF
-  buffer[offset + 3] = (value >> 24) & 0xFF
+  buffer[offset] = value & 0xff
+  buffer[offset + 1] = (value >> 8) & 0xff
+  buffer[offset + 2] = (value >> 16) & 0xff
+  buffer[offset + 3] = (value >> 24) & 0xff
 }
 
 /**
  * Convert bytes to string
- */ 
+ */
 function bytesToString(bytes: number[]): string {
   const clean: number[] = []
   for (let i = 0; i < bytes.length; i++) {
@@ -222,7 +229,7 @@ function parseXQFHeader(buffer: Uint8Array): XQFHeader {
     RedTime: readString(401, 400),
     BlkTime: readString(417, 416),
     RMKWriter: readString(465, 464),
-    Author: readString(481, 480)
+    Author: readString(481, 480),
   }
 }
 
@@ -235,7 +242,7 @@ function calculateKeys(header: XQFHeader): XQFKeys {
     XYp: 0,
     XYf: 0,
     XYt: 0,
-    RMK: 0
+    RMK: 0,
   }
 
   if (header.Version <= 15) {
@@ -247,22 +254,22 @@ function calculateKeys(header: XQFHeader): XQFKeys {
     (header.KeySum & header.KeyMask) | header.KeyOr[0],
     (header.KeyXYp & header.KeyMask) | header.KeyOr[1],
     (header.KeyXYf & header.KeyMask) | header.KeyOr[2],
-    (header.KeyXYt & header.KeyMask) | header.KeyOr[3]
+    (header.KeyXYt & header.KeyMask) | header.KeyOr[3],
   ]
 
   // Generate F32 mask using watermark
-  const WATERMARK = "[(C) Copyright Mr. Dong Shiwei.]"
+  const WATERMARK = '[(C) Copyright Mr. Dong Shiwei.]'
   for (let i = 0; i < 32; i++) {
     keys.F32[i] = FKey[i % 4] & WATERMARK.charCodeAt(i)
   }
 
   // Calculate position disturbance values
-  keys.XYp = ((header.KeyXYp * header.KeyXYp * 54 + 221) * header.KeyXYp) & 0xFF
-  keys.XYf = ((header.KeyXYf * header.KeyXYf * 54 + 221) * keys.XYp) & 0xFF
-  keys.XYt = ((header.KeyXYt * header.KeyXYt * 54 + 221) * keys.XYf) & 0xFF
+  keys.XYp = ((header.KeyXYp * header.KeyXYp * 54 + 221) * header.KeyXYp) & 0xff
+  keys.XYf = ((header.KeyXYf * header.KeyXYf * 54 + 221) * keys.XYp) & 0xff
+  keys.XYt = ((header.KeyXYt * header.KeyXYt * 54 + 221) * keys.XYf) & 0xff
 
   // Calculate RMK value
-  keys.RMK = (((header.KeySum << 8) + header.KeyXYp) % 32000 + 767) & 0xFFFF
+  keys.RMK = ((((header.KeySum << 8) + header.KeyXYp) % 32000) + 767) & 0xffff
 
   return keys
 }
@@ -270,14 +277,18 @@ function calculateKeys(header: XQFHeader): XQFKeys {
 /**
  * Decrypt data block if needed
  */
-function decryptData(data: Uint8Array, keys: XQFKeys, version: number): Uint8Array {
+function decryptData(
+  data: Uint8Array,
+  keys: XQFKeys,
+  version: number
+): Uint8Array {
   if (version <= 15) {
     return data // No decryption needed
   }
 
   const decrypted = new Uint8Array(data.length)
   for (let i = 0; i < data.length; i++) {
-    decrypted[i] = (data[i] - keys.F32[i % 32]) & 0xFF
+    decrypted[i] = (data[i] - keys.F32[i % 32]) & 0xff
   }
   return decrypted
 }
@@ -285,14 +296,18 @@ function decryptData(data: Uint8Array, keys: XQFKeys, version: number): Uint8Arr
 /**
  * Encrypt data block if needed
  */
-function encryptData(data: Uint8Array, keys: XQFKeys, version: number): Uint8Array {
+function encryptData(
+  data: Uint8Array,
+  keys: XQFKeys,
+  version: number
+): Uint8Array {
   if (version <= 15) {
     return data // No encryption needed
   }
 
   const encrypted = new Uint8Array(data.length)
   for (let i = 0; i < data.length; i++) {
-    encrypted[i] = (data[i] + keys.F32[i % 32]) & 0xFF
+    encrypted[i] = (data[i] + keys.F32[i % 32]) & 0xff
   }
   return encrypted
 }
@@ -302,14 +317,14 @@ function encryptData(data: Uint8Array, keys: XQFKeys, version: number): Uint8Arr
  */
 function parsePiecePositions(header: XQFHeader, keys: XQFKeys): string[] {
   const board = new Array(90).fill('*')
-  
+
   for (let i = 0; i < 32; i++) {
     let pieceKey: number
     let piecePos: number
 
     if (header.Version > 11) {
       pieceKey = (keys.XYp + i + 1) & 31
-      piecePos = (header.QiziXY[i] - keys.XYp) & 0xFF
+      piecePos = (header.QiziXY[i] - keys.XYp) & 0xff
     } else {
       pieceKey = i
       piecePos = header.QiziXY[i]
@@ -331,15 +346,15 @@ function parsePiecePositions(header: XQFHeader, keys: XQFKeys): string[] {
  */
 function boardToFenPosition(board: string[]): string {
   let fen = ''
-  
+
   for (let rank = 0; rank < 10; rank++) {
     let emptyCount = 0
     let rankStr = ''
-    
+
     for (let file = 0; file < 9; file++) {
       const index = rank * 9 + file
       const piece = board[index]
-      
+
       if (piece === '*') {
         emptyCount++
       } else {
@@ -350,14 +365,14 @@ function boardToFenPosition(board: string[]): string {
         rankStr += piece
       }
     }
-    
+
     if (emptyCount > 0) {
       rankStr += emptyCount.toString()
     }
-    
+
     fen += (rank > 0 ? '/' : '') + rankStr
   }
-  
+
   return fen
 }
 
@@ -368,7 +383,7 @@ function generateInitialFen(board: string[], header: XQFHeader): string {
   const position = boardToFenPosition(board)
   const sideToMove = header.WhoPlay === 1 ? 'b' : 'w'
   const fullmoveNumber = Math.max(1, Math.floor(header.PlayStepNo / 2))
-  
+
   return `${position} ${sideToMove} - - 0 ${fullmoveNumber}`
 }
 
@@ -378,11 +393,11 @@ function generateInitialFen(board: string[], header: XQFHeader): string {
 function fenPositionToBoard(fenPosition: string): string[] {
   const board = new Array(90).fill('*')
   const ranks = fenPosition.split('/')
-  
+
   for (let rank = 0; rank < Math.min(10, ranks.length); rank++) {
     const rankStr = ranks[rank]
     let file = 0
-    
+
     for (let i = 0; i < rankStr.length && file < 9; i++) {
       const char = rankStr[i]
       if (char >= '1' && char <= '9') {
@@ -397,16 +412,20 @@ function fenPositionToBoard(fenPosition: string): string[] {
       }
     }
   }
-  
+
   return board
 }
 
 /**
  * Generate piece positions array for XQF header
  */
-function generatePiecePositions(board: string[], version: number, XYp: number): number[] {
+function generatePiecePositions(
+  board: string[],
+  version: number,
+  XYp: number
+): number[] {
   const qiziXY = new Array(32).fill(255) // Use 255 for missing pieces
-  
+
   // Create reverse mapping from piece character to index in FEN_PIECES
   const pieceToIndex = new Map<string, number[]>()
   for (let i = 0; i < FEN_PIECES.length; i++) {
@@ -416,56 +435,61 @@ function generatePiecePositions(board: string[], version: number, XYp: number): 
     }
     pieceToIndex.get(piece)!.push(i)
   }
-  
+
   // Find each piece on the board
   for (let boardIndex = 0; boardIndex < board.length; boardIndex++) {
     const piece = board[boardIndex]
     if (piece === '*') continue
-    
+
     const pieceIndices = pieceToIndex.get(piece)
     if (!pieceIndices || pieceIndices.length === 0) continue
-    
+
     // Use the first available index for this piece type
     const pieceIndex = pieceIndices.shift()!
-    
+
     // Convert board index to position code
     const file = boardIndex % 9
     const rank = Math.floor(boardIndex / 9)
     const y = 9 - rank
     const posCode = file * 10 + y
-    
+
     // Apply disturbance if version > 11
     let finalPosCode = posCode
     if (version > 11) {
-      finalPosCode = (posCode + XYp) & 0xFF
+      finalPosCode = (posCode + XYp) & 0xff
     }
-    
+
     qiziXY[pieceIndex] = finalPosCode
   }
-  
+
   return qiziXY
 }
 
 /**
  * Create XQF header from GameNotation
  */
-function createXQFHeader(notation: GameNotation, version: number = 11): { header: XQFHeader; keys: XQFKeys } {
+function createXQFHeader(
+  notation: GameNotation,
+  version: number = 11
+): { header: XQFHeader; keys: XQFKeys } {
   // Parse initial FEN to get board state
-  const initialFen = notation.metadata.initialFen || 'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1'
+  const initialFen =
+    notation.metadata.initialFen ||
+    'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1'
   const fenParts = initialFen.split(' ')
   const board = fenPositionToBoard(fenParts[0])
   const sideToMove = fenParts[1] === 'b' ? 1 : 0
   const fullmoveNumber = parseInt(fenParts[5]) || 1
-  
+
   // Generate keys for encryption (simplified - use fixed values for compatibility)
   const keys: XQFKeys = {
     F32: new Array(32).fill(0),
     XYp: 0,
     XYf: 0,
     XYt: 0,
-    RMK: 0
+    RMK: 0,
   }
-  
+
   // Create basic header
   const header: XQFHeader = {
     Version: version,
@@ -492,19 +516,25 @@ function createXQFHeader(notation: GameNotation, version: number = 11): { header
     RedTime: '',
     BlkTime: '',
     RMKWriter: '',
-    Author: ''
+    Author: '',
   }
-  
+
   return { header, keys }
 }
 
 /**
  * Write string to buffer with length prefix
  */
-function writeStringToBuffer(buffer: Uint8Array, text: string, lengthOffset: number, dataOffset: number, maxLength: number): void {
+function writeStringToBuffer(
+  buffer: Uint8Array,
+  text: string,
+  lengthOffset: number,
+  dataOffset: number,
+  maxLength: number
+): void {
   const bytes = stringToBytes(text, maxLength)
   buffer[lengthOffset] = Math.min(bytes.length, 255)
-  
+
   for (let i = 0; i < bytes.length && i < maxLength; i++) {
     buffer[dataOffset + i] = bytes[i]
   }
@@ -516,13 +546,13 @@ function writeStringToBuffer(buffer: Uint8Array, text: string, lengthOffset: num
 function createHeaderBuffer(header: XQFHeader): Uint8Array {
   const buffer = new Uint8Array(1024)
   buffer.fill(0)
-  
+
   // Set signature and version
   buffer[0] = 0x58 // 'X'
   buffer[1] = 0x51 // 'Q'
   buffer[2] = header.Version
   buffer[3] = header.KeyMask
-  
+
   // Key data
   buffer[8] = header.KeyOr[0]
   buffer[9] = header.KeyOr[1]
@@ -532,26 +562,26 @@ function createHeaderBuffer(header: XQFHeader): Uint8Array {
   buffer[13] = header.KeyXYp
   buffer[14] = header.KeyXYf
   buffer[15] = header.KeyXYt
-  
+
   // Piece positions
   for (let i = 0; i < 32; i++) {
     buffer[16 + i] = header.QiziXY[i]
   }
-  
+
   // Game data
   writeLE16(buffer, 48, header.PlayStepNo)
   buffer[50] = header.WhoPlay
   buffer[51] = header.PlayResult
-  
+
   for (let i = 0; i < 4; i++) {
     buffer[52 + i] = header.PlayNodes[i]
   }
   for (let i = 0; i < 4; i++) {
     buffer[56 + i] = header.PTreePos[i]
   }
-  
+
   buffer[64] = header.Type
-  
+
   // Text fields
   writeStringToBuffer(buffer, header.Title || '', 80, 81, 127)
   writeStringToBuffer(buffer, header.MatchName || '', 208, 209, 63)
@@ -564,16 +594,20 @@ function createHeaderBuffer(header: XQFHeader): Uint8Array {
   writeStringToBuffer(buffer, header.BlkTime || '', 416, 417, 15)
   writeStringToBuffer(buffer, header.RMKWriter || '', 464, 465, 15)
   writeStringToBuffer(buffer, header.Author || '', 480, 481, 15)
-  
+
   return buffer
 }
 
 /**
  * Create move data buffer from GameNotation moves
  */
-function createMoveDataBuffer(moves: HistoryEntry[], keys: XQFKeys, version: number): Uint8Array {
+function createMoveDataBuffer(
+  moves: HistoryEntry[],
+  keys: XQFKeys,
+  version: number
+): Uint8Array {
   const records: Uint8Array[] = []
-  
+
   // Add initial comment record if needed
   const initialComment = '' // Could extract from metadata if needed
   if (initialComment) {
@@ -582,61 +616,61 @@ function createMoveDataBuffer(moves: HistoryEntry[], keys: XQFKeys, version: num
     if (version > 10) {
       commentLen += keys.RMK
     }
-    
+
     const record = new Uint8Array(8 + commentBytes.length)
     record[0] = 0 // fromByte (no move)
     record[1] = 0 // toByte (no move)
     record[2] = 0 // flags
     record[3] = 0 // reserved
     writeLE32(record, 4, commentLen)
-    
+
     for (let i = 0; i < commentBytes.length; i++) {
       record[8 + i] = commentBytes[i]
     }
-    
+
     records.push(record)
   }
-  
+
   // Process each move
   for (let i = 0; i < moves.length; i++) {
     const move = moves[i]
     if (move.type !== 'move' || move.data.length < 4) continue
-    
+
     // Parse move coordinates
     const fromCoord = move.data.substring(0, 2)
     const toCoord = move.data.substring(2, 4)
-    
+
     const fromIndex = coordToIndex(fromCoord)
     const toIndex = coordToIndex(toCoord)
-    
+
     if (fromIndex < 0 || toIndex < 0) continue
-    
+
     // Convert to position codes
     const fromFile = fromIndex % 9
     const fromRank = Math.floor(fromIndex / 9)
     const fromY = 9 - fromRank
     const fromPosCode = fromFile * 10 + fromY
-    
+
     const toFile = toIndex % 9
     const toRank = Math.floor(toIndex / 9)
     const toY = 9 - toRank
     const toPosCode = toFile * 10 + toY
-    
+
     // Apply disturbance
-    const fromByte = (fromPosCode + 24 + keys.XYf) & 0xFF
-    const toByte = (toPosCode + 32 + keys.XYt) & 0xFF
-    
+    const fromByte = (fromPosCode + 24 + keys.XYf) & 0xff
+    const toByte = (toPosCode + 32 + keys.XYt) & 0xff
+
     // Prepare comment
     const commentBytes = move.comment ? stringToBytes(move.comment, 1000) : []
     let commentLen = commentBytes.length
     if (version > 10 && commentLen > 0) {
       commentLen += keys.RMK
     }
-    
+
     // Set flags (simplified - just indicate if this is the last move)
-    const hasNext = i < moves.length - 1 ? (version > 10 ? 0x80 : 0xF0) : 0
+    const hasNext = i < moves.length - 1 ? (version > 10 ? 0x80 : 0xf0) : 0
     const flags = hasNext
-    
+
     // Create record
     const record = new Uint8Array(8 + commentBytes.length)
     record[0] = fromByte
@@ -644,24 +678,24 @@ function createMoveDataBuffer(moves: HistoryEntry[], keys: XQFKeys, version: num
     record[2] = flags
     record[3] = 0 // reserved
     writeLE32(record, 4, commentLen)
-    
+
     for (let j = 0; j < commentBytes.length; j++) {
       record[8 + j] = commentBytes[j]
     }
-    
+
     records.push(record)
   }
-  
+
   // Combine all records
   const totalLength = records.reduce((sum, record) => sum + record.length, 0)
   const buffer = new Uint8Array(totalLength)
   let offset = 0
-  
+
   for (const record of records) {
     buffer.set(record, offset)
     offset += record.length
   }
-  
+
   return buffer
 }
 
@@ -684,7 +718,7 @@ export function readXQF(buffer: Uint8Array): GameNotation {
   // Parse move data
   const rawMoveData = buffer.slice(1024)
   const moveData = decryptData(rawMoveData, keys, header.Version)
-  
+
   const moves: HistoryEntry[] = []
   let pos = 0
   let currentFen = initialFen
@@ -713,7 +747,9 @@ export function readXQF(buffer: Uint8Array): GameNotation {
         if (adjusted < 0 || adjusted > 100000) adjusted = 0
         commentLen = adjusted
         if (commentLen > 0 && pos + 8 + commentLen <= moveData.length) {
-          const commentBytes = Array.from(moveData.slice(pos + 8, pos + 8 + commentLen))
+          const commentBytes = Array.from(
+            moveData.slice(pos + 8, pos + 8 + commentLen)
+          )
           comment = bytesToString(commentBytes)
         }
         nextOffset = 8 + commentLen
@@ -729,7 +765,9 @@ export function readXQF(buffer: Uint8Array): GameNotation {
       if (adjusted < 0 || adjusted > 100000) adjusted = 0
       commentLen = adjusted
       if (commentLen > 0 && pos + 8 + commentLen <= moveData.length) {
-        const commentBytes = Array.from(moveData.slice(pos + 8, pos + 8 + commentLen))
+        const commentBytes = Array.from(
+          moveData.slice(pos + 8, pos + 8 + commentLen)
+        )
         comment = bytesToString(commentBytes)
       }
       nextOffset = 8 + commentLen
@@ -742,19 +780,24 @@ export function readXQF(buffer: Uint8Array): GameNotation {
     }
 
     // Decode move coordinates
-    const Pf = (fromByte - 24 - keys.XYf) & 0xFF
-    const Pt = (toByte - 32 - keys.XYt) & 0xFF
+    const Pf = (fromByte - 24 - keys.XYf) & 0xff
+    const Pt = (toByte - 32 - keys.XYt) & 0xff
     const fromCoord = positionCodeToCoord(Pf)
     const toCoord = positionCodeToCoord(Pt)
-    
-    if (fromCoord.index >= 0 && fromCoord.index < 90 && 
-        toCoord.index >= 0 && toCoord.index < 90) {
-      const moveStr = indexToCoord(fromCoord.index) + indexToCoord(toCoord.index)
+
+    if (
+      fromCoord.index >= 0 &&
+      fromCoord.index < 90 &&
+      toCoord.index >= 0 &&
+      toCoord.index < 90
+    ) {
+      const moveStr =
+        indexToCoord(fromCoord.index) + indexToCoord(toCoord.index)
       moves.push({
         type: 'move',
         data: moveStr,
         fen: currentFen,
-        comment
+        comment,
       })
     }
 
@@ -769,35 +812,38 @@ export function readXQF(buffer: Uint8Array): GameNotation {
       white: header.RedPlayer || '红方',
       black: header.BlkPlayer || '黑方',
       result: '*',
-      initialFen: initialFen
+      initialFen: initialFen,
     },
-    moves
+    moves,
   }
 }
 
 /**
  * Convert GameNotation to XQF file buffer
  */
-export function writeXQF(notation: GameNotation, version: number = 11): Uint8Array {
+export function writeXQF(
+  notation: GameNotation,
+  version: number = 11
+): Uint8Array {
   // Create header and keys
   const { header, keys } = createXQFHeader(notation, version)
-  
+
   // Create header buffer
   const headerBuffer = createHeaderBuffer(header)
-  
+
   // Create move data buffer
   const moveDataBuffer = createMoveDataBuffer(notation.moves, keys, version)
-  
+
   // Encrypt move data if needed
   const encryptedMoveData = encryptData(moveDataBuffer, keys, version)
-  
+
   // Combine header and move data
   const totalLength = 1024 + encryptedMoveData.length
   const result = new Uint8Array(totalLength)
-  
+
   result.set(headerBuffer, 0)
   result.set(encryptedMoveData, 1024)
-  
+
   return result
 }
 
@@ -810,7 +856,12 @@ export function readXQFRaw(buffer: Uint8Array): {
   header: ReturnType<typeof parseXQFHeader>
   keys: ReturnType<typeof calculateKeys>
   pieceBoard: string[]
-  moves: Array<{ fromIndex: number; toIndex: number; flags: number; comment: string }>
+  moves: Array<{
+    fromIndex: number
+    toIndex: number
+    flags: number
+    comment: string
+  }>
 } {
   if (buffer.length < 1024) {
     throw new Error('Invalid XQF file: too small')
@@ -827,7 +878,12 @@ export function readXQFRaw(buffer: Uint8Array): {
   const rawMoveData = buffer.slice(1024)
   const moveData = decryptData(rawMoveData, keys, header.Version)
 
-  const moves: Array<{ fromIndex: number; toIndex: number; flags: number; comment: string }> = []
+  const moves: Array<{
+    fromIndex: number
+    toIndex: number
+    flags: number
+    comment: string
+  }> = []
   let pos = 0
 
   while (pos < moveData.length) {
@@ -849,7 +905,9 @@ export function readXQFRaw(buffer: Uint8Array): {
         if (adjusted < 0 || adjusted > 100000) adjusted = 0
         const commentLen = adjusted
         if (commentLen > 0 && pos + 8 + commentLen <= moveData.length) {
-          const commentBytes = Array.from(moveData.slice(pos + 8, pos + 8 + commentLen))
+          const commentBytes = Array.from(
+            moveData.slice(pos + 8, pos + 8 + commentLen)
+          )
           comment = bytesToString(commentBytes)
         }
         nextOffset = 8 + commentLen
@@ -863,7 +921,9 @@ export function readXQFRaw(buffer: Uint8Array): {
       if (adjusted < 0 || adjusted > 100000) adjusted = 0
       const commentLen = adjusted
       if (commentLen > 0 && pos + 8 + commentLen <= moveData.length) {
-        const commentBytes = Array.from(moveData.slice(pos + 8, pos + 8 + commentLen))
+        const commentBytes = Array.from(
+          moveData.slice(pos + 8, pos + 8 + commentLen)
+        )
         comment = bytesToString(commentBytes)
       }
       nextOffset = 8 + commentLen
@@ -876,15 +936,12 @@ export function readXQFRaw(buffer: Uint8Array): {
     }
 
     // Decode to board indices
-    const Pf = (fromByte - 24 - keys.XYf) & 0xFF
-    const Pt = (toByte - 32 - keys.XYt) & 0xFF
+    const Pf = (fromByte - 24 - keys.XYf) & 0xff
+    const Pt = (toByte - 32 - keys.XYt) & 0xff
     const from = positionCodeToCoord(Pf)
     const to = positionCodeToCoord(Pt)
 
-    if (
-      from.index >= 0 && from.index < 90 &&
-      to.index >= 0 && to.index < 90
-    ) {
+    if (from.index >= 0 && from.index < 90 && to.index >= 0 && to.index < 90) {
       moves.push({ fromIndex: from.index, toIndex: to.index, flags, comment })
     }
 
@@ -906,7 +963,8 @@ function indexToUci(index: number): string {
 }
 
 // Standard Xiangqi start shape (board part only)
-const START_BOARD_FEN = 'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR'
+const START_BOARD_FEN =
+  'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR'
 
 function parseBoardOccupancy(fenBoard: string): boolean[] {
   const occupied: boolean[] = new Array(90).fill(false)
@@ -953,6 +1011,7 @@ export function convertXQFToJieqiNotation(
   }
 
   // Hidden pool counts: counts only for positions that remain hidden (X/x)
+  // prettier-ignore
   const currentHiddenCounts: Record<string, number> = {
     R: 0, N: 0, B: 0, A: 0, K: 0, C: 0, P: 0,
     r: 0, n: 0, b: 0, a: 0, k: 0, c: 0, p: 0,
@@ -961,7 +1020,11 @@ export function convertXQFToJieqiNotation(
     const mask = hiddenBoard[i]
     if (mask === 'X' || mask === 'x') {
       const actual = pieceBoard[i]
-      if (actual && actual !== '*' && currentHiddenCounts[actual] !== undefined) {
+      if (
+        actual &&
+        actual !== '*' &&
+        currentHiddenCounts[actual] !== undefined
+      ) {
         currentHiddenCounts[actual]++
       }
     }
@@ -985,9 +1048,15 @@ export function convertXQFToJieqiNotation(
   // Get sideToMove by the first move for compatibility
   if (rawMoves.length > 0) {
     const firstMovePiece = pieceBoard[rawMoves[0].fromIndex]
-    initialSideToMove = firstMovePiece && firstMovePiece.toUpperCase() === firstMovePiece ? 'w' : 'b'
+    initialSideToMove =
+      firstMovePiece && firstMovePiece.toUpperCase() === firstMovePiece
+        ? 'w'
+        : 'b'
   }
-  const fullmoveStart = Math.max(1, Math.floor((header as any).PlayStepNo ? (header as any).PlayStepNo / 2 : 1))
+  const fullmoveStart = Math.max(
+    1,
+    Math.floor((header as any).PlayStepNo ? (header as any).PlayStepNo / 2 : 1)
+  )
   let halfmoveClock = 0
   let fullmoveNumber = fullmoveStart
   let sideToMoveLocal: 'w' | 'b' = initialSideToMove as 'w' | 'b'
@@ -1011,10 +1080,17 @@ export function convertXQFToJieqiNotation(
 
     // Reveal if moving from hidden
     const actualPiece = pieceBoard[from]
-    if ((movingMask === 'X' || movingMask === 'x') && actualPiece && actualPiece !== '*') {
+    if (
+      (movingMask === 'X' || movingMask === 'x') &&
+      actualPiece &&
+      actualPiece !== '*'
+    ) {
       hiddenBoard[from] = actualPiece
       if (currentHiddenCounts[actualPiece] !== undefined) {
-        currentHiddenCounts[actualPiece] = Math.max(0, currentHiddenCounts[actualPiece] - 1)
+        currentHiddenCounts[actualPiece] = Math.max(
+          0,
+          currentHiddenCounts[actualPiece] - 1
+        )
       }
       halfmoveClock = 0
     } else if (capturedMask !== '*') {
@@ -1029,13 +1105,16 @@ export function convertXQFToJieqiNotation(
     hiddenBoard[from] = '*'
 
     // If captured a hidden piece, adjust pool (random mode only)
-    if ((capturedMask === 'X' || capturedMask === 'x') && flipMode === 'random') {
+    if (
+      (capturedMask === 'X' || capturedMask === 'x') &&
+      flipMode === 'random'
+    ) {
       const isRedHidden = capturedMask === 'X'
       // pool candidates of that side still > 0
       const poolChars = Object.keys(currentHiddenCounts).filter(k => {
         const cnt = currentHiddenCounts[k]
         if (cnt <= 0) return false
-        return isRedHidden ? (k === k.toUpperCase()) : (k === k.toLowerCase())
+        return isRedHidden ? k === k.toUpperCase() : k === k.toLowerCase()
       })
       if (poolChars.length > 0) {
         const pick = Math.floor(Math.random() * poolChars.length)

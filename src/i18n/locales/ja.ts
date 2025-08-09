@@ -401,7 +401,8 @@ export default {
       Logging:
         '有効（"true"）の場合、各エンジンプロセスの詳細なログ（すべての UCI 通信）を作成します。',
       SaveNotation: '各対局の棋譜ファイルを保存するかどうかのスイッチ。',
-      SaveNotationDir: '保存を有効にした場合の棋譜ファイルの保存先ディレクトリ。',
+      SaveNotationDir:
+        '保存を有効にした場合の棋譜ファイルの保存先ディレクトリ。',
       TimeControl: '各エンジンの時間制御設定。',
       AdjudicationRule: '和棋や決定的な局面の裁定ルール。',
     },
