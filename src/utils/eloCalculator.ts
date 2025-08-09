@@ -342,18 +342,32 @@ export function drawRatioFromWDL(wins: number, losses: number, draws: number): n
 }
 
 /**
- * Approximate draw ratio from PTNML pair counts.
- * Uses the common midpoint estimate where the ambiguous center bucket
- * (LW+DD+WL) contributes on average 1 draw per pair.
+ * Draw ratio lower/upper bounds from PTNML pair counts.
+ * - LD+DL and DW+WD each contribute exactly 1 draw per pair.
+ * - Center bucket (LW+DD+WL) contributes between 0 draws (all LW/WL) and 2 draws (all DD).
+ * - LL and WW contribute 0 draws.
+ * Returns [minDrawRatio, maxDrawRatio] as per-game ratios in [0,1].
  */
-export function drawRatioFromPTNML(ll: number, lddl: number, center: number, dwwd: number, ww: number): number {
+export function drawRatioBoundsFromPTNML(
+  ll: number,
+  lddl: number,
+  center: number,
+  dwwd: number,
+  ww: number
+): [number, number] {
   const LL = ll || 0
   const LDDL = lddl || 0
   const C = center || 0
   const DWWD = dwwd || 0
   const WW = ww || 0
   const P = LL + LDDL + C + DWWD + WW
-  if (P <= 0) return 0
-  const estimatedDraws = LDDL + C + DWWD // per-pair expected draws
-  return estimatedDraws / (2 * P)
+  if (P <= 0) return [0, 0]
+
+  const minDrawsPerPairs = LDDL + DWWD // center contributes 0
+  const maxDrawsPerPairs = LDDL + DWWD + 2 * C // center contributes 2
+
+  const denomGames = 2 * P
+  const minRatio = minDrawsPerPairs / denomGames
+  const maxRatio = maxDrawsPerPairs / denomGames
+  return [minRatio, maxRatio]
 }

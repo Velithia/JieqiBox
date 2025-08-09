@@ -224,7 +224,7 @@ import {
   calculateEloRatingFromPTNML,
   computeLOSFromMeanAndSE,
   drawRatioFromWDL,
-  drawRatioFromPTNML,
+  drawRatioBoundsFromPTNML,
 } from '@/utils/eloCalculator';
 import { calculateLLR_normalized } from '@/utils/sprt';
 import { calculateLLR_logistic } from '@/utils/sprt';
@@ -380,8 +380,8 @@ const drawRatioDisplay = computed<string | null>(() => {
     const center = Number(pt_center.value) || 0;
     const dwwd = Number(pt_dwwd.value) || 0;
     const ww = Number(pt_ww.value) || 0;
-    const r = drawRatioFromPTNML(ll, lddl, center, dwwd, ww);
-    return `${(r * 100).toFixed(2)}%`;
+    const [minR, maxR] = drawRatioBoundsFromPTNML(ll, lddl, center, dwwd, ww);
+    return `${(minR * 100).toFixed(2)}% - ${(maxR * 100).toFixed(2)}%`;
   }
 });
 
