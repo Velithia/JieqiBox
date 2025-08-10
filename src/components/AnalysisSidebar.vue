@@ -435,6 +435,9 @@
           <template v-if="entry.type === 'move'">
             <span class="move-number">{{ getMoveNumber(idx) }}</span>
             <span class="move-uci">{{ entry.data }}</span>
+            <span v-if="showChineseNotation" class="move-chinese">
+              {{ getChineseNotationForMove(idx) }}
+            </span>
             <div
               v-if="
                 entry.engineScore !== undefined ||
@@ -604,6 +607,7 @@
   import { useI18n } from 'vue-i18n'
   import type { HistoryEntry } from '@/composables/useChessGame'
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
+  import { uciToChineseMoves } from '@/utils/chineseNotation'
   import { useGameSettings } from '@/composables/useGameSettings'
   import AboutDialog from './AboutDialog.vue'
   // Import Engine Manager components and types
@@ -627,7 +631,8 @@
   const { restoreDefaultLayout } = usePanelManager()
 
   // Get interface settings
-  const { parseUciInfo, engineLogLineLimit } = useInterfaceSettings()
+  const { parseUciInfo, engineLogLineLimit, showChineseNotation } =
+    useInterfaceSettings()
 
   // Get persistent game settings
   const { enablePonder } = useGameSettings()
@@ -717,6 +722,10 @@
   const isBlackAi = ref(false)
   const isManualAnalysis = ref(false) // Track if current analysis is manual or AI auto-play
 
+  // Persist analysis-time context to ensure stable PV-to-Chinese conversion
+  const lastAnalysisFen = ref<string>('') // Jieqi/UI FEN captured at analysis start
+  const lastAnalysisPrefixMoves = ref<string[]>([])
+
   // Computed property: ponder is only available when exactly one AI is enabled
   const isPonderAvailable = computed(() => {
     return (
@@ -772,6 +781,20 @@
     }
     return engineOutput.value
   })
+
+  // Bridge: mirror engine's analysis-time context for stable PV rendering
+  watch(
+    () => engineState?.analysisUiFen?.value,
+    val => {
+      if (val) lastAnalysisFen.value = val
+    }
+  )
+  watch(
+    () => engineState?.analysisPrefixMoves?.value,
+    val => {
+      if (val) lastAnalysisPrefixMoves.value = [...val]
+    }
+  )
 
   // Load analysis settings from config file
   const loadAnalysisSettings = async () => {
@@ -1005,6 +1028,10 @@
         '[DEBUG] CHECK_AND_TRIGGER_AI: Starting AI analysis with settings:',
         analysisSettings.value
       )
+      // Record analysis-time context
+      lastAnalysisFen.value = baseFenForEngine.value
+      lastAnalysisPrefixMoves.value = [...engineMovesSinceLastReveal.value]
+
       startAnalysis(
         analysisSettings.value,
         engineMovesSinceLastReveal.value,
@@ -1146,6 +1173,10 @@
       maxNodes: 0, // 0 means no node limit
       analysisMode: 'infinite',
     }
+    // Record analysis-time context
+    lastAnalysisFen.value = baseFenForEngine.value
+    lastAnalysisPrefixMoves.value = [...engineMovesSinceLastReveal.value]
+
     startAnalysis(
       infiniteAnalysisSettings,
       engineMovesSinceLastReveal.value,
@@ -1872,6 +1903,27 @@
       return null
     }
 
+    // Format PV with Chinese notation if enabled
+    const formatPv = () => {
+      if (!info.pv) return null
+
+      if (showChineseNotation.value) {
+        try {
+          // Use the recorded analysis-time root FEN and prefix moves so PV stays stable across navigation
+          // Use the analysis-start UI FEN and convert only the PV (do not prepend prefix moves here)
+          const rootFen = lastAnalysisFen.value || gameState.generateFen()
+          const chineseMoves = uciToChineseMoves(rootFen, info.pv)
+          const chinesePv = chineseMoves.join(' ')
+          return `<span class="pv-line">${t('uci.pv')}: ${chinesePv}</span>`
+        } catch (error) {
+          console.warn('Failed to convert PV to Chinese notation:', error)
+          // Fallback to raw PV if conversion fails
+          return `<span class="pv-line">${t('uci.pv')}: ${info.pv}</span>`
+        }
+      }
+      return `<span class="pv-line">${t('uci.pv')}: ${info.pv}</span>`
+    }
+
     // Use i18n for field names
     const fields = [
       info.depth && `${t('uci.depth')}: ${info.depth}`,
@@ -1892,7 +1944,7 @@
       info.tbhits && `${t('uci.tbhits')}: ${info.tbhits}`,
       info.time &&
         `${t('uci.time')}: ${(parseInt(info.time, 10) / 1000).toFixed(2)}s`,
-      info.pv && `<span class="pv-line">${t('uci.pv')}: ${info.pv}</span>`,
+      formatPv(),
     ].filter(Boolean)
     return fields.join(' | ')
   }
@@ -2036,6 +2088,25 @@
       ponderMove.value,
       analysisSettings.value
     )
+  }
+
+  // Get Chinese notation for a specific move
+  function getChineseNotationForMove(moveIndex: number): string {
+    if (moveIndex < 0 || moveIndex >= history.value.length) return ''
+
+    const entry = history.value[moveIndex]
+    if (entry.type !== 'move') return ''
+
+    try {
+      // Get the FEN before this move
+      const fenBeforeMove =
+        moveIndex === 0 ? initialFen.value : history.value[moveIndex - 1].fen
+      const chineseMoves = uciToChineseMoves(fenBeforeMove, entry.data)
+      return chineseMoves[0] || ''
+    } catch (error) {
+      console.warn('Failed to convert move to Chinese notation:', error)
+      return ''
+    }
   }
 </script>
 
@@ -2191,7 +2262,21 @@
 
   .pv-line {
     color: #1976d2;
-    font-weight: bold;
+    font-weight: normal;
+    font-family:
+      'Noto Sans SC',
+      'Microsoft YaHei',
+      'PingFang SC',
+      'Hiragino Sans GB',
+      'Source Han Sans SC',
+      'WenQuanYi Micro Hei',
+      'Heiti SC',
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      Arial,
+      sans-serif;
   }
 
   .wdl-info {
@@ -2220,6 +2305,27 @@
   }
   .move-uci {
     flex: 1;
+  }
+
+  .move-chinese {
+    font-family:
+      'Noto Sans SC',
+      'Microsoft YaHei',
+      'PingFang SC',
+      'Hiragino Sans GB',
+      'Source Han Sans SC',
+      'WenQuanYi Micro Hei',
+      'Heiti SC',
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      Arial,
+      sans-serif;
+    font-size: 0.85rem;
+    color: rgb(var(--v-theme-secondary));
+    font-weight: normal;
+    margin-left: 8px;
   }
 
   .engine-analysis {

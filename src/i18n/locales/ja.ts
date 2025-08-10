@@ -342,6 +342,7 @@ export default {
     autosave: 'ゲームをAutosave.jsonに自動保存',
     useNewFenFormat: '新しいFEN形式を使用',
     engineLogLineLimit: 'エンジンログ行数制限',
+    showChineseNotation: '中国式記譜法を表示',
   },
 
   // UCIメッセージ

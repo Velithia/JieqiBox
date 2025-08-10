@@ -9,24 +9,6 @@ export interface EngineLine {
   kind: 'sent' | 'recv'
 }
 
-// Platform detection utility
-// const isAndroid = () => { // Removed unused function
-//   // Check multiple ways to detect Android platform
-//   if (typeof window !== 'undefined') {
-//     // Check Tauri platform if available
-//     const tauriPlatform = (window as any).__TAURI__?.platform
-//     if (tauriPlatform === 'android') return true
-
-//     // Check user agent
-//     if (navigator.userAgent.includes('Android')) return true
-//     if (/Android/i.test(navigator.userAgent)) return true
-//   }
-
-//   return false
-// }
-
-// function dbg(tag: string, ...m: any[]) { // console.log('[UCI]', tag, ...m) }
-
 export function useUciEngine(generateFen: () => string, gameState: any) {
   const { t } = useI18n()
   const engineOutput = ref<EngineLine[]>([])
@@ -42,6 +24,11 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
   const pvMoves = ref<string[]>([]) // Real-time PV
   // MultiPV: store moves for each PV index (0-based)
   const multiPvMoves = ref<string[][]>([])
+  // Persist analysis-time context for consumers (e.g., UI) to render PV against the exact position analyzed
+  const analysisBaseFen = ref<string>('')
+  const analysisPrefixMoves = ref<string[]>([])
+  // UI-friendly FEN (Jieqi FEN) captured at analysis start, independent of engine FEN formatting
+  const analysisUiFen = ref<string>('')
   // Cache of analysis lines for each PV
   const analysisLines: string[] = []
   const uciOptionsText = ref('') // cache UCI options raw text
@@ -581,6 +568,16 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
     const finalSettings = { ...defaultSettings, ...settings }
     console.log(`[DEBUG] START_ANALYSIS: Final settings=`, finalSettings)
 
+    // Record analysis-time context so UI can reconstruct PV notation against the same state
+    analysisBaseFen.value = fenToUse
+    analysisPrefixMoves.value = [...moves]
+    // Also capture the UI/Jieqi FEN at analysis start for Chinese notation conversion
+    try {
+      analysisUiFen.value = gameState.generateFen()
+    } catch (_) {
+      analysisUiFen.value = ''
+    }
+
     // Use baseFen if provided, otherwise use the FEN of the current position.
     const pos = `position fen ${fenToUse}${moves.length ? ' moves ' + moves.join(' ') : ''}`
     console.log(`[DEBUG] START_ANALYSIS: Position command: ${pos}`)
@@ -973,6 +970,9 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
     isStopping,
     pvMoves,
     multiPvMoves,
+    analysisBaseFen,
+    analysisPrefixMoves,
+    analysisUiFen,
     loadEngine,
     unloadEngine,
     startAnalysis,

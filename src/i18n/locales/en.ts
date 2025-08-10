@@ -439,6 +439,7 @@ export default {
     autosave: 'Auto-save game to Autosave.json',
     useNewFenFormat: 'Use New FEN Format',
     engineLogLineLimit: 'Engine Log Line Limit',
+    showChineseNotation: 'Show Chinese Notation',
   },
 
   // UCI messages

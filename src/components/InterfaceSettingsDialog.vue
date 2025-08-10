@@ -49,6 +49,11 @@
           variant="outlined"
           density="compact"
         ></v-text-field>
+        <v-switch
+          v-model="showChineseNotation"
+          :label="$t('interfaceSettings.showChineseNotation')"
+          color="primary"
+        ></v-switch>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -75,6 +80,7 @@
     autosave,
     useNewFenFormat,
     engineLogLineLimit,
+    showChineseNotation,
   } = useInterfaceSettings()
 
   const closeDialog = () => {

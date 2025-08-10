@@ -22,6 +22,7 @@ interface ConfigData {
     autosave: boolean
     useNewFenFormat: boolean
     engineLogLineLimit: number
+    showChineseNotation: boolean
   }
   evaluationChartSettings: {
     showMoveLabels: boolean
@@ -70,6 +71,7 @@ const defaultConfig: ConfigData = {
     autosave: true,
     useNewFenFormat: true,
     engineLogLineLimit: 256,
+    showChineseNotation: true,
   },
   evaluationChartSettings: {
     showMoveLabels: true,

@@ -344,6 +344,7 @@ export default {
     autosave: 'Tự động lưu ván cờ vào Autosave.json',
     useNewFenFormat: 'Sử dụng định dạng FEN mới',
     engineLogLineLimit: 'Giới hạn dòng nhật ký động cơ',
+    showChineseNotation: 'Hiển thị ký hiệu Trung Quốc',
   },
 
   // Tin nhắn UCI

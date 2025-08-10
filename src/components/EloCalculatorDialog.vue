@@ -417,7 +417,7 @@
       if (N <= 0) return null
       const p = d / N
       const z = 1.959963984540054
-      const se = Math.sqrt(Math.max(p * (1 - p) / N, 0))
+      const se = Math.sqrt(Math.max((p * (1 - p)) / N, 0))
       const pMin = Math.max(0, Math.min(1, p - z * se))
       const pMax = Math.max(0, Math.min(1, p + z * se))
       return `${(p * 100).toFixed(2)}% [${(pMin * 100).toFixed(2)}%, ${(pMax * 100).toFixed(2)}%]`
@@ -548,14 +548,21 @@
           font-weight: 500;
           color: rgb(var(--v-theme-primary));
           // Prefer a stack close to Computer Modern and Times New Roman
-          font-family: 'Latin Modern Math', 'Latin Modern Roman', 'CMU Serif',
+          font-family:
+            'Latin Modern Math', 'Latin Modern Roman', 'CMU Serif',
             'STIX Two Math', 'XITS Math', 'TeX Gyre Termes', 'Times New Roman',
             Times, serif;
           // Enable lining and tabular numerals where supported
           font-variant-numeric: lining-nums tabular-nums;
-          -webkit-font-feature-settings: 'lnum' 1, 'tnum' 1;
-          -moz-font-feature-settings: 'lnum' 1, 'tnum' 1;
-          font-feature-settings: 'lnum' 1, 'tnum' 1;
+          -webkit-font-feature-settings:
+            'lnum' 1,
+            'tnum' 1;
+          -moz-font-feature-settings:
+            'lnum' 1,
+            'tnum' 1;
+          font-feature-settings:
+            'lnum' 1,
+            'tnum' 1;
           &.performance {
             font-weight: 700;
             font-size: 1.1em;

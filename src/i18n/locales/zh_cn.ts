@@ -424,6 +424,7 @@ export default {
     autosave: '自动保存棋谱到Autosave.json',
     useNewFenFormat: '使用新FEN格式',
     engineLogLineLimit: '引擎日志行数限制',
+    showChineseNotation: '显示中文记谱法',
   },
 
   // UCI消息

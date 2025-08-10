@@ -20,6 +20,7 @@ const getInitialSettings = () => {
       autosave: true,
       useNewFenFormat: true,
       engineLogLineLimit: 256,
+      showChineseNotation: true,
     }
   }
 
@@ -34,6 +35,7 @@ const getInitialSettings = () => {
       autosave: settings.autosave !== false, // Default to true
       useNewFenFormat: settings.useNewFenFormat !== false, // Default to true
       engineLogLineLimit: settings.engineLogLineLimit || 256, // Default to 256
+      showChineseNotation: settings.showChineseNotation !== false, // Default to true
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -47,6 +49,7 @@ const getInitialSettings = () => {
       autosave: true,
       useNewFenFormat: true,
       engineLogLineLimit: 256,
+      showChineseNotation: true,
     }
   }
 }
@@ -61,6 +64,7 @@ const {
   autosave: initialAutosave,
   useNewFenFormat: initialUseNewFenFormat,
   engineLogLineLimit: initialEngineLogLineLimit,
+  showChineseNotation: initialShowChineseNotation,
 } = getInitialSettings()
 
 const showCoordinates = ref<boolean>(initialShowCoordinates)
@@ -71,6 +75,7 @@ const darkMode = ref<boolean>(initialDarkMode)
 const autosave = ref<boolean>(initialAutosave)
 const useNewFenFormat = ref<boolean>(initialUseNewFenFormat)
 const engineLogLineLimit = ref<number>(initialEngineLogLineLimit)
+const showChineseNotation = ref<boolean>(initialShowChineseNotation)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -86,6 +91,7 @@ watch(
     autosave,
     useNewFenFormat,
     engineLogLineLimit,
+    showChineseNotation,
   ],
   async ([
     newShowCoordinates,
@@ -96,6 +102,7 @@ watch(
     newAutosave,
     newUseNewFenFormat,
     newEngineLogLineLimit,
+    newShowChineseNotation,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -109,6 +116,7 @@ watch(
       autosave: newAutosave,
       useNewFenFormat: newUseNewFenFormat,
       engineLogLineLimit: newEngineLogLineLimit,
+      showChineseNotation: newShowChineseNotation,
     }
 
     try {
@@ -136,6 +144,7 @@ export function useInterfaceSettings() {
       autosave.value = settings.autosave !== false
       useNewFenFormat.value = settings.useNewFenFormat !== false
       engineLogLineLimit.value = settings.engineLogLineLimit || 256
+      showChineseNotation.value = !!settings.showChineseNotation
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -158,6 +167,7 @@ export function useInterfaceSettings() {
     autosave,
     useNewFenFormat,
     engineLogLineLimit,
+    showChineseNotation,
     loadSettings,
   }
 }
