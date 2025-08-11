@@ -35,7 +35,7 @@
 
     <!-- Right click hint at bottom -->
     <div class="chart-hint-bottom">
-      {{ $t('evaluationChart.rightClickHint') }}
+      {{ rightClickHintText }}
     </div>
     <Teleport to="body">
       <div
@@ -136,6 +136,7 @@
   import { useI18n } from 'vue-i18n'
   import type { HistoryEntry } from '@/composables/useChessGame'
   import { useEvaluationChartSettings } from '@/composables/useEvaluationChartSettings'
+  import { isMobilePlatform } from '@/utils/platform'
 
   const { t } = useI18n()
 
@@ -170,6 +171,15 @@
     score: '',
     scoreClass: '',
     time: '',
+  })
+
+  /* ---------- Platform-specific Text ---------- */
+  const rightClickHintText = computed(() => {
+    const isMobile = isMobilePlatform()
+    if (isMobile) {
+      return t('evaluationChart.longPressHint')
+    }
+    return t('evaluationChart.rightClickHint')
   })
 
   /* ---------- Zoom & Pan State ---------- */

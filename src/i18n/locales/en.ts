@@ -399,6 +399,7 @@ export default {
   evaluationChart: {
     title: 'Evaluation Chart',
     rightClickHint: 'Right-click for options',
+    longPressHint: 'Long press for options',
     showMoveLabels: 'Show Move Labels',
     linearYAxis: 'Linear Y-Axis',
     showOnlyLines: 'Show Only Lines',

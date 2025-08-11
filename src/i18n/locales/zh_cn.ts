@@ -384,6 +384,7 @@ export default {
   evaluationChart: {
     title: '局势图',
     rightClickHint: '右键点击查看选项',
+    longPressHint: '长按查看选项',
     showMoveLabels: '显示着法标签',
     linearYAxis: '线性Y轴',
     showOnlyLines: '仅显示线条',

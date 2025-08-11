@@ -306,6 +306,7 @@ export default {
   evaluationChart: {
     title: '評価チャート',
     rightClickHint: '右クリックでオプション',
+    longPressHint: '長押しでオプション',
     showMoveLabels: '手のラベルを表示',
     linearYAxis: '線形Y軸',
     showOnlyLines: '線のみ表示',

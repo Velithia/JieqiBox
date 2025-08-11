@@ -308,6 +308,7 @@ export default {
   evaluationChart: {
     title: 'Biểu đồ đánh giá',
     rightClickHint: 'Nhấp chuột phải để xem tùy chọn',
+    longPressHint: 'Nhấn giữ để xem tùy chọn',
     showMoveLabels: 'Hiển thị nhãn nước đi',
     linearYAxis: 'Trục Y tuyến tính',
     showOnlyLines: 'Chỉ hiển thị đường',

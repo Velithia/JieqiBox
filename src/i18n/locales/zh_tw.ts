@@ -300,6 +300,7 @@ export default {
   evaluationChart: {
     title: '局勢圖',
     rightClickHint: '右鍵點擊查看選項',
+    longPressHint: '長按查看選項',
     showMoveLabels: '顯示著法標籤',
     linearYAxis: '線性Y軸',
     showOnlyLines: '僅顯示線條',
