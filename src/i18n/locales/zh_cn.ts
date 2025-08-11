@@ -250,6 +250,15 @@ export default {
     goToLast: '到最后一步',
     play: '播放',
     pause: '暂停',
+    annotateMove: '标注走法',
+    // 走法标注
+    brilliant: '妙手',
+    good: '好棋',
+    interesting: '有趣',
+    dubious: '可疑',
+    mistake: '失误',
+    blunder: '败着',
+    clear: '清除',
   },
 
   // 引擎管理器
@@ -378,6 +387,7 @@ export default {
     inputFen: '输入FEN',
     newGame: '新对局',
     copied: '✓ 已复制',
+    clearDrawings: '清除绘制',
   },
 
   // 局势图

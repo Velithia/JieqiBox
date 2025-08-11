@@ -254,6 +254,15 @@ export default {
     goToLast: 'Đi đến nước cuối cùng',
     play: 'Phát',
     pause: 'Tạm dừng',
+    annotateMove: 'Ghi chú nước đi',
+    // Ghi chú nước đi
+    brilliant: 'Tuyệt vời',
+    good: 'Tốt',
+    interesting: 'Thú vị',
+    dubious: 'Đáng ngờ',
+    mistake: 'Sai lầm',
+    blunder: 'Lỗi lớn',
+    clear: 'Xóa',
   },
 
   // Trình quản lý Engine
@@ -302,6 +311,7 @@ export default {
     inputFen: 'Nhập FEN',
     newGame: 'Ván mới',
     copied: '✓ Đã sao chép',
+    clearDrawings: 'Xóa vẽ',
   },
 
   // Biểu đồ đánh giá

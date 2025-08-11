@@ -253,6 +253,15 @@ export default {
     goToLast: 'Go to Last Move',
     play: 'Play',
     pause: 'Pause',
+    annotateMove: 'Annotate Move',
+    // Move annotations
+    brilliant: 'Brilliant',
+    good: 'Good',
+    interesting: 'Interesting',
+    dubious: 'Dubious',
+    mistake: 'Mistake',
+    blunder: 'Blunder',
+    clear: 'Clear',
   },
 
   // Engine Manager
@@ -392,6 +401,7 @@ export default {
     inputFen: 'Input FEN',
     newGame: 'New Game',
     copied: '✓ Copied',
+    clearDrawings: 'Clear Drawings',
   },
 
   // Evaluation Chart

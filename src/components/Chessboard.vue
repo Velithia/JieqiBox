@@ -24,7 +24,14 @@
       </div>
 
       <!-- Pieces -->
-      <div class="pieces" @click="boardClick">
+      <div
+        class="pieces"
+        @click="boardClick"
+        @mousedown.right="handleRightMouseDown"
+        @mousemove="handleRightMouseMove"
+        @mouseup.right="handleRightMouseUp"
+        @contextmenu.prevent
+      >
         <img
           v-for="p in pieces"
           :key="p.id"
@@ -44,6 +51,7 @@
       <div class="last-move-highlights" v-if="lastMovePositions">
         <div
           class="highlight from"
+          :class="getAnnotationClass(lastMovePositions)"
           :style="
             rcStyle(
               displayRow(lastMovePositions.from.row),
@@ -53,14 +61,80 @@
         ></div>
         <div
           class="highlight to"
+          :class="getAnnotationClass(lastMovePositions)"
           :style="
             rcStyle(
               displayRow(lastMovePositions.to.row),
               displayCol(lastMovePositions.to.col)
             )
           "
-        ></div>
+        >
+        </div>
       </div>
+
+      <!-- Annotation badge overlay (above pieces and highlights) -->
+      <div
+        v-if="lastMovePositions && getCurrentMoveAnnotation()"
+        class="annotation-layer"
+      >
+        <div
+          class="annotation-anchor"
+          :class="getAnnotationClass(lastMovePositions)"
+          :style="
+            rcStyle(
+              displayRow(lastMovePositions.to.row),
+              displayCol(lastMovePositions.to.col)
+            )
+          "
+        >
+          <div class="annotation-badge">{{ getCurrentMoveAnnotation() }}</div>
+        </div>
+      </div>
+
+      <!-- User drawings (circles and arrows) -->
+      <svg
+        class="user-drawings"
+        viewBox="0 0 90 100"
+        preserveAspectRatio="none"
+      >
+        <!-- Circles -->
+        <circle
+          v-for="(circle, idx) in userCircles"
+          :key="`circle-${idx}`"
+          :cx="circle.x"
+          :cy="circle.y"
+          :r="circle.radius"
+          fill="none"
+          stroke="#ff6b6b"
+          stroke-width="1"
+          opacity="0.8"
+        />
+        <!-- Arrows -->
+        <defs>
+          <marker
+            id="user-arrow-marker"
+            markerWidth="3"
+            markerHeight="3"
+            refX="2"
+            refY="1.5"
+            orient="auto"
+          >
+            <polygon points="0 0, 3 1.5, 0 3" fill="#ff6b6b" />
+          </marker>
+        </defs>
+        <line
+          v-for="(arrow, idx) in userArrows"
+          :key="`arrow-${idx}`"
+          :x1="arrow.x1"
+          :y1="arrow.y1"
+          :x2="arrow.x2"
+          :y2="arrow.y2"
+          stroke="#ff6b6b"
+          stroke-width="2"
+          marker-end="url(#user-arrow-marker)"
+          opacity="0.8"
+        />
+      </svg>
 
       <!-- Valid moves indicators -->
       <div
@@ -159,6 +233,13 @@
           :disabled="isMatchRunning"
           >{{ $t('chessboard.newGame') }}</v-btn
         >
+        <v-btn
+          @click="clearUserDrawings"
+          size="small"
+          color="error"
+          :disabled="isMatchRunning"
+          >{{ $t('chessboard.clearDrawings') }}</v-btn
+        >
       </div>
 
       <!-- Copy success tip - positioned absolutely to avoid layout shifts -->
@@ -253,6 +334,15 @@
     history,
     currentMoveIndex,
   } = gs
+
+  // User drawing state
+  const userCircles = ref<Array<{ x: number; y: number; radius: number }>>([])
+  const userArrows = ref<
+    Array<{ x1: number; y1: number; x2: number; y2: number }>
+  >([])
+  const isDrawing = ref(false)
+  const drawingStart = ref<{ x: number; y: number } | null>(null)
+  const drawingStartRC = ref<{ row: number; col: number } | null>(null)
   const {
     bestMove,
     isThinking,
@@ -361,6 +451,103 @@
       pendingMove.value = result.move
       showClearHistoryDialog.value = true
     }
+  }
+
+  // Snap arbitrary percentage coordinates to nearest board grid center (row/col)
+  const snapPercentToRC = (xp: number, yp: number) => {
+    const colFloat = ((xp - OX) / GX) * (COLS - 1)
+    const rowFloat = ((yp - OY) / GY) * (ROWS - 1)
+    const col = Math.max(0, Math.min(COLS - 1, Math.round(colFloat)))
+    const row = Math.max(0, Math.min(ROWS - 1, Math.round(rowFloat)))
+    return { row, col }
+  }
+
+  // Right-click drawing handlers
+  const handleRightMouseDown = (e: MouseEvent) => {
+    e.preventDefault()
+    if (isMatchRunning.value) return
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const xp = ((e.clientX - rect.left) / rect.width) * 100
+    const yp = ((e.clientY - rect.top) / rect.height) * 100
+
+    const { row, col } = snapPercentToRC(xp, yp)
+    const snapped = percentFromRC(row, col)
+    drawingStart.value = { x: snapped.x, y: snapped.y }
+    drawingStartRC.value = { row, col }
+    isDrawing.value = true
+  }
+
+  const handleRightMouseMove = (e: MouseEvent) => {
+    if (!isDrawing.value || !drawingStart.value) return
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const xp = ((e.clientX - rect.left) / rect.width) * 100
+    const yp = ((e.clientY - rect.top) / rect.height) * 100
+    const { row, col } = snapPercentToRC(xp, yp)
+    const snapped = percentFromRC(row, col)
+
+    // Update the temporary arrow preview distance using snapped centers
+    const distance = Math.sqrt(
+      Math.pow(snapped.x - drawingStart.value.x, 2) +
+        Math.pow(snapped.y - drawingStart.value.y, 2)
+    )
+
+    // If dragged more than 10% of board size, it's an arrow
+    if (distance > 10) {
+      // Arrow mode - will be finalized on mouse up
+    } else {
+      // Circle mode - will be finalized on mouse up
+    }
+  }
+
+  const handleRightMouseUp = (e: MouseEvent) => {
+    if (!isDrawing.value || !drawingStart.value) return
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const xp = ((e.clientX - rect.left) / rect.width) * 100
+    const yp = ((e.clientY - rect.top) / rect.height) * 100
+    const { row, col } = snapPercentToRC(xp, yp)
+    const endCenter = percentFromRC(row, col)
+
+    // Convert to SVG coordinates (board width scaled to 90)
+    const svgX = drawingStart.value.x * 0.9
+    const svgY = drawingStart.value.y
+    const endSvgX = endCenter.x * 0.9
+    const endSvgY = endCenter.y
+
+    if (
+      drawingStartRC.value &&
+      (row !== drawingStartRC.value.row || col !== drawingStartRC.value.col)
+    ) {
+      // Create arrow
+      userArrows.value.push({
+        x1: svgX,
+        y1: svgY,
+        x2: endSvgX,
+        y2: endSvgY,
+      })
+    } else {
+      // Create circle snapped to grid center with radius based on cell size
+      const cellW = GX / (COLS - 1)
+      const cellH = GY / (ROWS - 1)
+      const radiusSvg = Math.max(3, Math.min(8, Math.min(0.9 * cellW, cellH) * 0.5))
+      userCircles.value.push({
+        x: svgX,
+        y: svgY,
+        radius: radiusSvg,
+      })
+    }
+
+    isDrawing.value = false
+    drawingStart.value = null
+    drawingStartRC.value = null
+  }
+
+  // Clear all user drawings
+  const clearUserDrawings = () => {
+    userCircles.value = []
+    userArrows.value = []
   }
 
   // Execute clear history and move after user confirmation
@@ -607,6 +794,41 @@
   // Helper to convert stored column to display column based on flip state
   const displayCol = (c: number) => (gs.isBoardFlipped.value ? 8 - c : c)
 
+  // Get annotation class for highlighting
+  const getAnnotationClass = (_positions: any) => {
+    const currentAnnotation = getCurrentMoveAnnotation()
+    if (!currentAnnotation) return ''
+
+    switch (currentAnnotation) {
+      case '!!':
+        return 'annot-brilliant'
+      case '!':
+        return 'annot-good'
+      case '!?':
+        return 'annot-interesting'
+      case '?!':
+        return 'annot-dubious'
+      case '?':
+        return 'annot-mistake'
+      case '??':
+        return 'annot-blunder'
+      default:
+        return ''
+    }
+  }
+
+  // Get current move annotation
+  const getCurrentMoveAnnotation = () => {
+    if (
+      currentMoveIndex.value <= 0 ||
+      currentMoveIndex.value > history.value.length
+    ) {
+      return null
+    }
+    const moveEntry = history.value[currentMoveIndex.value - 1]
+    return moveEntry?.annotation || null
+  }
+
   /* ===== Evaluation Bar (cp -> percent) ===== */
   const extractCpFromInfoLine = (line: string): number | null => {
     if (!line) return null
@@ -828,6 +1050,21 @@
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
   }
+
+  .user-drawings {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 35;
+    /* Disable text selection and double-click highlighting */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    /* Disable double-click highlighting */
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
   .al {
     stroke-width: 1;
     stroke-opacity: 0.9;
@@ -901,9 +1138,104 @@
     border: 3px solid #ff6b6b;
     background: rgba(255, 107, 107, 0.2);
   }
+  
+  /* Annotation background colors for highlight.from */
+  .highlight.from.annot-brilliant {
+    background: rgba(0, 102, 204, 0.2);
+  }
+  .highlight.from.annot-good {
+    background: rgba(0, 188, 212, 0.2);
+  }
+  .highlight.from.annot-interesting {
+    background: rgba(139, 195, 74, 0.2);
+  }
+  .highlight.from.annot-dubious {
+    background: rgba(255, 152, 0, 0.2);
+  }
+  .highlight.from.annot-mistake {
+    background: rgba(255, 87, 34, 0.2);
+  }
+  .highlight.from.annot-blunder {
+    background: rgba(244, 67, 54, 0.2);
+  }
   .highlight.to {
     border: 3px solid #4ecdc4;
     background: rgba(78, 205, 196, 0.2);
+    position: relative;
+  }
+
+  /* Annotation badge styles */
+  .annotation-badge {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    border: 2px solid white;
+  }
+
+  /* Annotation color classes */
+  .annot-brilliant {
+    border-color: #0066cc !important;
+  }
+  .annot-brilliant .annotation-badge {
+    background: #0066cc;
+  }
+
+  .annot-good {
+    border-color: #00bcd4 !important;
+  }
+  .annot-good .annotation-badge {
+    background: #00bcd4;
+  }
+
+  .annot-interesting {
+    border-color: #8bc34a !important;
+  }
+  .annot-interesting .annotation-badge {
+    background: #8bc34a;
+  }
+
+  .annot-dubious {
+    border-color: #ff9800 !important;
+  }
+  .annot-dubious .annotation-badge {
+    background: #ff9800;
+  }
+
+  .annot-mistake {
+    border-color: #ff5722 !important;
+  }
+  .annot-mistake .annotation-badge {
+    background: #ff5722;
+  }
+
+  .annot-blunder {
+    border-color: #f44336 !important;
+  }
+  .annot-blunder .annotation-badge {
+    background: #f44336;
+  }
+
+  /* Annotation overlay above pieces and last move highlight */
+  .annotation-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3000; // above all pieces and highlights
+  }
+  .annotation-anchor {
+    position: absolute;
+    width: 12%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
   }
 
   /* Valid move indicator styles */

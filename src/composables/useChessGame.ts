@@ -29,6 +29,7 @@ export type HistoryEntry = {
   comment?: string // User comment for this move
   engineScore?: number // Engine analysis score for this move (only recorded if engine was thinking)
   engineTime?: number // Engine analysis time in milliseconds for this move (only recorded if engine was thinking)
+  annotation?: '!!' | '!' | '!?' | '?!' | '?' | '??' // Move quality annotation
 }
 
 // Custom game notation format interface
@@ -2081,6 +2082,19 @@ export function useChessGame() {
     }
   }
 
+  // Update annotation for a specific move
+  const updateMoveAnnotation = (
+    moveIndex: number,
+    annotation: '!!' | '!' | '!?' | '?!' | '?' | '??' | undefined
+  ) => {
+    if (moveIndex >= 0 && moveIndex < history.value.length) {
+      history.value[moveIndex] = {
+        ...history.value[moveIndex],
+        annotation: annotation,
+      }
+    }
+  }
+
   // Undo the last move (whether made by human or computer)
   const undoLastMove = () => {
     // Check if there are any moves to undo
@@ -2235,6 +2249,7 @@ export function useChessGame() {
     undoLastMove,
     updateAllPieceZIndexes,
     updateMoveComment,
+    updateMoveAnnotation,
     determineGameResult,
     loadGameNotation,
   }

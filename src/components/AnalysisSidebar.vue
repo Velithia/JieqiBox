@@ -410,6 +410,50 @@
               variant="text"
               :title="$t('analysis.goToLast')"
             />
+            <!-- Annotation quick buttons for current move (apply to last move index) -->
+            <v-menu open-on-hover close-on-content-click>
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  size="x-small"
+                  color="indigo"
+                  variant="text"
+                  icon="mdi-star-circle"
+                  :title="$t('analysis.annotateMove')"
+                />
+              </template>
+              <v-list density="compact">
+                <v-list-item @click="setAnnotation('!!')"
+                  ><v-list-item-title
+                    >!! {{ $t('analysis.brilliant') }}</v-list-item-title
+                  ></v-list-item
+                >
+                <v-list-item @click="setAnnotation('!')"
+                  ><v-list-item-title>! {{ $t('analysis.good') }}</v-list-item-title></v-list-item
+                >
+                <v-list-item @click="setAnnotation('!?')"
+                  ><v-list-item-title
+                    >!? {{ $t('analysis.interesting') }}</v-list-item-title
+                  ></v-list-item
+                >
+                <v-list-item @click="setAnnotation('?!')"
+                  ><v-list-item-title
+                    >?! {{ $t('analysis.dubious') }}</v-list-item-title
+                  ></v-list-item
+                >
+                <v-list-item @click="setAnnotation('?')"
+                  ><v-list-item-title>? {{ $t('analysis.mistake') }}</v-list-item-title></v-list-item
+                >
+                <v-list-item @click="setAnnotation('??')"
+                  ><v-list-item-title
+                    >?? {{ $t('analysis.blunder') }}</v-list-item-title
+                  ></v-list-item
+                >
+                <v-list-item @click="setAnnotation(undefined)"
+                  ><v-list-item-title>{{ $t('analysis.clear') }}</v-list-item-title></v-list-item
+                >
+              </v-list>
+            </v-menu>
           </div>
         </div>
       </template>
@@ -435,6 +479,12 @@
           <template v-if="entry.type === 'move'">
             <span class="move-number">{{ getMoveNumber(idx) }}</span>
             <span class="move-uci">{{ entry.data }}</span>
+            <span
+              v-if="entry.annotation"
+              class="move-annot"
+              :class="annotationClass(entry.annotation)"
+              >{{ entry.annotation }}</span
+            >
             <span v-if="showChineseNotation" class="move-chinese">
               {{ getChineseNotationForMove(idx) }}
             </span>
@@ -655,6 +705,7 @@
     isBoardFlipped,
     initialFen,
     undoLastMove,
+    updateMoveAnnotation,
   } = gameState
 
   const engineState = inject('engine-state') as any
@@ -1057,6 +1108,36 @@
       return
     }
     replayToMove(moveIndex)
+  }
+
+  // Set annotation on last move (currentMoveIndex - 1)
+  function setAnnotation(a: '!!' | '!' | '!?' | '?!' | '?' | '??' | undefined) {
+    if (isMatchRunning.value) return
+    const idx = currentMoveIndex.value - 1
+    if (
+      idx >= 0 &&
+      idx < history.value.length &&
+      history.value[idx].type === 'move'
+    ) {
+      updateMoveAnnotation(idx, a)
+    }
+  }
+
+  function annotationClass(a: NonNullable<HistoryEntry['annotation']>) {
+    switch (a) {
+      case '!!':
+        return 'annot-brilliant'
+      case '!':
+        return 'annot-good'
+      case '!?':
+        return 'annot-interesting'
+      case '?!':
+        return 'annot-dubious'
+      case '?':
+        return 'annot-mistake'
+      case '??':
+        return 'annot-blunder'
+    }
   }
 
   /* ---------- Notation Navigation Functions ---------- */
@@ -2358,6 +2439,39 @@
     color: rgb(var(--v-theme-secondary));
     font-weight: normal;
     margin-left: 8px;
+  }
+
+  .move-annot {
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-left: 4px;
+    padding: 1px 3px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .annot-brilliant {
+    color: #0066cc;
+  }
+
+  .annot-good {
+    color: #00bcd4;
+  }
+
+  .annot-interesting {
+    color: #8bc34a;
+  }
+
+  .annot-dubious {
+    color: #ff9800;
+  }
+
+  .annot-mistake {
+    color: #ff5722;
+  }
+
+  .annot-blunder {
+    color: #f44336;
   }
 
   .engine-analysis {

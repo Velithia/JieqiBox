@@ -252,6 +252,15 @@ export default {
     goToLast: '最後の手に移動',
     play: '再生',
     pause: '一時停止',
+    annotateMove: '手の評価',
+    // 手の評価
+    brilliant: '絶妙',
+    good: '好手',
+    interesting: '興味深い',
+    dubious: '疑問',
+    mistake: 'ミス',
+    blunder: '大悪手',
+    clear: 'クリア',
   },
 
   // エンジンマネージャー
@@ -300,6 +309,7 @@ export default {
     inputFen: 'FENを入力',
     newGame: '新しいゲーム',
     copied: '✓ コピーしました',
+    clearDrawings: '描画をクリア',
   },
 
   // 評価チャート

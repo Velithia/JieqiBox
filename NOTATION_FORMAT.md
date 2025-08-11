@@ -29,6 +29,7 @@ The game notation file uses the JSON format with a `.json` file extension.
       "type": "move",
       "data": "e7e6",
       "comment": "Good opening move",
+      "annotation": "!",
       "fen": "xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX A2B2N2R2C2P5a2b2n2r2c2p5 w - - 0 1",
       "engineScore": 0.5,
       "engineTime": 1250
@@ -60,6 +61,7 @@ Each move record contains:
 - `data`: The operation data (move in UCI format or adjustment information).
 - `fen`: The FEN string of the board state after this move.
 - `comment`: Optional user comment for this move (string). Comments can be edited by users.
+- `annotation`: Optional move quality annotation (string). Values: `!!` (Brilliant), `!` (Good), `!?` (Interesting), `?!` (Dubious), `?` (Mistake), `??` (Blunder). Annotations can be set by users and affect the visual highlighting of moves.
 - `engineScore`: Engine analysis score for this move (number). Only recorded if engine was thinking before the move. Default is 0 if engine was not thinking.
 - `engineTime`: Engine analysis time in milliseconds for this move (number). Only recorded if engine was thinking before the move. Default is 0 if engine was not thinking.
 
