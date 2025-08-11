@@ -412,7 +412,7 @@ export default {
 
   // Elo計算器
   eloCalculator: {
-    title: 'Elo & LLR 計算器',
+    title: 'Elo 計算器',
     inputSection: '比賽結果',
     wins: '勝',
     losses: '負',
@@ -430,7 +430,7 @@ export default {
     },
     resultsSection: 'Elo 表現',
     performance: 'Elo 差值（含 95% 誤差）',
-    neloPerformance: 'nElo 差值（含 95% 誤差）',
+
     errorMargin: '誤差範圍 (95%)',
     confidenceInterval: '95% 信賴區間',
     scoreRate: '得分率',
@@ -438,13 +438,9 @@ export default {
     drawRatio: '和棋率',
     standardError: '標準誤',
     noResults: '輸入比賽結果以查看計算結果。',
-    basicRequiresWDL: '基礎模式需要 WDL 輸入。請切換為 WDL，或使用 SPRT 模式。',
+    basicRequiresWDL: '基礎模式需要 WDL 輸入。請切換為 WDL。',
     close: '關閉',
     basicMode: '基礎',
-    proMode: 'SPRT (LLR)',
-    hypothesisType: '假設類型',
-    llrResults: 'LLR 結果',
-    llrError: '無法計算 LLR。請檢查輸入。',
   },
 
   // 遊戲操作確認

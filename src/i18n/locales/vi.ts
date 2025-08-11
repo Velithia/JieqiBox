@@ -423,7 +423,7 @@ export default {
 
   // Máy tính Elo
   eloCalculator: {
-    title: 'Máy tính Elo & LLR',
+    title: 'Máy tính Elo',
     inputSection: 'Kết quả trận đấu',
     wins: 'Thắng',
     losses: 'Thua',
@@ -441,7 +441,7 @@ export default {
     },
     resultsSection: 'Hiệu suất Elo',
     performance: 'Chênh lệch Elo (kèm sai số 95%)',
-    neloPerformance: 'Chênh lệch nElo (kèm sai số 95%)',
+
     errorMargin: 'Sai số (95%)',
     confidenceInterval: 'Khoảng tin cậy 95%',
     scoreRate: 'Tỉ lệ điểm',
@@ -450,13 +450,9 @@ export default {
     standardError: 'Sai số chuẩn',
     noResults: 'Nhập kết quả để xem tính toán.',
     basicRequiresWDL:
-      'Chế độ Cơ bản cần WDL. Hãy chuyển sang WDL hoặc dùng chế độ SPRT.',
+      'Chế độ Cơ bản cần WDL. Hãy chuyển sang WDL.',
     close: 'Đóng',
     basicMode: 'Cơ bản',
-    proMode: 'SPRT (LLR)',
-    hypothesisType: 'Loại giả thuyết',
-    llrResults: 'Kết quả LLR',
-    llrError: 'Không thể tính LLR. Kiểm tra dữ liệu.',
   },
 
   // Xác nhận thao tác trò chơi

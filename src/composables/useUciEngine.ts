@@ -663,6 +663,23 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
       ? gameState.generateFenForEngine(fen)
       : fen
 
+    // Record analysis-time context for UI while pondering so PV conversion uses the correct root FEN
+    try {
+      analysisUiFen.value = gameState.generateFen()
+      analysisPrefixMoves.value = [...moves]
+      analysisBaseFen.value = fenForEngine
+      console.log(
+        '[DEBUG] START_PONDER: Captured analysis UI FEN and context for PV rendering',
+        {
+          analysisUiFen: analysisUiFen.value,
+          analysisPrefixMoves: analysisPrefixMoves.value,
+          analysisBaseFen: analysisBaseFen.value,
+        }
+      )
+    } catch (_) {
+      analysisUiFen.value = ''
+    }
+
     const moveToPonder = expectedMove || ponderMove.value
     console.log(
       `[DEBUG] START_PONDER: expectedMove='${expectedMove}', ponderMove.value='${ponderMove.value}', moveToPonder='${moveToPonder}'`

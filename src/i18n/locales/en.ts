@@ -337,7 +337,7 @@ export default {
 
   // Elo Calculator
   eloCalculator: {
-    title: 'Elo & LLR Calculator',
+    title: 'Elo Calculator',
     inputSection: 'Match Results',
     wins: 'Wins',
     losses: 'Losses',
@@ -355,7 +355,7 @@ export default {
     },
     resultsSection: 'Elo Performance',
     performance: 'Elo Difference (with 95% error)',
-    neloPerformance: 'nElo Difference (with 95% error)',
+
     confidenceInterval: '95% Confidence Interval',
     scoreRate: 'Score Rate',
     los: 'LOS (Likelihood of Superiority)',
@@ -363,13 +363,9 @@ export default {
     standardError: 'Standard Error',
     noResults: 'Enter match results to see calculations.',
     basicRequiresWDL:
-      'Basic mode requires WDL input. Switch to WDL or use SPRT mode.',
+      'Basic mode requires WDL input. Switch to WDL.',
     close: 'Close',
     basicMode: 'Basic',
-    proMode: 'SPRT (LLR)',
-    hypothesisType: 'Hypothesis Type',
-    llrResults: 'LLR Results',
-    llrError: 'Could not compute LLR. Check inputs.',
   },
 
   // Error messages

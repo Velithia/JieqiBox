@@ -1910,9 +1910,30 @@
       if (showChineseNotation.value) {
         try {
           // Use the recorded analysis-time root FEN and prefix moves so PV stays stable across navigation
-          // Use the analysis-start UI FEN and convert only the PV (do not prepend prefix moves here)
+          // Use the analysis-start UI FEN and convert the PV. When pondering with a known expected move,
+          // prepend that move to the PV so conversion happens from the correct position.
           const rootFen = lastAnalysisFen.value || gameState.generateFen()
-          const chineseMoves = uciToChineseMoves(rootFen, info.pv)
+
+          let pvToConvert: string = info.pv
+          if (
+            isPondering.value &&
+            !isInfinitePondering.value &&
+            ponderMove.value &&
+            !pvToConvert.startsWith(ponderMove.value)
+          ) {
+            pvToConvert = `${ponderMove.value} ${pvToConvert}`
+          }
+
+          console.log('[DEBUG] FORMAT_PV: Converting PV', {
+            rootFen,
+            pvOriginal: info.pv,
+            pvWithPonder: pvToConvert,
+            isPondering: isPondering.value,
+            isInfinitePondering: isInfinitePondering.value,
+            ponderMove: ponderMove.value,
+          })
+
+          const chineseMoves = uciToChineseMoves(rootFen, pvToConvert)
           const chinesePv = chineseMoves.join(' ')
           return `<span class="pv-line">${t('uci.pv')}: ${chinesePv}</span>`
         } catch (error) {

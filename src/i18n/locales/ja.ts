@@ -420,7 +420,7 @@ export default {
 
   // Elo計算機
   eloCalculator: {
-    title: 'Elo & LLR 計算機',
+    title: 'Elo 計算機',
     inputSection: '対局結果',
     wins: '勝',
     losses: '敗',
@@ -438,7 +438,7 @@ export default {
     },
     resultsSection: 'Elo パフォーマンス',
     performance: 'Elo差（95%誤差含む）',
-    neloPerformance: 'nElo差（95%誤差含む）',
+
     errorMargin: '誤差範囲 (95%)',
     confidenceInterval: '95% 信頼区間',
     scoreRate: '得点率',
@@ -447,13 +447,9 @@ export default {
     standardError: '標準誤差',
     noResults: '対局結果を入力してください。',
     basicRequiresWDL:
-      '基本モードでは WDL 入力が必要です。WDL に切り替えるか、SPRT モードを使用してください。',
+      '基本モードでは WDL 入力が必要です。WDL に切り替えてください。',
     close: '閉じる',
     basicMode: '基本',
-    proMode: 'SPRT (LLR)',
-    hypothesisType: '仮説タイプ',
-    llrResults: 'LLR 結果',
-    llrError: 'LLR を計算できません。入力を確認してください。',
   },
 
   // ゲーム操作確認
