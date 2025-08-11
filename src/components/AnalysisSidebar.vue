@@ -681,6 +681,8 @@
     isPonderMoveMatch,
     // Helper functions
     isDarkPieceMove,
+    // Chinese notation setting
+    setShowChineseNotation,
   } = engineState
 
   // Inject JAI engine state
@@ -794,6 +796,15 @@
     val => {
       if (val) lastAnalysisPrefixMoves.value = [...val]
     }
+  )
+
+  // Sync Chinese notation setting with engine
+  watch(
+    showChineseNotation,
+    (newValue) => {
+      setShowChineseNotation(newValue)
+    },
+    { immediate: true }
   )
 
   // Load analysis settings from config file

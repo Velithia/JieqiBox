@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { useI18n } from 'vue-i18n'
 import { useConfigManager, type ManagedEngine } from './useConfigManager' // Import new types
+import { uciToChineseMoves } from '@/utils/chineseNotation'
 
 export interface EngineLine {
   text: string
@@ -46,6 +47,9 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
 
   // Android-specific state
   const bundleIdentifier = ref('')
+
+  // Chinese notation setting
+  const showChineseNotation = ref(false)
 
   // Throttling mechanism for engine output processing
   let outputThrottleTimer: number | null = null
@@ -259,9 +263,23 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
           analysis.value = t('uci.checkmate')
           send('stop')
         } else {
-          analysis.value = mv
-            ? t('uci.bestMove', { move: mv })
-            : t('uci.noMoves')
+          if (showChineseNotation && mv) {
+            try {
+              // Use the current FEN to convert the best move to Chinese notation
+              const rootFen = generateFen()
+              const chineseMoves = uciToChineseMoves(rootFen, mv)
+              const chineseMove = chineseMoves[0] || mv
+              analysis.value = t('uci.bestMove', { move: chineseMove })
+            } catch (error) {
+              console.warn('Failed to convert best move to Chinese notation:', error)
+              // Fallback to original UCI move if conversion fails
+              analysis.value = t('uci.bestMove', { move: mv })
+            }
+          } else {
+            analysis.value = mv
+              ? t('uci.bestMove', { move: mv })
+              : t('uci.noMoves')
+          }
         }
 
         bestMove.value = mv // Set bestMove
@@ -1015,5 +1033,10 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
     // Helper functions
     isDarkPieceMove,
     currentEngine,
+    // Chinese notation setting
+    showChineseNotation,
+    setShowChineseNotation: (value: boolean) => {
+      showChineseNotation.value = value
+    },
   }
 }
