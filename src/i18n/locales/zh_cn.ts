@@ -417,6 +417,7 @@ export default {
     parseUciInfo: '解析UCI信息',
     showAnimations: '开启走子动画',
     showPositionChart: '显示局势图',
+    showEvaluationBar: '显示局势评估条',
     darkMode: '暗黑模式',
     autosave: '自动保存棋谱到Autosave.json',
     useNewFenFormat: '使用新FEN格式',

@@ -3,6 +3,26 @@
     <div class="chessboard-container">
       <img src="@/assets/xiangqi.png" class="bg" alt="board" />
 
+      <!-- Evaluation Bar (left side) -->
+      <div
+        v-if="showEvaluationBar && currentEvalPercent !== null"
+        class="eval-bar"
+        aria-hidden="true"
+      >
+        <div
+          class="eval-top"
+          :style="{ height: currentEvalPercent + '%' }"
+        ></div>
+        <div
+          class="eval-bottom"
+          :style="{ height: 100 - (currentEvalPercent as number) + '%' }"
+        ></div>
+        <div
+          class="eval-marker"
+          :style="{ top: currentEvalPercent + '%' }"
+        ></div>
+      </div>
+
       <!-- Pieces -->
       <div class="pieces" @click="boardClick">
         <img
@@ -165,6 +185,7 @@
   import { inject, ref, watch, computed, watchEffect } from 'vue'
   import type { Piece } from '@/composables/useChessGame'
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
+  import { useEvaluationChartSettings } from '@/composables/useEvaluationChartSettings'
   import ClearHistoryConfirmDialog from './ClearHistoryConfirmDialog.vue'
   import EvaluationChart from './EvaluationChart.vue'
 
@@ -187,8 +208,13 @@
     return gs.isBoardFlipped.value ? baseRanks.slice().reverse() : baseRanks
   })
 
-  const { showCoordinates, showAnimations, showPositionChart } =
-    useInterfaceSettings()
+  const {
+    showCoordinates,
+    showAnimations,
+    showPositionChart,
+    showEvaluationBar,
+  } = useInterfaceSettings()
+  const { blackPerspective } = useEvaluationChartSettings()
 
   /* ===== Injections ===== */
   const gs: any = inject('game-state')
@@ -202,6 +228,7 @@
     isInfinitePondering: any
     ponderMove: any
     ponderhit: any
+    analysis?: any
   }
 
   // Inject JAI engine state for tournament mode support
@@ -579,6 +606,70 @@
 
   // Helper to convert stored column to display column based on flip state
   const displayCol = (c: number) => (gs.isBoardFlipped.value ? 8 - c : c)
+
+  /* ===== Evaluation Bar (cp -> percent) ===== */
+  const extractCpFromInfoLine = (line: string): number | null => {
+    if (!line) return null
+    if (line.includes('lowerbound') || line.includes('upperbound')) return null
+    const m = line.match(/score\s+(cp|mate)\s+(-?\d+)/)
+    if (!m) return null
+    const type = m[1]
+    const val = parseInt(m[2])
+    if (Number.isNaN(val)) return null
+    return type === 'mate' ? (val > 0 ? 10000 : -10000) : val
+  }
+
+  const currentEvalCp = computed<number | null>(() => {
+    // Prefer JAI match analysis if available in match mode
+    const isMatchMode = (window as any).__MATCH_MODE__ || false
+    const jaiInfo: string | undefined = jaiEngine?.analysisInfo?.value
+    if (isMatchMode && jaiInfo) {
+      const lines = jaiInfo
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean)
+      // Use the latest info line with a valid score
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const cp = extractCpFromInfoLine(lines[i])
+        if (cp !== null) {
+          let val = cp
+          if (isPondering.value && !isInfinitePondering.value) val = -val
+          return val
+        }
+      }
+    }
+
+    // Fallback to regular UCI engine analysis
+    const analysis: string | undefined = (es as any)?.analysis?.value
+    if (analysis) {
+      const lines = analysis
+        .split('\n')
+        .map((l: string) => l.trim())
+        .filter(Boolean)
+      // The first line is usually MultiPV #1, but use the latest valid score just in case
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const cp = extractCpFromInfoLine(lines[i])
+        if (cp !== null) {
+          let val = cp
+          if (isPondering.value && !isInfinitePondering.value) val = -val
+          return val
+        }
+      }
+    }
+    return null
+  })
+
+  const currentEvalPercent = computed<number | null>(() => {
+    let cp = currentEvalCp.value
+    if (cp === null || cp === undefined) return null
+    // Perspective control (match EvaluationChart behavior)
+    if (blackPerspective.value) cp = -cp
+    // Smooth mapping cp -> [0,100] using tanh compression
+    // cp ~ +/-600 -> ~ +/-0.76 range, extreme cp saturates
+    const m = Math.tanh(cp / 600)
+    const pct = (m + 1) * 50
+    return Math.max(0, Math.min(100, Math.round(pct)))
+  })
 </script>
 
 <style scoped lang="scss">
@@ -608,6 +699,47 @@
         max-width: 90vmin;
       }
     }
+  }
+
+  /* Evaluation bar styles */
+  .eval-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -12px; // slightly outside the board
+    width: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #ddd;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+    pointer-events: none;
+
+    @media (max-width: 768px) {
+      left: -10px;
+      width: 6px;
+    }
+  }
+  .eval-top {
+    width: 100%;
+    background: #e53935; // red side advantage
+    transition: height 0.15s ease;
+    pointer-events: none;
+  }
+  .eval-bottom {
+    width: 100%;
+    background: #333; // black side advantage
+    transition: height 0.15s ease;
+    pointer-events: none;
+  }
+  .eval-marker {
+    position: absolute;
+    left: -3px;
+    right: -3px;
+    height: 2px;
+    background: #ffffff;
+    opacity: 0.9;
+    pointer-events: none;
   }
 
   .chessboard-container {

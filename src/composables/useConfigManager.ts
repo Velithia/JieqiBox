@@ -18,6 +18,7 @@ interface ConfigData {
     parseUciInfo: boolean
     showAnimations: boolean
     showPositionChart: boolean
+    showEvaluationBar: boolean
     darkMode: boolean
     autosave: boolean
     useNewFenFormat: boolean
@@ -67,6 +68,7 @@ const defaultConfig: ConfigData = {
     parseUciInfo: true,
     showAnimations: true,
     showPositionChart: false,
+    showEvaluationBar: true,
     darkMode: false,
     autosave: true,
     useNewFenFormat: true,

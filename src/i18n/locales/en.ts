@@ -362,8 +362,7 @@ export default {
     drawRatio: 'Draw Ratio',
     standardError: 'Standard Error',
     noResults: 'Enter match results to see calculations.',
-    basicRequiresWDL:
-      'Basic mode requires WDL input. Switch to WDL.',
+    basicRequiresWDL: 'Basic mode requires WDL input. Switch to WDL.',
     close: 'Close',
     basicMode: 'Basic',
   },
@@ -432,6 +431,7 @@ export default {
     parseUciInfo: 'Parse UCI Info',
     showAnimations: 'Enable move animations',
     showPositionChart: 'Show evaluation chart',
+    showEvaluationBar: 'Show evaluation bar',
     darkMode: 'Dark Mode',
     autosave: 'Auto-save game to Autosave.json',
     useNewFenFormat: 'Use New FEN Format',

@@ -341,6 +341,7 @@ export default {
     parseUciInfo: 'Phân tích thông tin UCI',
     showAnimations: 'Bật hoạt ảnh di chuyển quân cờ',
     showPositionChart: 'Hiển thị biểu đồ cục diện',
+    showEvaluationBar: 'Hiển thị thanh đánh giá',
     darkMode: 'Chế độ tối',
     autosave: 'Tự động lưu ván cờ vào Autosave.json',
     useNewFenFormat: 'Sử dụng định dạng FEN mới',
@@ -450,8 +451,7 @@ export default {
     drawRatio: 'Tỷ lệ hòa',
     standardError: 'Sai số chuẩn',
     noResults: 'Nhập kết quả để xem tính toán.',
-    basicRequiresWDL:
-      'Chế độ Cơ bản cần WDL. Hãy chuyển sang WDL.',
+    basicRequiresWDL: 'Chế độ Cơ bản cần WDL. Hãy chuyển sang WDL.',
     close: 'Đóng',
     basicMode: 'Cơ bản',
   },

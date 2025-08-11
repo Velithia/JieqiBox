@@ -34,12 +34,14 @@ export const isMobilePlatform = (): boolean => {
 
     // Check user agent for mobile devices
     const userAgent = navigator.userAgent.toLowerCase()
-    if (userAgent.includes('android') || 
-        userAgent.includes('iphone') || 
-        userAgent.includes('ipad') || 
-        userAgent.includes('ipod') ||
-        userAgent.includes('mobile') ||
-        userAgent.includes('tablet')) {
+    if (
+      userAgent.includes('android') ||
+      userAgent.includes('iphone') ||
+      userAgent.includes('ipad') ||
+      userAgent.includes('ipod') ||
+      userAgent.includes('mobile') ||
+      userAgent.includes('tablet')
+    ) {
       return true
     }
 

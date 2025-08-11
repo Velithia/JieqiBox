@@ -271,7 +271,10 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
               const chineseMove = chineseMoves[0] || mv
               analysis.value = t('uci.bestMove', { move: chineseMove })
             } catch (error) {
-              console.warn('Failed to convert best move to Chinese notation:', error)
+              console.warn(
+                'Failed to convert best move to Chinese notation:',
+                error
+              )
               // Fallback to original UCI move if conversion fails
               analysis.value = t('uci.bestMove', { move: mv })
             }

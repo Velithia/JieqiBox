@@ -339,6 +339,7 @@ export default {
     parseUciInfo: 'UCI情報を解析',
     showAnimations: '駒の動きのアニメーションを有効にする',
     showPositionChart: '形勢グラフを表示',
+    showEvaluationBar: '評価バーを表示',
     darkMode: 'ダークモード',
     autosave: 'ゲームをAutosave.jsonに自動保存',
     useNewFenFormat: '新しいFEN形式を使用',

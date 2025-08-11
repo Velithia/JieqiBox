@@ -126,38 +126,33 @@
             </div>
           </div>
 
-
-            <!-- Basic Mode -->
-            <div class="tab-item">
-              <div v-if="eloResult" class="results-section">
-                <h4>{{ $t('eloCalculator.resultsSection') }}</h4>
-                <div class="result-item">
-                  <span class="label"
-                    >{{ $t('eloCalculator.performance') }}:</span
-                  >
-                  <span class="value performance">{{ mergedEloDisplay }}</span>
-                </div>
-                <div class="result-item">
-                  <span class="label"
-                    >{{ $t('eloCalculator.scoreRate') }}:</span
-                  >
-                  <span class="value">{{ scoreRateIntervalDisplay }}</span>
-                </div>
-                <div class="result-item">
-                  <span class="label">{{ $t('eloCalculator.los') }}:</span>
-                  <span class="value">{{ losDisplay }}</span>
-                </div>
-                <div class="result-item">
-                  <span class="label"
-                    >{{ $t('eloCalculator.drawRatio') }}:</span
-                  >
-                  <span class="value">{{ drawRatioDisplay }}</span>
-                </div>
+          <!-- Basic Mode -->
+          <div class="tab-item">
+            <div v-if="eloResult" class="results-section">
+              <h4>{{ $t('eloCalculator.resultsSection') }}</h4>
+              <div class="result-item">
+                <span class="label"
+                  >{{ $t('eloCalculator.performance') }}:</span
+                >
+                <span class="value performance">{{ mergedEloDisplay }}</span>
               </div>
-              <div v-else-if="totalGames > 0" class="no-results">
-                {{ $t('eloCalculator.noResults') }}
+              <div class="result-item">
+                <span class="label">{{ $t('eloCalculator.scoreRate') }}:</span>
+                <span class="value">{{ scoreRateIntervalDisplay }}</span>
+              </div>
+              <div class="result-item">
+                <span class="label">{{ $t('eloCalculator.los') }}:</span>
+                <span class="value">{{ losDisplay }}</span>
+              </div>
+              <div class="result-item">
+                <span class="label">{{ $t('eloCalculator.drawRatio') }}:</span>
+                <span class="value">{{ drawRatioDisplay }}</span>
               </div>
             </div>
+            <div v-else-if="totalGames > 0" class="no-results">
+              {{ $t('eloCalculator.noResults') }}
+            </div>
+          </div>
         </div>
       </v-card-text>
 
@@ -183,7 +178,6 @@
     drawRatioBoundsFromPTNML,
   } from '@/utils/eloCalculator'
 
-
   // Props
   interface Props {
     modelValue: boolean
@@ -208,7 +202,6 @@
   const losses = ref(props.initialLosses)
   const draws = ref(props.initialDraws)
 
-
   // Results format: WDL or PTNML
   const resultsFormat = ref<'wdl' | 'ptnml'>('wdl')
   // PTNML inputs: [LL, LD+DL, LW+DD+WL, DW+WD, WW]
@@ -217,8 +210,6 @@
   const pt_center = ref<number>(0)
   const pt_dwwd = ref<number>(0)
   const pt_ww = ref<number>(0)
-
-
 
   // Computed properties
   const dialogVisible = computed({
@@ -267,8 +258,6 @@
     const err = formatErrorMargin(eloResult.value)
     return `${perf} ${err}`.trim()
   })
-
-
 
   // LOS display
   const losDisplay = computed<string | null>(() => {
@@ -322,8 +311,6 @@
     }
   })
 
-
-
   // Methods
   const closeDialog = () => {
     dialogVisible.value = false
@@ -375,8 +362,6 @@
     .tab-item {
       padding-top: 24px;
     }
-
-
 
     .results-section {
       h4 {

@@ -801,7 +801,7 @@
   // Sync Chinese notation setting with engine
   watch(
     showChineseNotation,
-    (newValue) => {
+    newValue => {
       setShowChineseNotation(newValue)
     },
     { immediate: true }

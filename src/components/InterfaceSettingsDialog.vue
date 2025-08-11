@@ -24,6 +24,11 @@
           color="primary"
         ></v-switch>
         <v-switch
+          v-model="showEvaluationBar"
+          :label="$t('interfaceSettings.showEvaluationBar')"
+          color="primary"
+        ></v-switch>
+        <v-switch
           v-model="darkMode"
           :label="$t('interfaceSettings.darkMode')"
           color="primary"
@@ -76,6 +81,7 @@
     parseUciInfo,
     showAnimations,
     showPositionChart,
+    showEvaluationBar,
     darkMode,
     autosave,
     useNewFenFormat,

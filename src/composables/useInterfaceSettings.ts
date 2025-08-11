@@ -16,6 +16,7 @@ const getInitialSettings = () => {
       parseUciInfo: true,
       showAnimations: true,
       showPositionChart: false,
+      showEvaluationBar: true,
       darkMode: false,
       autosave: true,
       useNewFenFormat: true,
@@ -31,6 +32,7 @@ const getInitialSettings = () => {
       parseUciInfo: settings.parseUciInfo !== false, // Default to true
       showAnimations: settings.showAnimations !== false, // Default to true
       showPositionChart: !!settings.showPositionChart, // Default to false
+      showEvaluationBar: settings.showEvaluationBar !== false, // Default to true
       darkMode: !!settings.darkMode, // Default to false
       autosave: settings.autosave !== false, // Default to true
       useNewFenFormat: settings.useNewFenFormat !== false, // Default to true
@@ -45,6 +47,7 @@ const getInitialSettings = () => {
       parseUciInfo: true,
       showAnimations: true,
       showPositionChart: false,
+      showEvaluationBar: true,
       darkMode: false,
       autosave: true,
       useNewFenFormat: true,
@@ -60,6 +63,7 @@ const {
   parseUciInfo: initialParseUciInfo,
   showAnimations: initialShowAnimations,
   showPositionChart: initialShowPositionChart,
+  showEvaluationBar: initialShowEvaluationBar,
   darkMode: initialDarkMode,
   autosave: initialAutosave,
   useNewFenFormat: initialUseNewFenFormat,
@@ -71,6 +75,7 @@ const showCoordinates = ref<boolean>(initialShowCoordinates)
 const parseUciInfo = ref<boolean>(initialParseUciInfo)
 const showAnimations = ref<boolean>(initialShowAnimations)
 const showPositionChart = ref<boolean>(initialShowPositionChart)
+const showEvaluationBar = ref<boolean>(initialShowEvaluationBar)
 const darkMode = ref<boolean>(initialDarkMode)
 const autosave = ref<boolean>(initialAutosave)
 const useNewFenFormat = ref<boolean>(initialUseNewFenFormat)
@@ -87,6 +92,7 @@ watch(
     parseUciInfo,
     showAnimations,
     showPositionChart,
+    showEvaluationBar,
     darkMode,
     autosave,
     useNewFenFormat,
@@ -98,6 +104,7 @@ watch(
     newParseUciInfo,
     newShowAnimations,
     newShowPositionChart,
+    newShowEvaluationBar,
     newDarkMode,
     newAutosave,
     newUseNewFenFormat,
@@ -112,6 +119,7 @@ watch(
       parseUciInfo: newParseUciInfo,
       showAnimations: newShowAnimations,
       showPositionChart: newShowPositionChart,
+      showEvaluationBar: newShowEvaluationBar,
       darkMode: newDarkMode,
       autosave: newAutosave,
       useNewFenFormat: newUseNewFenFormat,
@@ -140,6 +148,7 @@ export function useInterfaceSettings() {
       parseUciInfo.value = settings.parseUciInfo !== false
       showAnimations.value = settings.showAnimations !== false
       showPositionChart.value = !!settings.showPositionChart
+      showEvaluationBar.value = settings.showEvaluationBar !== false
       darkMode.value = !!settings.darkMode
       autosave.value = settings.autosave !== false
       useNewFenFormat.value = settings.useNewFenFormat !== false
@@ -163,6 +172,7 @@ export function useInterfaceSettings() {
     parseUciInfo,
     showAnimations,
     showPositionChart,
+    showEvaluationBar,
     darkMode,
     autosave,
     useNewFenFormat,
