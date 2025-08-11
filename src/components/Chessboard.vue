@@ -11,11 +11,17 @@
       >
         <div
           class="eval-top"
-          :style="{ height: currentEvalPercent + '%' }"
+          :style="{
+            height: currentEvalPercent + '%',
+            background: isRedOnTop ? '#e53935' : '#333',
+          }"
         ></div>
         <div
           class="eval-bottom"
-          :style="{ height: 100 - (currentEvalPercent as number) + '%' }"
+          :style="{
+            height: 100 - (currentEvalPercent as number) + '%',
+            background: isRedOnTop ? '#333' : '#e53935',
+          }"
         ></div>
         <div
           class="eval-marker"
@@ -68,8 +74,7 @@
               displayCol(lastMovePositions.to.col)
             )
           "
-        >
-        </div>
+        ></div>
       </div>
 
       <!-- Annotation badge overlay (above pieces and highlights) -->
@@ -266,7 +271,6 @@
   import { inject, ref, watch, computed, watchEffect } from 'vue'
   import type { Piece } from '@/composables/useChessGame'
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
-  import { useEvaluationChartSettings } from '@/composables/useEvaluationChartSettings'
   import ClearHistoryConfirmDialog from './ClearHistoryConfirmDialog.vue'
   import EvaluationChart from './EvaluationChart.vue'
 
@@ -295,7 +299,6 @@
     showPositionChart,
     showEvaluationBar,
   } = useInterfaceSettings()
-  const { blackPerspective } = useEvaluationChartSettings()
 
   /* ===== Injections ===== */
   const gs: any = inject('game-state')
@@ -359,6 +362,15 @@
   // Get valid moves for the selected piece
   const validMovesForSelectedPiece = computed(() => {
     return gs.getValidMovesForSelectedPiece.value
+  })
+
+  // Red side display position: when board is flipped, red is on top; otherwise red is on bottom
+  const isRedOnTop = computed(() => {
+    try {
+      return !!gs?.isBoardFlipped?.value
+    } catch {
+      return false
+    }
   })
 
   // Calculate the ID of the checked king/general, if any
@@ -531,7 +543,10 @@
       // Create circle snapped to grid center with radius based on cell size
       const cellW = GX / (COLS - 1)
       const cellH = GY / (ROWS - 1)
-      const radiusSvg = Math.max(3, Math.min(8, Math.min(0.9 * cellW, cellH) * 0.5))
+      const radiusSvg = Math.max(
+        3,
+        Math.min(8, Math.min(0.9 * cellW, cellH) * 0.5)
+      )
       userCircles.value.push({
         x: svgX,
         y: svgY,
@@ -884,13 +899,17 @@
   const currentEvalPercent = computed<number | null>(() => {
     let cp = currentEvalCp.value
     if (cp === null || cp === undefined) return null
-    // Perspective control (match EvaluationChart behavior)
-    if (blackPerspective.value) cp = -cp
-    // Smooth mapping cp -> [0,100] using tanh compression
-    // cp ~ +/-600 -> ~ +/-0.76 range, extreme cp saturates
+    // Normalize to Red's perspective: engine cp is from side-to-move perspective
+    // If it's Black to move, invert so positive always means Red is better
+    try {
+      if (gs?.sideToMove?.value === 'black') cp = -cp
+    } catch {}
+    // Smooth mapping cp -> red side percent using tanh compression
     const m = Math.tanh(cp / 600)
-    const pct = (m + 1) * 50
-    return Math.max(0, Math.min(100, Math.round(pct)))
+    const redPct = Math.max(0, Math.min(100, Math.round((m + 1) * 50)))
+    // Convert to top segment percent based on which side is on top
+    const topPct = isRedOnTop.value ? redPct : 100 - redPct
+    return topPct
   })
 </script>
 
@@ -1138,7 +1157,7 @@
     border: 3px solid #ff6b6b;
     background: rgba(255, 107, 107, 0.2);
   }
-  
+
   /* Annotation background colors for highlight.from */
   .highlight.from.annot-brilliant {
     background: rgba(0, 102, 204, 0.2);

@@ -429,7 +429,9 @@
                   ></v-list-item
                 >
                 <v-list-item @click="setAnnotation('!')"
-                  ><v-list-item-title>! {{ $t('analysis.good') }}</v-list-item-title></v-list-item
+                  ><v-list-item-title
+                    >! {{ $t('analysis.good') }}</v-list-item-title
+                  ></v-list-item
                 >
                 <v-list-item @click="setAnnotation('!?')"
                   ><v-list-item-title
@@ -442,7 +444,9 @@
                   ></v-list-item
                 >
                 <v-list-item @click="setAnnotation('?')"
-                  ><v-list-item-title>? {{ $t('analysis.mistake') }}</v-list-item-title></v-list-item
+                  ><v-list-item-title
+                    >? {{ $t('analysis.mistake') }}</v-list-item-title
+                  ></v-list-item
                 >
                 <v-list-item @click="setAnnotation('??')"
                   ><v-list-item-title
@@ -450,7 +454,9 @@
                   ></v-list-item
                 >
                 <v-list-item @click="setAnnotation(undefined)"
-                  ><v-list-item-title>{{ $t('analysis.clear') }}</v-list-item-title></v-list-item
+                  ><v-list-item-title>{{
+                    $t('analysis.clear')
+                  }}</v-list-item-title></v-list-item
                 >
               </v-list>
             </v-menu>
