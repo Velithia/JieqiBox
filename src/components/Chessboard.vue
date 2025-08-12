@@ -339,9 +339,21 @@
   } = gs
 
   // User drawing state
-  const userCircles = ref<Array<{ x: number; y: number; radius: number }>>([])
+  // Store additional row/col metadata so we can toggle drawings on duplicate actions
+  const userCircles = ref<
+    Array<{ x: number; y: number; radius: number; row: number; col: number }>
+  >([])
   const userArrows = ref<
-    Array<{ x1: number; y1: number; x2: number; y2: number }>
+    Array<{
+      x1: number
+      y1: number
+      x2: number
+      y2: number
+      fromRow: number
+      fromCol: number
+      toRow: number
+      toCol: number
+    }>
   >([])
   const isDrawing = ref(false)
   const drawingStart = ref<{ x: number; y: number } | null>(null)
@@ -532,26 +544,64 @@
       drawingStartRC.value &&
       (row !== drawingStartRC.value.row || col !== drawingStartRC.value.col)
     ) {
-      // Create arrow
-      userArrows.value.push({
-        x1: svgX,
-        y1: svgY,
-        x2: endSvgX,
-        y2: endSvgY,
-      })
+      // Arrow mode: toggle if the same directed arrow already exists
+      const fromRow = drawingStartRC.value.row
+      const fromCol = drawingStartRC.value.col
+      const toRow = row
+      const toCol = col
+
+      const existingIdx = userArrows.value.findIndex(
+        a =>
+          a.fromRow === fromRow &&
+          a.fromCol === fromCol &&
+          a.toRow === toRow &&
+          a.toCol === toCol
+      )
+
+      if (existingIdx >= 0) {
+        // Remove existing identical arrow
+        userArrows.value.splice(existingIdx, 1)
+      } else {
+        // Create new arrow
+        userArrows.value.push({
+          x1: svgX,
+          y1: svgY,
+          x2: endSvgX,
+          y2: endSvgY,
+          fromRow,
+          fromCol,
+          toRow,
+          toCol,
+        })
+      }
     } else {
-      // Create circle snapped to grid center with radius based on cell size
+      // Circle mode: toggle if a circle already exists at this square center
       const cellW = GX / (COLS - 1)
       const cellH = GY / (ROWS - 1)
       const radiusSvg = Math.max(
         3,
         Math.min(8, Math.min(0.9 * cellW, cellH) * 0.5)
       )
-      userCircles.value.push({
-        x: svgX,
-        y: svgY,
-        radius: radiusSvg,
-      })
+
+      const cRow = drawingStartRC.value?.row ?? 0
+      const cCol = drawingStartRC.value?.col ?? 0
+      const existingIdx = userCircles.value.findIndex(
+        c => c.row === cRow && c.col === cCol
+      )
+
+      if (existingIdx >= 0) {
+        // Remove existing circle at this grid center
+        userCircles.value.splice(existingIdx, 1)
+      } else {
+        // Create new circle snapped to grid center
+        userCircles.value.push({
+          x: svgX,
+          y: svgY,
+          radius: radiusSvg,
+          row: cRow,
+          col: cCol,
+        })
+      }
     }
 
     isDrawing.value = false
