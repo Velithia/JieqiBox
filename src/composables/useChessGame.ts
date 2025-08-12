@@ -5,6 +5,7 @@ import {
   REVERSE_FEN_MAP,
   INITIAL_PIECE_COUNTS,
 } from '@/utils/constants'
+import { MATE_SCORE_BASE } from '@/utils/constants'
 import { isAndroidPlatform as checkAndroidPlatform } from '../utils/platform'
 import { useInterfaceSettings } from './useInterfaceSettings'
 import { useGameSettings } from './useGameSettings'
@@ -647,12 +648,13 @@ export function useChessGame() {
           const scoreType = scoreMatch[1]
           const scoreValue = parseInt(scoreMatch[2])
           // Convert to centipawns (cp) or mate score
-          engineScore =
-            scoreType === 'mate'
-              ? scoreValue > 0
-                ? 10000
-                : -10000
-              : scoreValue
+          if (scoreType === 'mate') {
+            const ply = Math.abs(scoreValue)
+            const sign = scoreValue >= 0 ? 1 : -1
+            engineScore = sign * (MATE_SCORE_BASE - ply)
+          } else {
+            engineScore = scoreValue
+          }
 
           // If pondering, invert the score
           if (

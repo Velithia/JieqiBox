@@ -2346,11 +2346,15 @@
       info.multipv && `${t('uci.multipv')}: ${info.multipv}`,
       info.scoreType &&
         info.scoreValue &&
-        `<span class="${getScoreColorClass()}">${
-          info.scoreType === 'cp'
-            ? `${t('uci.score')}: ${info.scoreValue}`
-            : `${t('uci.mate')}: ${info.scoreValue}`
-        }</span>`,
+        (() => {
+          if (info.scoreType === 'cp') {
+            return `<span class="${getScoreColorClass()}">${t('uci.score')}: ${info.scoreValue}</span>`
+          }
+          const m = parseInt(info.scoreValue, 10)
+          const sign = m > 0 ? '+' : '-'
+          const ply = Math.abs(m)
+          return `<span class=\"${getScoreColorClass()}\">${t('uci.mate')}: ${sign}M${ply}</span>`
+        })(),
       formatWdl(),
       info.nodes && `${t('uci.nodes')}: ${info.nodes}`,
       info.nps &&
@@ -2406,17 +2410,21 @@
   }
 
   // Helper functions for engine analysis display
+  import { MATE_SCORE_BASE } from '@/utils/constants'
   function getScoreClass(score: number): string {
-    if (score >= 10000) return 'score-mate-positive'
-    if (score <= -10000) return 'score-mate-negative'
+    if (score >= MATE_SCORE_BASE - 999) return 'score-mate-positive'
+    if (score <= -(MATE_SCORE_BASE - 999)) return 'score-mate-negative'
     if (score > 50) return 'score-positive'
     if (score < -50) return 'score-negative'
     return 'score-neutral'
   }
 
   function formatScore(score: number): string {
-    if (score >= 10000) return 'M+'
-    if (score <= -10000) return 'M-'
+    if (Math.abs(score) >= MATE_SCORE_BASE - 999) {
+      const sign = score > 0 ? '+' : '-'
+      const ply = Math.max(0, MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(score)))
+      return `${sign}M${ply}`
+    }
     return score.toString() // Display centipawns directly
   }
 

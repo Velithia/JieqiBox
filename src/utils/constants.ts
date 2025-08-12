@@ -77,3 +77,9 @@ export const LANGUAGE_TO_HTML_LANG: { [key: string]: string } = {
   en: 'en-US',
   vi: 'vi-VN',
 }
+
+/**
+ * Base absolute score used to represent mate evaluations.
+ * A mate in N plies will be encoded as sign * (MATE_SCORE_BASE - N).
+ */
+export const MATE_SCORE_BASE = 30000

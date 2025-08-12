@@ -281,6 +281,7 @@
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
   import ClearHistoryConfirmDialog from './ClearHistoryConfirmDialog.vue'
   import EvaluationChart from './EvaluationChart.vue'
+  import { MATE_SCORE_BASE } from '@/utils/constants'
 
   /* ===== Layout ===== */
   const PAD_X = 11,
@@ -934,7 +935,13 @@
     const type = m[1]
     const val = parseInt(m[2])
     if (Number.isNaN(val)) return null
-    return type === 'mate' ? (val > 0 ? 10000 : -10000) : val
+    if (type === 'mate') {
+      const ply = Math.abs(val)
+      const sign = val >= 0 ? 1 : -1
+      // ±(MATE_SCORE_BASE - ply)
+      return sign * (MATE_SCORE_BASE - ply)
+    }
+    return val
   }
 
   // Track the last analysis info to detect changes
