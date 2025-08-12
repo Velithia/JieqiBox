@@ -543,12 +543,27 @@
             />
           </div>
           <div v-if="editingCommentIndex === 0" class="comment-edit">
-            <v-text-field
+            <div class="comment-toolbar">
+              <v-btn size="x-small" variant="text" icon="mdi-format-bold" @click="surroundSelection(0, '**', '**')" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-italic" @click="surroundSelection(0, '*', '*')" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-underline" @click="surroundSelection(0, '<u>', '</u>')" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-strikethrough" @click="surroundSelection(0, '~~', '~~')" />
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 1)">H1</v-btn>
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 2)">H2</v-btn>
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 3)">H3</v-btn>
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 4)">H4</v-btn>
+              <v-btn size="x-small" variant="text" icon="mdi-link-variant" @click="insertLink(0)" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-clear" @click="clearFormatting(0)" />
+            </div>
+            <v-textarea
+              :ref="el => setCommentTextareaRef(0, el)"
               v-model="editingCommentText"
+              auto-grow
+              rows="2"
               density="compact"
               hide-details
               :placeholder="$t('analysis.enterComment')"
-              @keyup.enter="saveComment"
+              @keyup.enter.ctrl.exact="saveComment"
               @keyup.esc="cancelEdit"
             />
             <div class="comment-edit-buttons">
@@ -560,9 +575,7 @@
               }}</v-btn>
             </div>
           </div>
-          <div v-else class="comment-text">
-            {{ getCommentText(0) || $t('analysis.noComment') }}
-          </div>
+          <div v-else class="comment-text" v-html="getCommentHtmlWithFallback(0)"></div>
         </div>
         <div
           v-for="(_, idx) in history"
@@ -582,12 +595,27 @@
             />
           </div>
           <div v-if="editingCommentIndex === idx + 1" class="comment-edit">
-            <v-text-field
+            <div class="comment-toolbar">
+              <v-btn size="x-small" variant="text" icon="mdi-format-bold" @click="surroundSelection(idx + 1, '**', '**')" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-italic" @click="surroundSelection(idx + 1, '*', '*')" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-underline" @click="surroundSelection(idx + 1, '<u>', '</u>')" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-strikethrough" @click="surroundSelection(idx + 1, '~~', '~~')" />
+              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 1)">H1</v-btn>
+              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 2)">H2</v-btn>
+              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 3)">H3</v-btn>
+              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 4)">H4</v-btn>
+              <v-btn size="x-small" variant="text" icon="mdi-link-variant" @click="insertLink(idx + 1)" />
+              <v-btn size="x-small" variant="text" icon="mdi-format-clear" @click="clearFormatting(idx + 1)" />
+            </div>
+            <v-textarea
+              :ref="el => setCommentTextareaRef(idx + 1, el)"
               v-model="editingCommentText"
+              auto-grow
+              rows="2"
               density="compact"
               hide-details
               :placeholder="$t('analysis.enterComment')"
-              @keyup.enter="saveComment"
+              @keyup.enter.ctrl.exact="saveComment"
               @keyup.esc="cancelEdit"
             />
             <div class="comment-edit-buttons">
@@ -599,9 +627,7 @@
               }}</v-btn>
             </div>
           </div>
-          <div v-else class="comment-text">
-            {{ getCommentText(idx + 1) || $t('analysis.noComment') }}
-          </div>
+          <div v-else class="comment-text" v-html="getCommentHtmlWithFallback(idx + 1)"></div>
         </div>
       </div>
     </DraggablePanel>
@@ -681,6 +707,8 @@
     formatEloRating,
     formatErrorMargin,
   } from '@/utils/eloCalculator'
+  import { marked } from 'marked'
+  import DOMPurify from 'dompurify'
 
   const { t } = useI18n()
 
@@ -811,6 +839,7 @@
   const editingCommentIndex = ref<number | null>(null)
   const editingCommentText = ref<string>('')
   const commentsListElement = ref<HTMLElement | null>(null)
+  const commentTextareaRefs = ref<Record<number, any>>({})
 
   /* ---------- Notation Navigation State ---------- */
   const isPlaying = ref(false)
@@ -1515,6 +1544,172 @@
       return history.value[historyIndex].comment || ''
     }
     return ''
+  }
+
+  // Set ref for v-textarea components by move index
+  function setCommentTextareaRef(index: number, el: any) {
+    if (index == null) return
+    if (el) {
+      commentTextareaRefs.value[index] = el
+    }
+  }
+
+  function getTextareaElement(index: number): HTMLTextAreaElement | null {
+    const comp = commentTextareaRefs.value[index]
+    if (!comp || !comp.$el) return null
+    const ta = comp.$el.querySelector('textarea') as HTMLTextAreaElement | null
+    return ta || null
+  }
+
+  // Markdown formatting helpers
+  function surroundSelection(
+    index: number,
+    before: string,
+    after: string
+  ) {
+    const ta = getTextareaElement(index)
+    const text = editingCommentText.value || ''
+    if (!ta) {
+      editingCommentText.value = `${before}${text}${after}`
+      return
+    }
+    const start = ta.selectionStart ?? 0
+    const end = ta.selectionEnd ?? 0
+    const selected = text.slice(start, end)
+    const newText = text.slice(0, start) + before + selected + after + text.slice(end)
+    editingCommentText.value = newText
+    nextTick(() => {
+      const pos = start + before.length + selected.length + after.length
+      ta.focus()
+      ta.selectionStart = ta.selectionEnd = pos
+    })
+  }
+
+  function applyHeading(index: number, level: 1 | 2 | 3 | 4) {
+    const ta = getTextareaElement(index)
+    const text = editingCommentText.value || ''
+    const start = ta?.selectionStart ?? 0
+    const end = ta?.selectionEnd ?? 0
+    const sel = text.slice(start, end)
+    const target = sel.length > 0 ? sel : (() => {
+      // no selection -> current line
+      const lineStart = text.lastIndexOf('\n', start - 1) + 1
+      const lineEnd = text.indexOf('\n', start)
+      return text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd)
+    })()
+    const processed = target
+      .split('\n')
+      .map(l => l.replace(/^\s{0,3}#{1,6}\s+/, ''))
+      .map(l => `${'#'.repeat(level)} ${l}`)
+      .join('\n')
+    if (sel.length > 0) {
+      const newText = text.slice(0, start) + processed + text.slice(end)
+      editingCommentText.value = newText
+      nextTick(() => {
+        if (ta) {
+          const pos = start + processed.length
+          ta.focus()
+          ta.selectionStart = ta.selectionEnd = pos
+        }
+      })
+    } else {
+      // replace current line
+      const lineStart = text.lastIndexOf('\n', start - 1) + 1
+      const lineEnd = text.indexOf('\n', start)
+      const endPos = lineEnd === -1 ? text.length : lineEnd
+      const newText = text.slice(0, lineStart) + processed + text.slice(endPos)
+      editingCommentText.value = newText
+      nextTick(() => {
+        if (ta) {
+          const pos = lineStart + processed.length
+          ta.focus()
+          ta.selectionStart = ta.selectionEnd = pos
+        }
+      })
+    }
+  }
+
+  function stripMarkdownText(input: string): string {
+    let out = input
+    // Remove headers
+    out = out.replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    // Bold/italic/strike
+    out = out.replace(/\*\*([^*]+)\*\*/g, '$1')
+    out = out.replace(/__([^_]+)__/g, '$1')
+    out = out.replace(/\*([^*]+)\*/g, '$1')
+    out = out.replace(/_([^_]+)_/g, '$1')
+    out = out.replace(/~~([^~]+)~~/g, '$1')
+    // Underline HTML
+    out = out.replace(/<u>(.*?)<\/u>/g, '$1')
+    // Links and images
+    out = out.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+    // Inline code
+    out = out.replace(/`([^`]+)`/g, '$1')
+    return out
+  }
+
+  function clearFormatting(index: number) {
+    const ta = getTextareaElement(index)
+    const text = editingCommentText.value || ''
+    if (!ta) {
+      editingCommentText.value = stripMarkdownText(text)
+      return
+    }
+    const start = ta.selectionStart ?? 0
+    const end = ta.selectionEnd ?? 0
+    if (start === end) {
+      editingCommentText.value = stripMarkdownText(text)
+    } else {
+      const before = text.slice(0, start)
+      const selected = text.slice(start, end)
+      const after = text.slice(end)
+      editingCommentText.value = before + stripMarkdownText(selected) + after
+      nextTick(() => {
+        ta.focus()
+        ta.selectionStart = start
+        ta.selectionEnd = start + stripMarkdownText(selected).length
+      })
+    }
+  }
+
+  function insertLink(index: number) {
+    const ta = getTextareaElement(index)
+    const url = window.prompt('URL') || ''
+    if (!url) return
+    const text = editingCommentText.value || ''
+    const start = ta?.selectionStart ?? 0
+    const end = ta?.selectionEnd ?? 0
+    const selected = text.slice(start, end) || 'link'
+    const md = `[${selected}](${url})`
+    const newText = text.slice(0, start) + md + text.slice(end)
+    editingCommentText.value = newText
+    nextTick(() => {
+      if (ta) {
+        const pos = start + md.length
+        ta.focus()
+        ta.selectionStart = ta.selectionEnd = pos
+      }
+    })
+  }
+
+  function renderMarkdown(text: string): string {
+    if (!text) return ''
+    const raw = marked.parse(text, { breaks: true }) as string
+    const sanitized = DOMPurify.sanitize(raw)
+    return sanitized.replace(/<a\s+/g, '<a target="_blank" rel="noopener noreferrer" ')
+  }
+
+  function getCommentHtml(moveIndex: number): string {
+    const txt = getCommentText(moveIndex)
+    if (!txt) return ''
+    return renderMarkdown(txt)
+  }
+
+  function getCommentHtmlWithFallback(moveIndex: number): string {
+    const html = getCommentHtml(moveIndex)
+    if (html) return html
+    return DOMPurify.sanitize(String(t('analysis.noComment')))
   }
 
   // Start editing a comment
@@ -2691,6 +2886,28 @@
 
   .comment-edit {
     margin-top: 4px;
+  }
+
+  .comment-toolbar {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .comment-text :deep(h1),
+  .comment-text :deep(h2),
+  .comment-text :deep(h3),
+  .comment-text :deep(h4) {
+    margin: 6px 0 4px;
+    line-height: 1.2;
+  }
+  .comment-text :deep(p) {
+    margin: 4px 0;
+  }
+  .comment-text :deep(a) {
+    color: rgb(var(--v-theme-primary));
+    text-decoration: underline;
   }
 
   .comment-edit-buttons {
