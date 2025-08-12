@@ -22,7 +22,8 @@ The game notation file uses the JSON format with a `.json` file extension.
     "result": "*",
     "initialFen": "xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX A2B2N2R2C2P5a2b2n2r2c2p5 w - - 0 1",
     "flipMode": "random",
-    "currentFen": "FEN string of the current board state"
+    "currentFen": "FEN string of the current board state",
+    "openingComment": "Optional comment for the Opening position"
   },
   "moves": [
     {
@@ -52,6 +53,7 @@ The game notation file uses the JSON format with a `.json` file extension.
 - `initialFen`: FEN string for the initial board setup.
 - `flipMode`: Flip mode (`"random"` or `"free"`).
 - `currentFen`: FEN string for the current board state.
+- `openingComment`: Optional comment text for the Opening position (before any move). This enables annotating the initial position; it is displayed and editable in the comments panel at move index 0.
 
 ### moves
 
@@ -118,7 +120,8 @@ The format is `[PieceChar][Count]`, for example, `A2B2N2R2C2P5a2b2n2r2c2p5`.
     "result": "*",
     "initialFen": "xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX A2B2N2R2C2P5a2b2n2r2c2p5 w - - 0 1",
     "flipMode": "random",
-    "currentFen": "xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX A2B2N2R2C2P5a2b2n2r2c2p5 w - - 0 1"
+    "currentFen": "xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX A2B2N2R2C2P5a2b2n2r2c2p5 w - - 0 1",
+    "openingComment": "This is an example note for the opening position."
   },
   "moves": []
 }

@@ -1537,7 +1537,7 @@
   // Get comment text for a specific move index
   function getCommentText(moveIndex: number): string {
     if (moveIndex === 0) {
-      return '' // Opening position has no comment
+      return gameState.openingComment?.value || ''
     }
     const historyIndex = moveIndex - 1
     if (historyIndex >= 0 && historyIndex < history.value.length) {
@@ -1722,16 +1722,16 @@
   function saveComment() {
     if (editingCommentIndex.value !== null) {
       if (editingCommentIndex.value === 0) {
-        // Opening position - no comment to save
-        editingCommentIndex.value = null
-        editingCommentText.value = ''
-        return
-      }
-
-      const historyIndex = editingCommentIndex.value - 1
-      if (historyIndex >= 0 && historyIndex < history.value.length) {
-        // Update the comment in the history
-        gameState.updateMoveComment(historyIndex, editingCommentText.value)
+        // Save opening comment
+        if (typeof gameState.updateOpeningComment === 'function') {
+          gameState.updateOpeningComment(editingCommentText.value)
+        }
+      } else {
+        const historyIndex = editingCommentIndex.value - 1
+        if (historyIndex >= 0 && historyIndex < history.value.length) {
+          // Update the comment in the history
+          gameState.updateMoveComment(historyIndex, editingCommentText.value)
+        }
       }
     }
 

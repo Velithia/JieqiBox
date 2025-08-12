@@ -45,6 +45,7 @@ export interface GameNotation {
     initialFen?: string
     flipMode?: 'random' | 'free'
     currentFen?: string
+    openingComment?: string
   }
   moves: HistoryEntry[]
 }
@@ -65,6 +66,7 @@ export function useChessGame() {
 
   const history = ref<HistoryEntry[]>([])
   const currentMoveIndex = ref<number>(0)
+  const openingComment = ref<string>('')
   const unrevealedPieceCounts = ref<{ [key: string]: number }>({})
   const isBoardFlipped = ref(false) // board flip state
 
@@ -778,6 +780,7 @@ export function useChessGame() {
     loadFen(START_FEN, false) // No animation at game start
     history.value = []
     currentMoveIndex.value = 0
+    openingComment.value = ''
     lastMovePositions.value = null // Clear highlights for new game
 
     // Ensure flip state is correct for new game
@@ -1720,6 +1723,8 @@ export function useChessGame() {
 
         // Reformat FEN using generateFen to ensure consistency for Opening section
         initialFen.value = generateFen()
+        // Reset opening comment as this is a fresh position baseline
+        openingComment.value = ''
 
         // Execute historical moves
         const moves = movesPart.split(' ').filter(move => move.length >= 4)
@@ -1751,6 +1756,8 @@ export function useChessGame() {
 
         // Reformat FEN using generateFen to ensure consistency for Opening section
         initialFen.value = generateFen()
+        // Reset opening comment as this is a fresh position baseline
+        openingComment.value = ''
 
         // Trigger arrow clear event
         triggerArrowClear()
@@ -1780,6 +1787,7 @@ export function useChessGame() {
         initialFen: initialFen.value, // Use the actual initial FEN
         flipMode: flipMode.value,
         currentFen: generateFen(),
+        openingComment: openingComment.value || undefined,
       },
       moves: [...history.value],
     }
@@ -1840,6 +1848,13 @@ export function useChessGame() {
     // Restore history and index
     history.value = [...notation.moves]
     currentMoveIndex.value = notation.moves.length
+
+    // Restore opening comment if present
+    if (notation.metadata.openingComment !== undefined) {
+      openingComment.value = notation.metadata.openingComment
+    } else {
+      openingComment.value = ''
+    }
 
     // Always set the initial FEN if available
     if (notation.metadata.initialFen) {
@@ -2094,6 +2109,11 @@ export function useChessGame() {
     }
   }
 
+  // Update opening comment (for move index 0)
+  const updateOpeningComment = (comment: string) => {
+    openingComment.value = (comment || '').trim()
+  }
+
   // Update annotation for a specific move
   const updateMoveAnnotation = (
     moveIndex: number,
@@ -2217,6 +2237,7 @@ export function useChessGame() {
     copySuccessVisible,
     sideToMove,
     history,
+    openingComment,
     moveHistory,
     currentMoveIndex,
     flipMode,
@@ -2262,6 +2283,7 @@ export function useChessGame() {
     undoLastMove,
     updateAllPieceZIndexes,
     updateMoveComment,
+    updateOpeningComment,
     updateMoveAnnotation,
     determineGameResult,
     loadGameNotation,
