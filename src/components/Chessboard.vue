@@ -900,6 +900,10 @@
 
   // Get current move annotation
   const getCurrentMoveAnnotation = () => {
+    // Suppress annotation display while a flip selection dialog is pending
+    try {
+      if (gs?.pendingFlip?.value) return null
+    } catch {}
     if (
       currentMoveIndex.value <= 0 ||
       currentMoveIndex.value > history.value.length
