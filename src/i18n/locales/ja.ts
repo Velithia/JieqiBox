@@ -297,6 +297,24 @@ export default {
     engineAddedSuccess: 'エンジン{name}が正常に追加されました！',
   },
 
+  // エンジンマネージャー内の保存済み UCI オプション編集
+  uciEditor: {
+    title: '保存済みUCIオプション',
+    noSaved:
+      'このエンジンにはまだ保存済みのオプションがありません。下で項目を追加して、エンジン読み込み前に事前設定できます。',
+    addOption: 'オプションを追加',
+    optionName: 'オプション名',
+    optionValue: '値',
+    type: '種類',
+    typeString: '文字列',
+    typeNumber: '数値',
+    typeSwitch: 'スイッチ',
+    typeCombo: 'コンボ（選択）',
+    typeButton: 'ボタン',
+    willExecute: '読み込み時に実行',
+    noExecute: '実行しない',
+  },
+
   // エラーメッセージ
   errors: {
     saveNotationFailed: '棋譜の保存に失敗しました',

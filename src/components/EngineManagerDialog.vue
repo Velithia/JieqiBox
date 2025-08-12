@@ -13,6 +13,9 @@
           class="elevation-1"
         >
           <template v-slot:item.actions="{ item }">
+            <v-icon small class="mr-2" @click="openUciOptionsEditor(item)">
+              mdi-cog
+            </v-icon>
             <v-icon small class="mr-2" @click="editEngine(item)">
               mdi-pencil
             </v-icon>
@@ -70,6 +73,114 @@
             $t('common.cancel')
           }}</v-btn>
           <v-btn color="blue-darken-1" @click="saveEngine">{{
+            $t('common.save')
+          }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- UCI Options (Saved) Editor Dialog -->
+    <v-dialog v-model="uciDialogVisible" max-width="700px" persistent>
+      <v-card>
+        <v-card-title>
+          <span class="headline">
+            {{ $t('uciEditor.title') }} -
+            {{ selectedEngineForOptions?.name || '' }}
+          </span>
+        </v-card-title>
+        <v-card-text>
+          <div v-if="uciRows.length === 0" class="text-medium-emphasis mb-4">
+            {{ $t('uciEditor.noSaved') }}
+          </div>
+
+          <div
+            v-for="(row, idx) in uciRows"
+            :key="idx"
+            class="d-flex align-center mb-3 gap-2"
+          >
+            <v-text-field
+              v-model="row.key"
+              :label="$t('uciEditor.optionName')"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="mr-2"
+              style="max-width: 260px"
+            />
+
+            <v-select
+              v-model="row.type"
+              :items="typeItems"
+              item-title="label"
+              item-value="value"
+              :label="$t('uciEditor.type')"
+              density="compact"
+              variant="outlined"
+              hide-details
+              style="max-width: 140px"
+              class="mr-2"
+            />
+
+            <v-text-field
+              v-if="row.type === 'string' || row.type === 'number'"
+              v-model="row.value"
+              :type="row.type === 'number' ? 'number' : 'text'"
+              :label="$t('uciEditor.optionValue')"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="flex-grow-1 mr-2"
+            />
+            <v-select
+              v-else-if="row.type === 'combo'"
+              v-model="row.value"
+              :items="row.vars && row.vars.length ? row.vars : []"
+              :label="$t('uciEditor.optionValue')"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="flex-grow-1 mr-2"
+            />
+            <v-switch
+              v-else-if="row.type === 'boolean'"
+              v-model="row.value"
+              color="primary"
+              hide-details
+              class="mr-2"
+            />
+            <v-btn
+              v-else-if="row.type === 'button'"
+              variant="outlined"
+              color="primary"
+              class="mr-2"
+              @click="toggleButtonFlag(row)"
+            >
+              {{
+                row.value
+                  ? $t('uciEditor.willExecute')
+                  : $t('uciEditor.noExecute')
+              }}
+            </v-btn>
+
+            <v-btn icon variant="text" color="red" @click="removeUciRow(idx)">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+          </div>
+
+          <v-btn color="primary" variant="outlined" @click="addUciRow">
+            <v-icon start>mdi-plus</v-icon>
+            {{ $t('uciEditor.addOption') }}
+          </v-btn>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="onClearUciOptions">
+            {{ $t('uciOptions.clearSettings') }}
+          </v-btn>
+          <v-btn color="grey-darken-1" @click="closeUciDialog">{{
+            $t('common.cancel')
+          }}</v-btn>
+          <v-btn color="blue-darken-1" @click="saveUciOptions">{{
             $t('common.save')
           }}</v-btn>
         </v-card-actions>
@@ -146,6 +257,26 @@
   // --- NEW State for Deletion Flow ---
   const confirmDeleteDialog = ref(false)
   const engineToDelete = ref<ManagedEngine | null>(null)
+
+  // UCI options editor state
+  const uciDialogVisible = ref(false)
+  const selectedEngineForOptions = ref<ManagedEngine | null>(null)
+  type RowType = 'string' | 'number' | 'boolean' | 'combo' | 'button'
+  interface UciRow {
+    key: string
+    value: any
+    type: RowType
+    vars?: string[] // for combo choices (optional, not persisted)
+    varsCsv?: string // UI helper for editing choices
+  }
+  const uciRows = ref<UciRow[]>([])
+  const typeItems = [
+    { label: t('uciEditor.typeString'), value: 'string' },
+    { label: t('uciEditor.typeNumber'), value: 'number' },
+    { label: t('uciEditor.typeSwitch'), value: 'boolean' },
+    { label: t('uciEditor.typeCombo'), value: 'combo' },
+    { label: t('uciEditor.typeButton'), value: 'button' },
+  ]
 
   // Computed properties
   const isVisible = computed({
@@ -302,6 +433,79 @@
     isEditing.value = true
     editedEngine.value = { ...engine }
     editDialog.value = true
+  }
+
+  const openUciOptionsEditor = async (engine: ManagedEngine) => {
+    await configManager.loadConfig()
+    selectedEngineForOptions.value = engine
+    const saved = configManager.getUciOptions(engine.id)
+    uciRows.value = Object.entries(saved).map(([key, value]) => {
+      let type: RowType = 'string'
+      if (typeof value === 'boolean') type = 'boolean'
+      else if (typeof value === 'number') type = 'number'
+      else if (value === '__button__') type = 'button'
+      return { key, value, type }
+    })
+    uciDialogVisible.value = true
+  }
+
+  const addUciRow = () => {
+    uciRows.value.push({
+      key: '',
+      value: '',
+      type: 'string',
+      vars: [],
+      varsCsv: '',
+    })
+  }
+
+  const removeUciRow = (index: number) => {
+    uciRows.value.splice(index, 1)
+  }
+
+  const closeUciDialog = () => {
+    uciDialogVisible.value = false
+    selectedEngineForOptions.value = null
+    uciRows.value = []
+  }
+
+  const saveUciOptions = async () => {
+    if (!selectedEngineForOptions.value) return
+    const obj: Record<string, any> = {}
+    for (const row of uciRows.value) {
+      if (!row.key) continue
+      let v: any = row.value
+      if (row.type === 'number') {
+        const n = Number(v)
+        v = isNaN(n) ? 0 : n
+      } else if (row.type === 'boolean') {
+        v = Boolean(v)
+      } else if (row.type === 'button') {
+        // Sentinel value to indicate a button should be executed on load
+        v = v ? '__button__' : undefined
+        if (v === undefined) continue
+      } else if (row.type === 'combo') {
+        v = String(v ?? '')
+      } else {
+        v = String(v ?? '')
+      }
+      obj[row.key] = v
+    }
+    await configManager.updateUciOptions(selectedEngineForOptions.value.id, obj)
+    closeUciDialog()
+  }
+
+  const onClearUciOptions = async () => {
+    if (!selectedEngineForOptions.value) return
+    if (confirm(t('uciOptions.confirmClearSettings'))) {
+      await configManager.clearUciOptions(selectedEngineForOptions.value.id)
+      uciRows.value = []
+      alert(t('uciOptions.settingsCleared'))
+    }
+  }
+
+  const toggleButtonFlag = (row: UciRow) => {
+    row.value = !row.value
   }
 
   // --- UPDATED Deletion Flow ---

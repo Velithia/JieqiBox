@@ -292,6 +292,24 @@ export default {
     engineAddedSuccess: '引擎 {name} 添加成功!',
   },
 
+  // 引擎管理器中的已保存 UCI 选项编辑器
+  uciEditor: {
+    title: '已保存的UCI选项',
+    noSaved:
+      '当前引擎尚无已保存的选项。可在下方添加项目，以在加载引擎前预配置。',
+    addOption: '添加选项',
+    optionName: '选项名',
+    optionValue: '选项值',
+    type: '类型',
+    typeString: '字符串',
+    typeNumber: '数字',
+    typeSwitch: '开关',
+    typeCombo: '下拉选择',
+    typeButton: '按钮',
+    willExecute: '加载时执行',
+    noExecute: '不执行',
+  },
+
   // JAI 选项对话框
   jaiOptions: {
     title: 'JAI比赛选项',

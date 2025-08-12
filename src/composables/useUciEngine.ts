@@ -931,6 +931,12 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
       if (Object.keys(savedUciOptions).length === 0) return
 
       Object.entries(savedUciOptions).forEach(([name, value]) => {
+        // Special handling for button type: sentinel '__button__' means execute button
+        if (value === '__button__') {
+          const command = `setoption name ${name}`
+          send(command)
+          return
+        }
         const command = `setoption name ${name} value ${value}`
         send(command)
       })

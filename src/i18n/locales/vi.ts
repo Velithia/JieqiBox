@@ -298,6 +298,24 @@ export default {
     engineAddedSuccess: 'Đã thêm thành công engine {name}!',
   },
 
+  // Trình sửa tùy chọn UCI đã lưu trong Trình quản lý Engine
+  uciEditor: {
+    title: 'Tùy chọn UCI đã lưu',
+    noSaved:
+      'Chưa có tùy chọn nào được lưu cho engine này. Thêm mục bên dưới để cấu hình trước khi tải engine.',
+    addOption: 'Thêm tùy chọn',
+    optionName: 'Tên tùy chọn',
+    optionValue: 'Giá trị',
+    type: 'Loại',
+    typeString: 'Chuỗi',
+    typeNumber: 'Số',
+    typeSwitch: 'Công tắc',
+    typeCombo: 'Danh sách chọn',
+    typeButton: 'Nút',
+    willExecute: 'Thực thi khi tải',
+    noExecute: 'Không thực thi',
+  },
+
   // Thông báo lỗi
   errors: {
     saveNotationFailed: 'Lưu biên bản thất bại',

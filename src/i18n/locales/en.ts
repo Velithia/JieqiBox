@@ -297,6 +297,24 @@ export default {
     engineAddedSuccess: 'Engine {name} was added successfully!',
   },
 
+  // UCI saved options editor inside Engine Manager
+  uciEditor: {
+    title: 'Saved UCI Options',
+    noSaved:
+      'No saved options for this engine yet. Add items below to preconfigure before loading the engine.',
+    addOption: 'Add Option',
+    optionName: 'Option Name',
+    optionValue: 'Value',
+    type: 'Type',
+    typeString: 'String',
+    typeNumber: 'Number',
+    typeSwitch: 'Switch',
+    typeCombo: 'Combo (select)',
+    typeButton: 'Button',
+    willExecute: 'Execute on load',
+    noExecute: 'Do not execute',
+  },
+
   // JAI options dialog
   jaiOptions: {
     title: 'JAI Match Options',

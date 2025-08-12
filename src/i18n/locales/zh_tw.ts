@@ -292,6 +292,24 @@ export default {
     engineAddedSuccess: '引擎 {name} 新增成功！',
   },
 
+  // 引擎管理器中的已保存 UCI 選項編輯器
+  uciEditor: {
+    title: '已儲存的 UCI 選項',
+    noSaved:
+      '目前此引擎尚未有已儲存的選項。可於下方新增項目，以在載入引擎前預先設定。',
+    addOption: '新增選項',
+    optionName: '選項名稱',
+    optionValue: '選項值',
+    type: '類型',
+    typeString: '字串',
+    typeNumber: '數字',
+    typeSwitch: '開關',
+    typeCombo: '下拉選擇',
+    typeButton: '按鈕',
+    willExecute: '載入時執行',
+    noExecute: '不執行',
+  },
+
   // 錯誤訊息
   errors: {
     saveNotationFailed: '儲存棋譜失敗',
