@@ -25,6 +25,14 @@
                   {{ $t('positionEditor.flipBoard') }}
                 </v-btn>
                 <v-btn
+                  @click="mirrorLeftRight"
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                >
+                  {{ $t('positionEditor.mirrorLeftRight') }}
+                </v-btn>
+                <v-btn
                   @click="switchSide"
                   color="secondary"
                   variant="outlined"
@@ -621,6 +629,31 @@
     if (gameState.toggleBoardFlip) {
       gameState.toggleBoardFlip(false)
     }
+  }
+
+  // Mirror left-right (horizontal mirror over central file)
+  const mirrorLeftRight = () => {
+    editingPieces.value = editingPieces.value.map(piece => {
+      const mirroredCol = 8 - piece.col
+      const mirroredInitialCol = 8 - piece.initialCol
+      const sameRow = piece.row
+      const sameInitialRow = piece.initialRow
+      return {
+        ...piece,
+        row: sameRow,
+        col: mirroredCol,
+        initialRow: sameInitialRow,
+        initialCol: mirroredInitialCol,
+        initialRole: gameState.getRoleByPosition
+          ? gameState.getRoleByPosition(sameRow, mirroredCol)
+          : piece.initialRole,
+      }
+    })
+
+    // Reclassify dark pieces after coordinates change
+    reclassifyAllDarkPieces()
+
+    // Do not change board flip orientation for left-right mirror
   }
 
   // Switch side to move

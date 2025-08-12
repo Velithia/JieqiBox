@@ -105,6 +105,7 @@ export default {
   positionEditor: {
     title: 'Position Editor',
     flipBoard: '🔄 Flip Board',
+    mirrorLeftRight: '↔️ Mirror Left-Right',
     switchSide: '⚡ Switch Side',
     resetPosition: '🔄 Reset Position',
     clearPosition: '🔄 Clear Position',

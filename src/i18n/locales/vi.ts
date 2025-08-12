@@ -106,6 +106,7 @@ export default {
   positionEditor: {
     title: 'Chỉnh sửa vị trí',
     flipBoard: '🔄 Lật bàn cờ',
+    mirrorLeftRight: '↔️ Đối xứng trái-phải',
     switchSide: '⚡ Chuyển bên',
     resetPosition: '🔄 Đặt lại vị trí',
     clearPosition: '🔄 Xóa vị trí',

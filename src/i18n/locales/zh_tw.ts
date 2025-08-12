@@ -102,6 +102,7 @@ export default {
   positionEditor: {
     title: '局面編輯',
     flipBoard: '🔄 上下翻轉',
+    mirrorLeftRight: '↔️ 左右對稱',
     switchSide: '⚡ 切換先手',
     resetPosition: '🔄 重設局面',
     clearPosition: '🔄 清除局面',

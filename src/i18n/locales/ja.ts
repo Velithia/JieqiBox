@@ -104,6 +104,7 @@ export default {
   positionEditor: {
     title: '局面編集',
     flipBoard: '🔄 盤を反転',
+    mirrorLeftRight: '↔️ 左右対称',
     switchSide: '⚡ 手番を切り替え',
     resetPosition: '🔄 局面をリセット',
     clearPosition: '🔄 局面をクリア',
