@@ -1056,7 +1056,7 @@
     &.has-chart {
       gap: 12px;
       width: 100%;
-      max-width: 70vmin;
+      max-width: 72vmin;
     }
 
     // Mobile responsive adjustments
