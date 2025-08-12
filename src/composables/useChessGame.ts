@@ -1825,6 +1825,60 @@ export function useChessGame() {
     }
   }
 
+  // Apply a parsed GameNotation object to current game state
+  const applyGameNotation = async (notation: GameNotation) => {
+    // Validate basic structure
+    if (!notation || !notation.metadata || !Array.isArray(notation.moves)) {
+      throw new Error('无效的棋谱格式')
+    }
+
+    // Set flip mode if present
+    if (notation.metadata.flipMode) {
+      flipMode.value = notation.metadata.flipMode
+    }
+
+    // Restore history and index
+    history.value = [...notation.moves]
+    currentMoveIndex.value = notation.moves.length
+
+    // Always set the initial FEN if available
+    if (notation.metadata.initialFen) {
+      initialFen.value = notation.metadata.initialFen
+    }
+
+    // Load current position or replay from initial
+    if (notation.metadata.currentFen) {
+      loadFen(notation.metadata.currentFen, false)
+      unrevealedPieceCounts.value = deriveUnrevealedPieceCountsFromFen(
+        notation.metadata.currentFen
+      )
+    } else if (notation.metadata.initialFen) {
+      loadFen(notation.metadata.initialFen, false)
+      unrevealedPieceCounts.value = deriveUnrevealedPieceCountsFromFen(
+        notation.metadata.initialFen
+      )
+      if (currentMoveIndex.value > 0) {
+        replayToMove(currentMoveIndex.value)
+      }
+    } else {
+      setupNewGame()
+    }
+
+    // Refresh layers
+    pieces.value.forEach(p => (p.zIndex = undefined))
+    updateAllPieceZIndexes()
+
+    // Clear arrows and stop engines
+    triggerArrowClear()
+    window.dispatchEvent(
+      new CustomEvent('force-stop-ai', {
+        detail: { reason: 'load-notation' },
+      })
+    )
+
+    return true
+  }
+
   // Load game notation from a file (supports both JSON and XQF formats)
   const loadGameNotation = async (file: File) => {
     try {
@@ -1842,70 +1896,28 @@ export function useChessGame() {
         })
         console.log('Loaded XQF (Jieqi) notation:', notation)
       } else {
-        // Handle JSON format (existing logic)
         const text = await file.text()
         notation = JSON.parse(text)
       }
 
-      // Validate the game notation format
-      if (!notation.metadata || !notation.moves) {
-        throw new Error('无效的棋谱格式')
-      }
-
-      // Set the flip mode
-      if (notation.metadata.flipMode) {
-        flipMode.value = notation.metadata.flipMode
-      }
-
-      // Restore the history
-      history.value = [...notation.moves]
-      currentMoveIndex.value = notation.moves.length
-
-      // Always set the initial FEN from notation if available
-      if (notation.metadata.initialFen) {
-        initialFen.value = notation.metadata.initialFen // Set the initial FEN from notation
-      }
-
-      // If there is a current FEN, load the current state directly
-      if (notation.metadata.currentFen) {
-        loadFen(notation.metadata.currentFen, false)
-        // Derive unrevealed piece counts from current FEN
-        unrevealedPieceCounts.value = deriveUnrevealedPieceCountsFromFen(
-          notation.metadata.currentFen
-        )
-      } else if (notation.metadata.initialFen) {
-        // Otherwise, replay from the initial FEN
-        loadFen(notation.metadata.initialFen, false)
-        // Derive unrevealed piece counts from initial FEN
-        unrevealedPieceCounts.value = deriveUnrevealedPieceCountsFromFen(
-          notation.metadata.initialFen
-        )
-        if (currentMoveIndex.value > 0) {
-          replayToMove(currentMoveIndex.value)
-        }
-      } else {
-        setupNewGame()
-      }
-
-      // Reset zIndex for all pieces when loading game notation
-      pieces.value.forEach(p => (p.zIndex = undefined))
-      // Update zIndex for all pieces based on new positions
-      updateAllPieceZIndexes()
-
-      // Trigger arrow clear event
-      triggerArrowClear()
-
-      // Force stop engine analysis and AI to ensure loading game notation when engine doesn't continue thinking
-      window.dispatchEvent(
-        new CustomEvent('force-stop-ai', {
-          detail: { reason: 'load-notation' },
-        })
-      )
-
+      await applyGameNotation(notation)
       return true
     } catch (error) {
       console.error('加载棋谱失败:', error)
       alert('加载棋谱失败，请检查文件格式')
+      return false
+    }
+  }
+
+  // Load game notation directly from JSON text (no file dialog)
+  const loadGameNotationFromText = async (text: string) => {
+    try {
+      const notation: GameNotation = JSON.parse(text)
+      await applyGameNotation(notation)
+      return true
+    } catch (error) {
+      console.error('解析/应用棋谱失败:', error)
+      alert('解析/应用棋谱失败，请检查内容格式是否为有效的JSON棋谱')
       return false
     }
   }
@@ -2233,6 +2245,7 @@ export function useChessGame() {
     adjustUnrevealedCount,
     saveGameNotation,
     openGameNotation,
+    loadGameNotationFromText,
     generateGameNotation,
     loadFen,
     recordAndFinalize,

@@ -45,6 +45,15 @@
         :loading="isSaving"
         :title="$t('toolbar.saveNotation')"
       />
+      <v-btn
+        icon="mdi-clipboard-text"
+        size="small"
+        color="cyan"
+        variant="text"
+        @click="showNotationTextDialog = true"
+        :disabled="isMatchRunning"
+        :title="$t('toolbar.viewPasteNotation')"
+      />
     </div>
 
     <div class="toolbar-center">
@@ -105,6 +114,10 @@
       @position-changed="handlePositionChanged"
     />
     <InterfaceSettingsDialog v-model="showInterfaceSettingsDialog" />
+    <NotationTextDialog
+      v-model="showNotationTextDialog"
+      @apply="handleApplyNotationText"
+    />
   </div>
 </template>
 
@@ -116,6 +129,7 @@
   import PositionEditorDialog from './PositionEditorDialog.vue'
   import LanguageSelector from './LanguageSelector.vue'
   import InterfaceSettingsDialog from './InterfaceSettingsDialog.vue'
+  import NotationTextDialog from './NotationTextDialog.vue'
   import { useInterfaceSettings } from '../composables/useInterfaceSettings'
 
   const { t } = useI18n()
@@ -133,6 +147,7 @@
   const showTimeDialog = ref(false)
   const showPositionEditor = ref(false)
   const showInterfaceSettingsDialog = ref(false)
+  const showNotationTextDialog = ref(false)
 
   // State for variation restart logic
   const isWaitingToRestartForVariation = ref(false)
@@ -143,6 +158,7 @@
   // Save/Open states
   const isSaving = ref(false)
   const isOpening = ref(false)
+  const isApplyingText = ref(false)
 
   // Analysis settings
   const analysisSettings = ref({
@@ -371,6 +387,24 @@
       console.error(t('errors.openNotationFailed'), error)
     } finally {
       isOpening.value = false
+    }
+  }
+
+  // Apply notation from pasted JSON text
+  const handleApplyNotationText = async (text: string) => {
+    if (isMatchRunning.value) return
+    // Stop engine and reset variation state
+    if (engineState.stopAnalysis) {
+      engineState.stopAnalysis()
+    }
+    resetVariationState()
+    isApplyingText.value = true
+    try {
+      await gameState.loadGameNotationFromText(text)
+    } catch (error) {
+      console.error(t('errors.openNotationFailed'), error)
+    } finally {
+      isApplyingText.value = false
     }
   }
 

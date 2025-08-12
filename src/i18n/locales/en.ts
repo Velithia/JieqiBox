@@ -36,6 +36,7 @@ export default {
     noMoreVariations: 'No more variations available',
     darkMode: 'Dark Mode',
     lightMode: 'Light Mode',
+    viewPasteNotation: 'View/Paste Notation',
   },
 
   // UCI options dialog
@@ -159,6 +160,14 @@ export default {
     placeholder: 'Please input FEN string...',
     confirm: 'Confirm',
     cancel: 'Cancel',
+  },
+
+  // Notation JSON dialog
+  notationTextDialog: {
+    title: 'View / Paste Notation (JSON)',
+    placeholder: 'JSON of current game notation will appear here. You can copy it, or paste a notation JSON and click Apply to load it.',
+    copy: 'Copy JSON',
+    apply: 'Apply',
   },
 
   // Flip prompt dialog

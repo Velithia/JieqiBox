@@ -36,6 +36,7 @@ export default {
     noMoreVariations: 'これ以上の変化はありません',
     darkMode: 'ダークモード',
     lightMode: 'ライトモード',
+    viewPasteNotation: '棋譜の表示/貼り付け',
   },
 
   // UCIオプションダイアログ
@@ -158,6 +159,15 @@ export default {
     placeholder: 'FEN文字列を入力してください...',
     confirm: '確認',
     cancel: 'キャンセル',
+  },
+
+  // 棋譜JSONダイアログ
+  notationTextDialog: {
+    title: '棋譜（JSON）の表示 / 貼り付け',
+    placeholder:
+      '現在の対局のJSON棋譜がここに表示されます。コピーして共有できます。受け取ったJSON棋譜をここに貼り付け、「適用」を押すと読み込みます。',
+    copy: 'JSONをコピー',
+    apply: '適用',
   },
 
   // 駒をめくるプロンプトダイアログ

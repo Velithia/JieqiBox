@@ -36,6 +36,7 @@ export default {
     noMoreVariations: 'Không còn biến thể nào khả dụng',
     darkMode: 'Chế độ tối',
     lightMode: 'Chế độ sáng',
+    viewPasteNotation: 'Xem/Dán biên bản',
   },
 
   // Hộp thoại tùy chọn UCI
@@ -160,6 +161,15 @@ export default {
     placeholder: 'Vui lòng nhập chuỗi FEN...',
     confirm: 'Xác nhận',
     cancel: 'Hủy',
+  },
+
+  // Hộp thoại biên bản JSON
+  notationTextDialog: {
+    title: 'Xem / Dán biên bản (JSON)',
+    placeholder:
+      'Biên bản JSON của ván hiện tại sẽ hiển thị ở đây. Bạn có thể sao chép để chia sẻ; hoặc dán biên bản JSON nhận được vào đây và bấm Áp dụng để tải.',
+    copy: 'Sao chép JSON',
+    apply: 'Áp dụng',
   },
 
   // Hộp thoại nhắc lật quân

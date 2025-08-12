@@ -36,6 +36,7 @@ export default {
     noMoreVariations: '已无更多可变的走法',
     darkMode: '暗黑模式',
     lightMode: '亮色模式',
+    viewPasteNotation: '查看/输入棋谱',
   },
 
   // UCI选项对话框
@@ -156,6 +157,14 @@ export default {
     placeholder: '请输入FEN字符串...',
     confirm: '确认',
     cancel: '取消',
+  },
+
+  // 棋谱JSON对话框
+  notationTextDialog: {
+    title: '查看 / 输入棋谱（JSON）',
+    placeholder: '此处会显示当前对局的JSON棋谱。你可以复制分享；或将收到的JSON棋谱粘贴到此处，点击“应用”载入棋谱。',
+    copy: '复制JSON',
+    apply: '应用',
   },
 
   // 翻子提示对话框
