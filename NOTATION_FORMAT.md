@@ -67,6 +67,17 @@ Each move record contains:
 - `engineScore`: Engine analysis score for this move (number). Only recorded if engine was thinking before the move. Default is 0 if engine was not thinking.
 - `engineTime`: Engine analysis time in milliseconds for this move (number). Only recorded if engine was thinking before the move. Default is 0 if engine was not thinking.
 
+#### Engine score (mate) encoding
+
+- Non-mate positions: `engineScore` is a centipawn value (integer). Higher means better for the side indicated by the engine output.
+- Mate positions: encoded as a large magnitude score using a base value `MATE_SCORE_BASE`.
+  - Current base: `MATE_SCORE_BASE = 30000`.
+  - If the engine reports mate in `ply` plies (e.g., `score mate 6`), we store:
+    - `engineScore = + (MATE_SCORE_BASE - ply)` for a winning mate for the side to move
+    - `engineScore = - (MATE_SCORE_BASE - ply)` for a losing mate for the side to move
+  - Example: mate in 6 -> `+29994`; mate in 10 -> `-29990`.
+- UI display: mate scores are shown as `+Mply` or `-Mply` (e.g., `+M6`, `-M10`).
+
 ## FEN Format Specification
 
 The application supports both old and new FEN formats, with the new format being the default:
