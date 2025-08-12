@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="dialogVisible" persistent max-width="800px" :fullscreen="$vuetify.display.smAndDown">
+  <v-dialog
+    v-model="dialogVisible"
+    persistent
+    max-width="800px"
+    :fullscreen="$vuetify.display.smAndDown"
+  >
     <v-card>
       <v-card-title>
         <span class="text-h6">{{ $t('notationTextDialog.title') }}</span>
@@ -18,7 +23,12 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn color="blue-grey" variant="text" @click="copyToClipboard" :loading="isCopying">
+        <v-btn
+          color="blue-grey"
+          variant="text"
+          @click="copyToClipboard"
+          :loading="isCopying"
+        >
           {{ $t('notationTextDialog.copy') }}
         </v-btn>
         <v-btn color="error" variant="text" @click="closeDialog">
@@ -95,6 +105,4 @@
   }
 </script>
 
-<style scoped>
-</style>
-
+<style scoped></style>

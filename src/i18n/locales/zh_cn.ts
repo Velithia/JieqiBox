@@ -163,7 +163,8 @@ export default {
   // 棋谱JSON对话框
   notationTextDialog: {
     title: '查看 / 输入棋谱（JSON）',
-    placeholder: '此处会显示当前对局的JSON棋谱。你可以复制分享；或将收到的JSON棋谱粘贴到此处，点击“应用”载入棋谱。',
+    placeholder:
+      '此处会显示当前对局的JSON棋谱。你可以复制分享；或将收到的JSON棋谱粘贴到此处，点击“应用”载入棋谱。',
     copy: '复制JSON',
     apply: '应用',
   },

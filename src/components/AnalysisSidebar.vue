@@ -544,16 +544,54 @@
           </div>
           <div v-if="editingCommentIndex === 0" class="comment-edit">
             <div class="comment-toolbar">
-              <v-btn size="x-small" variant="text" icon="mdi-format-bold" @click="surroundSelection(0, '**', '**')" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-italic" @click="surroundSelection(0, '*', '*')" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-underline" @click="surroundSelection(0, '<u>', '</u>')" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-strikethrough" @click="surroundSelection(0, '~~', '~~')" />
-              <v-btn size="x-small" variant="text" @click="applyHeading(0, 1)">H1</v-btn>
-              <v-btn size="x-small" variant="text" @click="applyHeading(0, 2)">H2</v-btn>
-              <v-btn size="x-small" variant="text" @click="applyHeading(0, 3)">H3</v-btn>
-              <v-btn size="x-small" variant="text" @click="applyHeading(0, 4)">H4</v-btn>
-              <v-btn size="x-small" variant="text" icon="mdi-link-variant" @click="insertLink(0)" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-clear" @click="clearFormatting(0)" />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-bold"
+                @click="surroundSelection(0, '**', '**')"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-italic"
+                @click="surroundSelection(0, '*', '*')"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-underline"
+                @click="surroundSelection(0, '<u>', '</u>')"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-strikethrough"
+                @click="surroundSelection(0, '~~', '~~')"
+              />
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 1)"
+                >H1</v-btn
+              >
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 2)"
+                >H2</v-btn
+              >
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 3)"
+                >H3</v-btn
+              >
+              <v-btn size="x-small" variant="text" @click="applyHeading(0, 4)"
+                >H4</v-btn
+              >
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-link-variant"
+                @click="insertLink(0)"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-clear"
+                @click="clearFormatting(0)"
+              />
             </div>
             <v-textarea
               :ref="el => setCommentTextareaRef(0, el)"
@@ -575,7 +613,11 @@
               }}</v-btn>
             </div>
           </div>
-          <div v-else class="comment-text" v-html="getCommentHtmlWithFallback(0)"></div>
+          <div
+            v-else
+            class="comment-text"
+            v-html="getCommentHtmlWithFallback(0)"
+          ></div>
         </div>
         <div
           v-for="(_, idx) in history"
@@ -596,16 +638,66 @@
           </div>
           <div v-if="editingCommentIndex === idx + 1" class="comment-edit">
             <div class="comment-toolbar">
-              <v-btn size="x-small" variant="text" icon="mdi-format-bold" @click="surroundSelection(idx + 1, '**', '**')" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-italic" @click="surroundSelection(idx + 1, '*', '*')" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-underline" @click="surroundSelection(idx + 1, '<u>', '</u>')" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-strikethrough" @click="surroundSelection(idx + 1, '~~', '~~')" />
-              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 1)">H1</v-btn>
-              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 2)">H2</v-btn>
-              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 3)">H3</v-btn>
-              <v-btn size="x-small" variant="text" @click="applyHeading(idx + 1, 4)">H4</v-btn>
-              <v-btn size="x-small" variant="text" icon="mdi-link-variant" @click="insertLink(idx + 1)" />
-              <v-btn size="x-small" variant="text" icon="mdi-format-clear" @click="clearFormatting(idx + 1)" />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-bold"
+                @click="surroundSelection(idx + 1, '**', '**')"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-italic"
+                @click="surroundSelection(idx + 1, '*', '*')"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-underline"
+                @click="surroundSelection(idx + 1, '<u>', '</u>')"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-strikethrough"
+                @click="surroundSelection(idx + 1, '~~', '~~')"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                @click="applyHeading(idx + 1, 1)"
+                >H1</v-btn
+              >
+              <v-btn
+                size="x-small"
+                variant="text"
+                @click="applyHeading(idx + 1, 2)"
+                >H2</v-btn
+              >
+              <v-btn
+                size="x-small"
+                variant="text"
+                @click="applyHeading(idx + 1, 3)"
+                >H3</v-btn
+              >
+              <v-btn
+                size="x-small"
+                variant="text"
+                @click="applyHeading(idx + 1, 4)"
+                >H4</v-btn
+              >
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-link-variant"
+                @click="insertLink(idx + 1)"
+              />
+              <v-btn
+                size="x-small"
+                variant="text"
+                icon="mdi-format-clear"
+                @click="clearFormatting(idx + 1)"
+              />
             </div>
             <v-textarea
               :ref="el => setCommentTextareaRef(idx + 1, el)"
@@ -627,7 +719,11 @@
               }}</v-btn>
             </div>
           </div>
-          <div v-else class="comment-text" v-html="getCommentHtmlWithFallback(idx + 1)"></div>
+          <div
+            v-else
+            class="comment-text"
+            v-html="getCommentHtmlWithFallback(idx + 1)"
+          ></div>
         </div>
       </div>
     </DraggablePanel>
@@ -1562,11 +1658,7 @@
   }
 
   // Markdown formatting helpers
-  function surroundSelection(
-    index: number,
-    before: string,
-    after: string
-  ) {
+  function surroundSelection(index: number, before: string, after: string) {
     const ta = getTextareaElement(index)
     const text = editingCommentText.value || ''
     if (!ta) {
@@ -1576,7 +1668,8 @@
     const start = ta.selectionStart ?? 0
     const end = ta.selectionEnd ?? 0
     const selected = text.slice(start, end)
-    const newText = text.slice(0, start) + before + selected + after + text.slice(end)
+    const newText =
+      text.slice(0, start) + before + selected + after + text.slice(end)
     editingCommentText.value = newText
     nextTick(() => {
       const pos = start + before.length + selected.length + after.length
@@ -1591,12 +1684,15 @@
     const start = ta?.selectionStart ?? 0
     const end = ta?.selectionEnd ?? 0
     const sel = text.slice(start, end)
-    const target = sel.length > 0 ? sel : (() => {
-      // no selection -> current line
-      const lineStart = text.lastIndexOf('\n', start - 1) + 1
-      const lineEnd = text.indexOf('\n', start)
-      return text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd)
-    })()
+    const target =
+      sel.length > 0
+        ? sel
+        : (() => {
+            // no selection -> current line
+            const lineStart = text.lastIndexOf('\n', start - 1) + 1
+            const lineEnd = text.indexOf('\n', start)
+            return text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd)
+          })()
     const processed = target
       .split('\n')
       .map(l => l.replace(/^\s{0,3}#{1,6}\s+/, ''))
@@ -1697,7 +1793,10 @@
     if (!text) return ''
     const raw = marked.parse(text, { breaks: true }) as string
     const sanitized = DOMPurify.sanitize(raw)
-    return sanitized.replace(/<a\s+/g, '<a target="_blank" rel="noopener noreferrer" ')
+    return sanitized.replace(
+      /<a\s+/g,
+      '<a target="_blank" rel="noopener noreferrer" '
+    )
   }
 
   function getCommentHtml(moveIndex: number): string {

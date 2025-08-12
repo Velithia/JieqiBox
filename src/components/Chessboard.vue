@@ -268,7 +268,15 @@
 </template>
 
 <script setup lang="ts">
-  import { inject, ref, watch, computed, watchEffect, onMounted, onUnmounted } from 'vue'
+  import {
+    inject,
+    ref,
+    watch,
+    computed,
+    watchEffect,
+    onMounted,
+    onUnmounted,
+  } from 'vue'
   import type { Piece } from '@/composables/useChessGame'
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
   import ClearHistoryConfirmDialog from './ClearHistoryConfirmDialog.vue'
@@ -628,7 +636,10 @@
     window.addEventListener('force-stop-ai', handleForceStopAi as EventListener)
   })
   onUnmounted(() => {
-    window.removeEventListener('force-stop-ai', handleForceStopAi as EventListener)
+    window.removeEventListener(
+      'force-stop-ai',
+      handleForceStopAi as EventListener
+    )
   })
 
   // Execute clear history and move after user confirmation

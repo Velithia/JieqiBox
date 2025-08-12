@@ -166,7 +166,8 @@ export default {
   // Notation JSON dialog
   notationTextDialog: {
     title: 'View / Paste Notation (JSON)',
-    placeholder: 'JSON of current game notation will appear here. You can copy it, or paste a notation JSON and click Apply to load it.',
+    placeholder:
+      'JSON of current game notation will appear here. You can copy it, or paste a notation JSON and click Apply to load it.',
     copy: 'Copy JSON',
     apply: 'Apply',
   },
