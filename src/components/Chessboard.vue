@@ -856,54 +856,102 @@
     return type === 'mate' ? (val > 0 ? 10000 : -10000) : val
   }
 
+  // Track the last analysis info to detect changes
+  const lastAnalysisInfo = ref<string>('')
+  const lastJaiAnalysisInfo = ref<string>('')
+  const lastEvalCp = ref<number | null>(null)
+  const lastAnalysisSideToMove = ref<string | null>(null)
+
   const currentEvalCp = computed<number | null>(() => {
     // Prefer JAI match analysis if available in match mode
     const isMatchMode = (window as any).__MATCH_MODE__ || false
     const jaiInfo: string | undefined = jaiEngine?.analysisInfo?.value
+
     if (isMatchMode && jaiInfo) {
-      const lines = jaiInfo
-        .split('\n')
-        .map(l => l.trim())
-        .filter(Boolean)
-      // Use the latest info line with a valid score
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const cp = extractCpFromInfoLine(lines[i])
-        if (cp !== null) {
-          let val = cp
-          if (isPondering.value && !isInfinitePondering.value) val = -val
-          return val
+      // Check if JAI analysis info has changed
+      if (jaiInfo !== lastJaiAnalysisInfo.value) {
+        lastJaiAnalysisInfo.value = jaiInfo
+
+        const lines = jaiInfo
+          .split('\n')
+          .map(l => l.trim())
+          .filter(Boolean)
+        // Use the latest info line with a valid score
+        for (let i = lines.length - 1; i >= 0; i--) {
+          const cp = extractCpFromInfoLine(lines[i])
+          if (cp !== null) {
+            let val = cp
+            if (isPondering.value && !isInfinitePondering.value) val = -val
+
+            // Store the side to move when we get new analysis info
+            try {
+              lastAnalysisSideToMove.value = gs?.sideToMove?.value || null
+            } catch {}
+
+            // Normalize to Red's perspective using the side to move when analysis info was received
+            if (lastAnalysisSideToMove.value === 'black') {
+              val = -val
+            }
+
+            lastEvalCp.value = val
+            return val
+          }
         }
+      } else {
+        // Analysis info hasn't changed, return the last computed value
+        return lastEvalCp.value
       }
     }
 
     // Fallback to regular UCI engine analysis
     const analysis: string | undefined = (es as any)?.analysis?.value
     if (analysis) {
-      const lines = analysis
-        .split('\n')
-        .map((l: string) => l.trim())
-        .filter(Boolean)
-      // The first line is usually MultiPV #1, but use the latest valid score just in case
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const cp = extractCpFromInfoLine(lines[i])
-        if (cp !== null) {
-          let val = cp
-          if (isPondering.value && !isInfinitePondering.value) val = -val
-          return val
+      // Check if UCI analysis info has changed
+      if (analysis !== lastAnalysisInfo.value) {
+        lastAnalysisInfo.value = analysis
+
+        const lines = analysis
+          .split('\n')
+          .map((l: string) => l.trim())
+          .filter(Boolean)
+        // The first line is usually MultiPV #1, but use the latest valid score just in case
+        for (let i = lines.length - 1; i >= 0; i--) {
+          const cp = extractCpFromInfoLine(lines[i])
+          if (cp !== null) {
+            let val = cp
+            if (isPondering.value && !isInfinitePondering.value) val = -val
+
+            // Store the side to move when we get new analysis info
+            try {
+              lastAnalysisSideToMove.value = gs?.sideToMove?.value || null
+            } catch {}
+
+            // Normalize to Red's perspective using the side to move when analysis info was received
+            if (lastAnalysisSideToMove.value === 'black') {
+              val = -val
+            }
+
+            lastEvalCp.value = val
+            return val
+          }
         }
+      } else {
+        // Analysis info hasn't changed, return the last computed value
+        return lastEvalCp.value
       }
     }
+
+    // No analysis info available, reset cached values
+    lastAnalysisInfo.value = ''
+    lastJaiAnalysisInfo.value = ''
+    lastEvalCp.value = null
+    lastAnalysisSideToMove.value = null
     return null
   })
 
   const currentEvalPercent = computed<number | null>(() => {
     let cp = currentEvalCp.value
     if (cp === null || cp === undefined) return null
-    // Normalize to Red's perspective: engine cp is from side-to-move perspective
-    // If it's Black to move, invert so positive always means Red is better
-    try {
-      if (gs?.sideToMove?.value === 'black') cp = -cp
-    } catch {}
     // Smooth mapping cp -> red side percent using tanh compression
     const m = Math.tanh(cp / 600)
     const redPct = Math.max(0, Math.min(100, Math.round((m + 1) * 50)))
