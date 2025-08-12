@@ -2645,6 +2645,15 @@
     }
   }
 
+  /* Make text areas fill available height when panel is undocked/resized */
+  .undocked-panel-content .analysis-output,
+  .undocked-panel-content .move-list,
+  .undocked-panel-content .comments-list,
+  .undocked-panel-content .engine-log {
+    height: 100% !important;
+    max-height: none;
+  }
+
   .score-positive {
     color: #c62828;
     font-weight: bold;
