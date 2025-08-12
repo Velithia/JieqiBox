@@ -231,7 +231,7 @@ export default {
     dockPanel: 'Dock Panel',
     restorePanels: 'Restore Panels Layout',
     flipBoard: 'Flip Board',
-    flipBoardBack: 'Restore Orientation',
+    flipBoardBack: 'Restore',
     ponderMode: 'Ponder Mode',
     selectEngine: 'Select Engine',
     manageEngines: 'Manage',
