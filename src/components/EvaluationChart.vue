@@ -677,7 +677,10 @@
   const formatScore = (s: number) => {
     if (Math.abs(s) >= MATE_SCORE_BASE - 999) {
       const sign = s > 0 ? '+' : '-'
-      const ply = Math.max(0, MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(s)))
+      const ply = Math.max(
+        0,
+        MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(s))
+      )
       return `${sign}M${ply}`
     }
     return Math.round(s).toString()

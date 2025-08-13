@@ -529,6 +529,8 @@ export function useChessGame() {
     // Get engine analysis data if engine was thinking before this move
     let engineScore: number | undefined
     let engineTime: number | undefined
+    // Track whether this recorded move is an AI move (base-uci matched)
+    let isAiMove = false
 
     if (type === 'move') {
       // Check if engine was thinking before this move
@@ -541,8 +543,16 @@ export function useChessGame() {
         analysisStartTime: engineState?.analysisStartTime?.value,
       })
 
-      // Check if this is an AI move (we can detect this by checking if the move was triggered by bestMove)
-      const isAiMove = (window as any).__LAST_AI_MOVE__ === data
+      // Check if this is an AI move (compare base 4-char UCI only, since we may append flip/cap letters)
+      const lastAiMoveRaw = (window as any).__LAST_AI_MOVE__
+      const baseEq = (a?: string | null, b?: string | null) => {
+        if (!a || !b) return false
+        const at = a.trim()
+        const bt = b.trim()
+        if (at.length < 4 || bt.length < 4) return false
+        return at.slice(0, 4) === bt.slice(0, 4)
+      }
+      isAiMove = baseEq(lastAiMoveRaw, data)
       console.log('[DEBUG] RECORD_AND_FINALIZE: Is AI move:', isAiMove)
 
       // Get isManualAnalysis from global state
@@ -739,8 +749,7 @@ export function useChessGame() {
       history.value.length
     )
 
-    // Clear the AI move flag after recording
-    const isAiMove = (window as any).__LAST_AI_MOVE__ === data
+    // Clear the AI move flag after recording, if this move was AI's
     if (isAiMove) {
       console.log(
         '[DEBUG] RECORD_AND_FINALIZE: Clearing AI move flag for move:',
@@ -825,7 +834,8 @@ export function useChessGame() {
   const completeFlipAfterMove = (
     piece: Piece,
     uciMove: string,
-    chosenPieceName: string
+    chosenPieceName: string,
+    capturedHiddenChar?: string | null
   ) => {
     console.log(
       `[DEBUG] completeFlipAfterMove: Entered. User chose '${chosenPieceName}'.`
@@ -868,10 +878,17 @@ export function useChessGame() {
     const isAiMove = (window as any).__LAST_AI_MOVE__ === uciMove
 
     // In free mode, lastMovePositions has already been set in movePiece, here we only need to record history
+    // Append flipped piece letter to UCI move (e.g., a3a4R)
+    const flippedChar = getCharFromPieceName(chosenPieceName)
+    let uciMoveWithFlip = `${uciMove}${flippedChar}`
+    if (capturedHiddenChar) {
+      // Ensure order is Flip first, then Captured (e.g., a3a4Rp)
+      uciMoveWithFlip += capturedHiddenChar
+    }
     console.log(
-      `[DEBUG] completeFlipAfterMove: About to call recordAndFinalize with move: ${uciMove}`
+      `[DEBUG] completeFlipAfterMove: About to call recordAndFinalize with move: ${uciMoveWithFlip}`
     )
-    recordAndFinalize('move', uciMove)
+    recordAndFinalize('move', uciMoveWithFlip)
 
     // If this was an AI move, start ponder now that the flip dialog is closed
     if (isAiMove) {
@@ -1370,6 +1387,7 @@ export function useChessGame() {
       to: { row: targetRow, col: targetCol },
     }
 
+    let capturedHiddenChar: string | null = null
     if (targetPiece) {
       // In free flip mode, capturing opponent's hidden piece should not affect their unrevealed pool
       // Only in random flip mode and not in match mode, we randomly remove a piece from opponent's pool
@@ -1386,6 +1404,8 @@ export function useChessGame() {
         if (opponentPoolChars.length > 0) {
           const charToRemove = shuffle(opponentPoolChars)[0]
           unrevealedPieceCounts.value[charToRemove]--
+          // Remember which hidden piece was virtually captured for UCI annotation
+          capturedHiddenChar = charToRemove
         }
       }
       pieces.value = pieces.value.filter(p => p.id !== targetPiece.id)
@@ -1424,7 +1444,12 @@ export function useChessGame() {
           uciMove: uciMove,
           side: pieceSide,
           callback: chosenName =>
-            completeFlipAfterMove(piece, uciMove, chosenName),
+            completeFlipAfterMove(
+              piece,
+              uciMove,
+              chosenName,
+              capturedHiddenChar
+            ),
         }
       } else {
         const pool = Object.entries(unrevealedPieceCounts.value)
@@ -1442,7 +1467,7 @@ export function useChessGame() {
           return
         }
         const chosenName = shuffle(pool)[0]
-        completeFlipAfterMove(piece, uciMove, chosenName)
+        completeFlipAfterMove(piece, uciMove, chosenName, capturedHiddenChar)
       }
     } else {
       console.log(`[DEBUG] movePiece: Regular move detected. Finalizing.`)
@@ -1451,7 +1476,11 @@ export function useChessGame() {
       console.log(
         `[DEBUG] movePiece: About to call recordAndFinalize with move: ${uciMove}`
       )
-      recordAndFinalize('move', uciMove)
+      // If captured a hidden piece in random mode, append the captured piece letter
+      const finalUci = capturedHiddenChar
+        ? `${uciMove}${capturedHiddenChar}`
+        : uciMove
+      recordAndFinalize('move', finalUci)
     }
 
     // Ensure the moving piece stays on top during the CSS transition
@@ -1611,6 +1640,18 @@ export function useChessGame() {
       // If there was explicit flip information, clear any pending flip dialog
       if (pendingFlip.value) {
         pendingFlip.value = null
+      }
+
+      // Ensure the just-recorded move in history includes the explicit flip info
+      if (history.value.length > 0) {
+        const lastIdx = history.value.length - 1
+        const lastEntry = history.value[lastIdx]
+        if (lastEntry && lastEntry.type === 'move') {
+          history.value[lastIdx] = {
+            ...lastEntry,
+            data: `${lastEntry.data}${flipInfo}`,
+          }
+        }
       }
     }
 

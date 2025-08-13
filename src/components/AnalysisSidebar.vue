@@ -2422,7 +2422,10 @@
   function formatScore(score: number): string {
     if (Math.abs(score) >= MATE_SCORE_BASE - 999) {
       const sign = score > 0 ? '+' : '-'
-      const ply = Math.max(0, MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(score)))
+      const ply = Math.max(
+        0,
+        MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(score))
+      )
       return `${sign}M${ply}`
     }
     return score.toString() // Display centipawns directly
