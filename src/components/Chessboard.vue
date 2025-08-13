@@ -263,6 +263,7 @@
       v-if="showPositionChart"
       :history="history"
       :current-move-index="currentMoveIndex"
+      @seek="handleChartSeek"
     />
   </div>
 </template>
@@ -282,6 +283,14 @@
   import ClearHistoryConfirmDialog from './ClearHistoryConfirmDialog.vue'
   import EvaluationChart from './EvaluationChart.vue'
   import { MATE_SCORE_BASE } from '@/utils/constants'
+
+  // Seek handler for EvaluationChart
+  const handleChartSeek = (idx: number) => {
+    try {
+      const gsAny: any = gs
+      if (gsAny?.replayToMove) gsAny.replayToMove(idx)
+    } catch {}
+  }
 
   /* ===== Layout ===== */
   const PAD_X = 11,

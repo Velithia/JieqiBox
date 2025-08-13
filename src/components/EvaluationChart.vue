@@ -146,6 +146,9 @@
     currentMoveIndex: number
   }
   const props = defineProps<Props>()
+  const emit = defineEmits<{
+    (e: 'seek', moveIndex: number): void
+  }>()
 
   /* ---------- Canvas-related Refs ---------- */
   const chartCanvas = ref<HTMLCanvasElement | null>(null)
@@ -189,6 +192,10 @@
   const panOffset = ref(0) // The starting move index for the visible area
   const isPanning = ref(false)
   const lastPanX = ref(0)
+  const panStartX = ref(0)
+  const panStartY = ref(0)
+  const didPanSinceMouseDown = ref(false)
+  const suppressNextClick = ref(false)
 
   /* ---------- Context Menu State ---------- */
   const contextMenuVisible = ref(false)
@@ -219,6 +226,7 @@
   // Context menu event handlers
   const handleContextMenu = (e: MouseEvent) => {
     e.preventDefault()
+    suppressNextClick.value = true
     contextMenuVisible.value = true
     contextMenuStyle.value = {
       left: `${e.clientX}px`,
@@ -776,6 +784,9 @@
   const handleMouseDown = (e: MouseEvent) => {
     isPanning.value = true
     lastPanX.value = e.clientX
+    panStartX.value = e.clientX
+    panStartY.value = e.clientY
+    didPanSinceMouseDown.value = false
     if (chartContainer.value) chartContainer.value.style.cursor = 'grabbing'
   }
   const handlePanEnd = () => {
@@ -798,6 +809,10 @@
       lastPanX.value = e.clientX
       const panDelta = (deltaX / areaWidth) * visibleMoves
       panOffset.value -= panDelta
+      const dist =
+        Math.abs(e.clientX - panStartX.value) +
+        Math.abs(e.clientY - panStartY.value)
+      if (dist > 4) didPanSinceMouseDown.value = true
       nextTick(drawChart)
       return
     }
@@ -839,6 +854,31 @@
     }
   }
 
+  // Click to seek to the nearest move index
+  const handleClick = (e: MouseEvent) => {
+    if (!chartCanvas.value) return
+    if (suppressNextClick.value) {
+      suppressNextClick.value = false
+      return
+    }
+    if (isPanning.value || didPanSinceMouseDown.value) {
+      didPanSinceMouseDown.value = false
+      return
+    }
+    const points = chartData.value
+    if (points.length < 2) return
+    const areaWidth = chartWidth.value - padding.left - padding.right
+    if (areaWidth <= 0) return
+    const totalMoves = points.length - 1
+    const visibleMoves = totalMoves / zoomLevel.value
+    const mouseProportion = (e.offsetX - padding.left) / areaWidth
+    const moveIndex = panOffset.value + mouseProportion * visibleMoves
+    const closestIndex = Math.round(
+      Math.max(0, Math.min(points.length - 1, moveIndex))
+    )
+    emit('seek', closestIndex)
+  }
+
   /* ---------- Resize Listener ---------- */
   const handleResize = () => {
     if (!chartCanvas.value || !chartContainer.value) return
@@ -856,8 +896,6 @@
   watch(
     [() => props.history, () => props.currentMoveIndex],
     () => {
-      zoomLevel.value = 1.0
-      panOffset.value = 0
       nextTick(drawChart)
     },
     { deep: true }
@@ -885,6 +923,7 @@
       chartCanvas.value.addEventListener('mousedown', handleMouseDown)
       chartCanvas.value.addEventListener('mousemove', handleMouseMove)
       chartCanvas.value.addEventListener('mouseleave', handleMouseLeave)
+      chartCanvas.value.addEventListener('click', handleClick)
       chartCanvas.value.addEventListener('contextmenu', handleContextMenu)
       chartContainer.value.addEventListener('mouseup', handlePanEnd)
       chartContainer.value.addEventListener('mouseleave', handlePanEnd)
@@ -899,6 +938,7 @@
       chartCanvas.value.removeEventListener('mousedown', handleMouseDown)
       chartCanvas.value.removeEventListener('mousemove', handleMouseMove)
       chartCanvas.value.removeEventListener('mouseleave', handleMouseLeave)
+      chartCanvas.value.removeEventListener('click', handleClick)
       chartCanvas.value.removeEventListener('contextmenu', handleContextMenu)
       chartContainer.value.removeEventListener('mouseup', handlePanEnd)
       chartContainer.value.removeEventListener('mouseleave', handlePanEnd)
