@@ -440,6 +440,7 @@
     if (!showOnlyLines.value) {
       drawDataPoints(ctx, area, points, minT, rangeT, visibleMoves)
     }
+    drawOffscreenIndicator(ctx, area, points, visibleMoves)
   }
 
   /* ---------- Drawing Helpers ---------- */
@@ -680,6 +681,44 @@
           ctx.arc(x, y, 6, 0, 2 * Math.PI)
           ctx.stroke()
         }
+      }
+    }
+  }
+  const drawOffscreenIndicator = (
+    ctx: CanvasRenderingContext2D,
+    area: any,
+    points: any[],
+    visibleMoves: number
+  ) => {
+    // Find the data point for the current move.
+    const currentPoint = points.find(
+      p => p.moveIndex === props.currentMoveIndex
+    )
+
+    // Exit if the current move isn't in the data (e.g., initial state).
+    if (!currentPoint) return
+
+    // Calculate the theoretical X coordinate where the current move would be.
+    const currentX = getX(currentPoint.moveIndex, area.width, visibleMoves)
+
+    // Check if the calculated position is outside the visible chart area.
+    const isOffscreenLeft = currentX < area.x
+    const isOffscreenRight = currentX > area.x + area.width
+
+    if (isOffscreenLeft || isOffscreenRight) {
+      // Set the style for the indicator. Use the same color as the current move highlight.
+      ctx.fillStyle = '#ff9800'
+      ctx.font = 'bold 16px Arial'
+      ctx.textBaseline = 'middle' // Vertically center the arrow character.
+
+      if (isOffscreenLeft) {
+        // If the move is off-screen to the left, draw a left-pointing arrow.
+        ctx.textAlign = 'left'
+        ctx.fillText('◀', area.x + 5, area.y + area.height / 2)
+      } else {
+        // If the move is off-screen to the right, draw a right-pointing arrow.
+        ctx.textAlign = 'right'
+        ctx.fillText('▶', area.x + area.width - 5, area.y + area.height / 2)
       }
     }
   }
