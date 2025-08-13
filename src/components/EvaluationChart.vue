@@ -690,6 +690,9 @@
     points: any[],
     visibleMoves: number
   ) => {
+    // Do not draw offscreen indicators at minimum zoom
+    if (zoomLevel.value <= minZoom + 1e-6) return
+
     // Find the data point for the current move.
     const currentPoint = points.find(
       p => p.moveIndex === props.currentMoveIndex
@@ -702,8 +705,9 @@
     const currentX = getX(currentPoint.moveIndex, area.width, visibleMoves)
 
     // Check if the calculated position is outside the visible chart area.
-    const isOffscreenLeft = currentX < area.x
-    const isOffscreenRight = currentX > area.x + area.width
+    const epsilon = 0.5
+    const isOffscreenLeft = currentX < area.x - epsilon
+    const isOffscreenRight = currentX > area.x + area.width + epsilon
 
     if (isOffscreenLeft || isOffscreenRight) {
       // Set the style for the indicator. Use the same color as the current move highlight.
