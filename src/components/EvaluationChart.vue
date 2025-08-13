@@ -522,11 +522,23 @@
     const startIndex = Math.floor(panOffset.value)
     const endIndex = Math.ceil(panOffset.value + visibleMoves)
     const step = Math.max(1, Math.floor(visibleMoves / (area.width / 40)))
+    let lastDrawnMoveNumber = -1
     for (let i = startIndex; i <= endIndex; i++) {
       if (i >= 0 && i < points.length && points[i].moveNumber % step === 0) {
         const p = points[i]
-        const x = getX(i, area.width, visibleMoves)
-        ctx.fillText(p.moveNumber.toString(), x, area.y + area.height + 5)
+
+        if (
+          p.moveNumber > 0 &&
+          p.moveNumber % step === 0 &&
+          p.moveNumber !== lastDrawnMoveNumber
+        ) {
+          const x = getX(i, area.width, visibleMoves)
+
+          if (x >= area.x && x <= area.x + area.width) {
+            ctx.fillText(p.moveNumber.toString(), x, area.y + area.height + 5)
+            lastDrawnMoveNumber = p.moveNumber
+          }
+        }
       }
     }
   }
