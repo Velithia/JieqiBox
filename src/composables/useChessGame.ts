@@ -1984,11 +1984,11 @@ export function useChessGame() {
   const openGameNotation = () => {
     const input = document.createElement('input')
     input.type = 'file'
-    
+
     // Include binary MIME type to support XQF files on Android devices
     // Android may recognize .xqf files as binary/octet-stream instead of by extension
     input.accept = '.json,.xqf,application/json,application/octet-stream'
-    
+
     input.onchange = async event => {
       const target = event.target as HTMLInputElement
       if (target.files && target.files[0]) {

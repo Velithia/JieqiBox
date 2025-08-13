@@ -269,6 +269,20 @@
   const chartHeight = ref(0)
   const padding = { top: 20, right: 20, bottom: 40, left: 60 }
 
+  const setupCanvas = () => {
+    if (!chartCanvas.value || !chartContainer.value) return
+    const ctn = chartContainer.value
+    const dpr = window.devicePixelRatio || 1
+    chartWidth.value = ctn.clientWidth
+    chartHeight.value = ctn.clientHeight
+    chartCanvas.value.width = Math.max(1, Math.floor(chartWidth.value * dpr))
+    chartCanvas.value.height = Math.max(1, Math.floor(chartHeight.value * dpr))
+    chartCanvas.value.style.width = `${chartWidth.value}px`
+    chartCanvas.value.style.height = `${chartHeight.value}px`
+    chartContext.value = chartCanvas.value.getContext('2d')
+    chartContext.value?.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+
   /* ---------- Parameter: asinh Scaling Factor ---------- */
   const scaleFactor = 100 // <- Key parameter
   const transform = (s: number) => Math.asinh(s / scaleFactor)
@@ -881,14 +895,7 @@
 
   /* ---------- Resize Listener ---------- */
   const handleResize = () => {
-    if (!chartCanvas.value || !chartContainer.value) return
-    const ctn = chartContainer.value
-    chartWidth.value = ctn.clientWidth
-    chartHeight.value = ctn.clientHeight
-    chartCanvas.value.width = chartWidth.value
-    chartCanvas.value.height = chartHeight.value
-    chartCanvas.value.style.width = `${chartWidth.value}px`
-    chartCanvas.value.style.height = `${chartHeight.value}px`
+    setupCanvas()
     nextTick(drawChart)
   }
 
