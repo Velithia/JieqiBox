@@ -338,6 +338,7 @@ export default {
     copyFen: 'Sao chép FEN',
     pasteFen: 'Dán FEN',
     inputFen: 'Nhập FEN',
+    inputCopyFen: 'Nhập/Sao chép FEN',
     newGame: 'Ván mới',
     copied: '✓ Đã sao chép',
     clearDrawings: 'Xóa vẽ',

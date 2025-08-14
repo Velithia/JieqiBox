@@ -428,6 +428,7 @@ export default {
     copyFen: 'Copy FEN',
     pasteFen: 'Paste FEN',
     inputFen: 'Input FEN',
+    inputCopyFen: 'Input/Copy FEN',
     newGame: 'New Game',
     copied: '✓ Copied',
     clearDrawings: 'Clear Drawings',

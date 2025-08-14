@@ -336,6 +336,7 @@ export default {
     copyFen: 'FENをコピー',
     pasteFen: 'FENを貼り付け',
     inputFen: 'FENを入力',
+    inputCopyFen: 'FENを入力/コピー',
     newGame: '新しいゲーム',
     copied: '✓ コピーしました',
     clearDrawings: '描画をクリア',

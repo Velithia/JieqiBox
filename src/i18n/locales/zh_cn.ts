@@ -414,6 +414,7 @@ export default {
     copyFen: '复制FEN',
     pasteFen: '粘贴FEN',
     inputFen: '输入FEN',
+    inputCopyFen: '输入/复制FEN',
     newGame: '新对局',
     copied: '✓ 已复制',
     clearDrawings: '清除绘制',

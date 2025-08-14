@@ -214,9 +214,12 @@
 
       <!-- Panel -->
       <div class="panel">
-        <v-btn @click="copyFenToClipboard" size="small" color="button">{{
-          $t('chessboard.copyFen')
-        }}</v-btn>
+        <v-btn 
+          v-if="!isAndroid" 
+          @click="copyFenToClipboard" 
+          size="small" 
+          color="button"
+        >{{ $t('chessboard.copyFen') }}</v-btn>
         <v-btn
           @click="pasteFenFromClipboard"
           size="small"
@@ -229,7 +232,7 @@
           size="small"
           color="button"
           :disabled="isMatchRunning"
-          >{{ $t('chessboard.inputFen') }}</v-btn
+          >{{ isAndroid ? $t('chessboard.inputCopyFen') : $t('chessboard.inputFen') }}</v-btn
         >
         <v-btn
           @click="setupNewGameWithArrow"
@@ -239,6 +242,7 @@
           >{{ $t('chessboard.newGame') }}</v-btn
         >
         <v-btn
+          v-if="!isAndroid"
           @click="clearUserDrawings"
           size="small"
           color="error"
@@ -283,6 +287,7 @@
   import ClearHistoryConfirmDialog from './ClearHistoryConfirmDialog.vue'
   import EvaluationChart from './EvaluationChart.vue'
   import { MATE_SCORE_BASE } from '@/utils/constants'
+  import { isAndroidPlatform } from '@/utils/platform'
 
   // Seek handler for EvaluationChart
   const handleChartSeek = (idx: number) => {
@@ -401,6 +406,11 @@
     } catch {
       return false
     }
+  })
+
+  // Check if running on Android platform
+  const isAndroid = computed(() => {
+    return isAndroidPlatform()
   })
 
   // Calculate the ID of the checked king/general, if any

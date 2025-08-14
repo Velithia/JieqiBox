@@ -330,6 +330,7 @@ export default {
     copyFen: '複製FEN',
     pasteFen: '貼上FEN',
     inputFen: '輸入FEN',
+    inputCopyFen: '輸入/複製FEN',
     newGame: '新對局',
     copied: '✓ 已複製',
     clearDrawings: '清除繪製',
