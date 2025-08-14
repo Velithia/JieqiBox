@@ -267,7 +267,17 @@
   /* ---------- Dimensions ---------- */
   const chartWidth = ref(0)
   const chartHeight = ref(0)
-  const padding = { top: 20, right: 20, bottom: 40, left: 60 }
+  // Responsive padding based on screen width
+  const getPadding = () => {
+    const isMobile = window.innerWidth <= 768
+    return {
+      top: 20,
+      right: isMobile ? 15 : 20,
+      bottom: isMobile ? 35 : 40,
+      left: isMobile ? 45 : 60
+    }
+  }
+  const padding = getPadding()
 
   const setupCanvas = () => {
     if (!chartCanvas.value || !chartContainer.value) return
@@ -356,6 +366,10 @@
     const startIndex = Math.floor(panOffset.value)
     const endIndex = Math.ceil(panOffset.value + visibleMoves)
     const areaWidth = chartWidth.value - padding.left - padding.right
+    
+    // Ensure area width is valid
+    if (areaWidth <= 0) return labels
+    
     const labelStep = Math.max(1, Math.floor(visibleMoves / (areaWidth / 70)))
     for (let i = startIndex; i <= endIndex; i += 1) {
       if (i >= points.length) break
@@ -368,6 +382,7 @@
       ) {
         const x =
           padding.left + ((i - panOffset.value) / visibleMoves) * areaWidth
+        // Ensure x is within valid bounds
         if (x >= padding.left && x <= chartWidth.value - padding.right) {
           labels.push({
             text: p.moveText,
@@ -392,6 +407,16 @@
       y: padding.top,
       width: chartWidth.value - padding.left - padding.right,
       height: chartHeight.value - padding.top - padding.bottom,
+    }
+    
+    // Ensure area width is not negative
+    if (area.width <= 0) {
+      area.width = 1;
+    }
+    
+    // Ensure area height is not negative
+    if (area.height <= 0) {
+      area.height = 1;
     }
     const totalMoves = points.length - 1
     const visibleMoves = totalMoves / zoomLevel.value
@@ -500,7 +525,10 @@
     const endIndex = Math.ceil(panOffset.value + visibleMoves)
     for (let i = startIndex; i <= endIndex; i++) {
       const x = getX(i, area.width, visibleMoves)
-      if (x >= area.x && x <= area.x + area.width) {
+      // Allow a small margin for grid lines
+      const leftBound = area.x - 5
+      const rightBound = area.x + area.width + 5
+      if (x >= leftBound && x <= rightBound) {
         ctx.beginPath()
         ctx.moveTo(x, area.y)
         ctx.lineTo(x, area.y + area.height)
@@ -557,7 +585,10 @@
         ) {
           const x = getX(i, area.width, visibleMoves)
 
-          if (x >= area.x && x <= area.x + area.width) {
+          // Ensure x is within valid bounds with a small margin
+          const leftBound = area.x - 5
+          const rightBound = area.x + area.width + 5
+          if (x >= leftBound && x <= rightBound) {
             ctx.fillText(p.moveNumber.toString(), x, area.y + area.height + 5)
             lastDrawnMoveNumber = p.moveNumber
           }
@@ -895,6 +926,8 @@
 
   /* ---------- Resize Listener ---------- */
   const handleResize = () => {
+    // Update padding based on screen size
+    Object.assign(padding, getPadding())
     setupCanvas()
     nextTick(drawChart)
   }
@@ -1107,13 +1140,23 @@
   }
   @media (max-width: 768px) {
     .evaluation-chart {
-      padding: 12px;
+      padding: 10px;
     }
     .chart-container {
       height: 180px;
     }
     .chart-title {
       font-size: 14px;
+    }
+  }
+  
+  /* Specific fix for Android portrait mode */
+  @media (max-width: 768px) and (orientation: portrait) {
+    .evaluation-chart {
+      padding: 8px;
+    }
+    .chart-container {
+      height: 160px;
     }
   }
 </style>
