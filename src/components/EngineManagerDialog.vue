@@ -315,13 +315,13 @@
           !engines.value.some(
             (e: ManagedEngine) =>
               e.name === value && e.id !== editedEngine.value.id
-          ) || t('common.nameMustBeUnique')
+          ) || t('engineManager.nameExists')
         )
       }
       // When adding new engine, check against all engines
       return (
         !engines.value.some((e: ManagedEngine) => e.name === value) ||
-        t('common.nameMustBeUnique')
+        t('engineManager.nameExists')
       )
     },
   }
