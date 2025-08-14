@@ -411,7 +411,7 @@
               :title="$t('analysis.goToLast')"
             />
             <!-- Annotation quick buttons for current move (apply to last move index) -->
-            <v-menu open-on-hover close-on-content-click>
+            <v-menu location="bottom" :close-on-content-click="true">
               <template #activator="{ props }">
                 <v-btn
                   v-bind="props"
