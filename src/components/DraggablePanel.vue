@@ -170,6 +170,7 @@
     flex-grow: 1;
     overflow: auto;
     height: calc(100% - 30px);
+    padding: 0 4px; /* Add padding to ensure content doesn't touch edges */
   }
   .panel-content {
     padding-bottom: 8px;

@@ -196,7 +196,7 @@
   const panStartY = ref(0)
   const didPanSinceMouseDown = ref(false)
   const suppressNextClick = ref(false)
-  
+
   // Touch events state
   const lastTouchDistance = ref(0)
   const isTouchZooming = ref(false)
@@ -278,7 +278,7 @@
       top: 20,
       right: isMobile ? 15 : 20,
       bottom: isMobile ? 35 : 40,
-      left: isMobile ? 45 : 60
+      left: isMobile ? 45 : 60,
     }
   }
   const padding = getPadding()
@@ -370,10 +370,10 @@
     const startIndex = Math.floor(panOffset.value)
     const endIndex = Math.ceil(panOffset.value + visibleMoves)
     const areaWidth = chartWidth.value - padding.left - padding.right
-    
+
     // Ensure area width is valid
     if (areaWidth <= 0) return labels
-    
+
     const labelStep = Math.max(1, Math.floor(visibleMoves / (areaWidth / 70)))
     for (let i = startIndex; i <= endIndex; i += 1) {
       if (i >= points.length) break
@@ -412,15 +412,15 @@
       width: chartWidth.value - padding.left - padding.right,
       height: chartHeight.value - padding.top - padding.bottom,
     }
-    
+
     // Ensure area width is not negative
     if (area.width <= 0) {
-      area.width = 1;
+      area.width = 1
     }
-    
+
     // Ensure area height is not negative
     if (area.height <= 0) {
-      area.height = 1;
+      area.height = 1
     }
     const totalMoves = points.length - 1
     const visibleMoves = totalMoves / zoomLevel.value
@@ -830,7 +830,7 @@
     panOffset.value = moveIndexAtCursor - mouseProportion * newVisibleMoves
     nextTick(drawChart)
   }
-  
+
   // Calculate distance between two touch points
   const getTouchDistance = (touches: TouchList): number => {
     if (touches.length < 2) return 0
@@ -838,7 +838,7 @@
     const dy = touches[0].clientY - touches[1].clientY
     return Math.sqrt(dx * dx + dy * dy)
   }
-  
+
   // Handle touch start for zooming
   const handleTouchStart = (e: TouchEvent) => {
     if (e.touches.length === 2) {
@@ -853,44 +853,44 @@
       if (chartContainer.value) chartContainer.value.style.cursor = 'grabbing'
     }
   }
-  
+
   // Handle touch move for panning and zooming
   const handleTouchMove = (e: TouchEvent) => {
     if (!chartCanvas.value || !chartContainer.value) return
     e.preventDefault()
-    
+
     // Handle two-finger zoom
     if (isTouchZooming.value && e.touches.length === 2) {
       tooltipVisible.value = false
       const currentDistance = getTouchDistance(e.touches)
       const areaWidth = chartWidth.value - padding.left - padding.right
       if (areaWidth <= 0) return
-      
+
       // Calculate zoom center (midpoint between touches)
       const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2
       const rect = chartCanvas.value.getBoundingClientRect()
       const mouseX = centerX - rect.left
-      
+
       const totalMoves = Math.max(1, chartData.value.length - 1)
       const currentVisibleMoves = totalMoves / zoomLevel.value
       const mouseProportion = (mouseX - padding.left) / areaWidth
       const moveIndexAtCursor =
         panOffset.value + mouseProportion * currentVisibleMoves
-      
+
       // Calculate zoom factor based on distance change
       const zoomFactor = currentDistance / lastTouchDistance.value
       const oldZoomLevel = zoomLevel.value
       let newZoomLevel = oldZoomLevel * zoomFactor
       zoomLevel.value = Math.max(minZoom, Math.min(maxZoom, newZoomLevel))
-      
+
       const newVisibleMoves = totalMoves / zoomLevel.value
       panOffset.value = moveIndexAtCursor - mouseProportion * newVisibleMoves
-      
+
       lastTouchDistance.value = currentDistance
       nextTick(drawChart)
       return
     }
-    
+
     // Handle single-finger panning
     if (isPanning.value && e.touches.length === 1) {
       tooltipVisible.value = false
@@ -908,7 +908,7 @@
       nextTick(drawChart)
     }
   }
-  
+
   // Handle touch end
   const handleTouchEnd = () => {
     isTouchZooming.value = false
@@ -1056,7 +1056,7 @@
       chartCanvas.value.addEventListener('mouseleave', handleMouseLeave)
       chartCanvas.value.addEventListener('click', handleClick)
       chartCanvas.value.addEventListener('contextmenu', handleContextMenu)
-      
+
       // Add touch event listeners
       chartCanvas.value.addEventListener('touchstart', handleTouchStart, {
         passive: false,
@@ -1066,7 +1066,7 @@
       })
       chartCanvas.value.addEventListener('touchend', handleTouchEnd)
       chartCanvas.value.addEventListener('touchcancel', handleTouchEnd)
-      
+
       chartContainer.value.addEventListener('mouseup', handlePanEnd)
       chartContainer.value.addEventListener('mouseleave', handlePanEnd)
       handleResize()
@@ -1082,13 +1082,13 @@
       chartCanvas.value.removeEventListener('mouseleave', handleMouseLeave)
       chartCanvas.value.removeEventListener('click', handleClick)
       chartCanvas.value.removeEventListener('contextmenu', handleContextMenu)
-      
+
       // Remove touch event listeners
       chartCanvas.value.removeEventListener('touchstart', handleTouchStart)
       chartCanvas.value.removeEventListener('touchmove', handleTouchMove)
       chartCanvas.value.removeEventListener('touchend', handleTouchEnd)
       chartCanvas.value.removeEventListener('touchcancel', handleTouchEnd)
-      
+
       chartContainer.value.removeEventListener('mouseup', handlePanEnd)
       chartContainer.value.removeEventListener('mouseleave', handlePanEnd)
     }
@@ -1258,7 +1258,7 @@
       font-size: 14px;
     }
   }
-  
+
   /* Specific fix for Android portrait mode */
   @media (max-width: 768px) and (orientation: portrait) {
     .evaluation-chart {

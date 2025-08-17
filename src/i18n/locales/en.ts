@@ -257,6 +257,12 @@ export default {
     stopped: 'Stopped',
     noMatchEngine: 'No match engine loaded',
     noAnalysis: 'No analysis available',
+    // Luck index related
+    luckIndex: 'Luck Index',
+    luckIndexBasedOnFlipSequence: 'Estimated based on flip sequence',
+    blackFavor: 'Black Favor',
+    redFavor: 'Red Favor',
+    currentValue: 'Current Value',
     // Navigation buttons
     goToFirst: 'Go to First Move',
     goToPrevious: 'Go to Previous Move',
@@ -477,6 +483,7 @@ export default {
     useNewFenFormat: 'Use New FEN Format',
     engineLogLineLimit: 'Engine Log Line Limit',
     showChineseNotation: 'Show Chinese Notation',
+    showLuckIndex: 'Show Luck Index',
   },
 
   // UCI messages

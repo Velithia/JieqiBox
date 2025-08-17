@@ -256,6 +256,12 @@ export default {
     stopped: '停止',
     noMatchEngine: 'マッチエンジンが読み込まれていません',
     noAnalysis: '解析データがありません',
+    // 運び指数関連
+    luckIndex: '運び指数',
+    luckIndexBasedOnFlipSequence: '駒をめくる順序に基づく推定',
+    blackFavor: '黒優勢',
+    redFavor: '赤優勢',
+    currentValue: '現在値',
     // ナビゲーションボタン
     goToFirst: '最初の手に移動',
     goToPrevious: '前の手に移動',
@@ -385,6 +391,7 @@ export default {
     useNewFenFormat: '新しいFEN形式を使用',
     engineLogLineLimit: 'エンジンログ行数制限',
     showChineseNotation: '中国式記譜法を表示',
+    showLuckIndex: '運び指数を表示',
   },
 
   // UCIメッセージ

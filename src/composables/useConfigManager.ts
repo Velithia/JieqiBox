@@ -24,6 +24,7 @@ interface ConfigData {
     useNewFenFormat: boolean
     engineLogLineLimit: number
     showChineseNotation: boolean
+    showLuckIndex: boolean
   }
   evaluationChartSettings: {
     showMoveLabels: boolean
@@ -74,6 +75,7 @@ const defaultConfig: ConfigData = {
     useNewFenFormat: true,
     engineLogLineLimit: 256,
     showChineseNotation: true,
+    showLuckIndex: true,
   },
   evaluationChartSettings: {
     showMoveLabels: true,

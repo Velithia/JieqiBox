@@ -221,6 +221,40 @@
       />
     </div>
 
+    <DraggablePanel v-if="shouldShowLuckIndex" panel-id="luck-index">
+      <template #header>
+        <h3 class="section-title">{{ $t('analysis.luckIndex') }}</h3>
+      </template>
+      <div class="luck-index-panel">
+        <div class="luck-description">
+          {{ $t('analysis.luckIndexBasedOnFlipSequence') }}
+        </div>
+        <div class="luck-row">
+          <span class="label">{{ $t('analysis.currentValue') }}</span>
+          <span class="luck-value" :class="luckClass">{{ luckIndex }}</span>
+        </div>
+        <div class="luck-axis">
+          <div class="axis-track"></div>
+          <div
+            class="axis-tick"
+            v-for="tick in axisTicks"
+            :key="tick.pos"
+            :style="{ left: tick.pos + '%' }"
+          >
+            <span class="tick-label">{{ tick.label }}</span>
+          </div>
+          <div class="axis-zero" :style="{ left: '50%' }"></div>
+          <div class="axis-marker" :class="luckClass" :style="markerStyle">
+            <span class="marker-value">{{ luckIndex }}</span>
+          </div>
+        </div>
+        <div class="luck-legend">
+          <span>{{ $t('analysis.blackFavor') }}</span>
+          <span>{{ $t('analysis.redFavor') }}</span>
+        </div>
+      </div>
+    </DraggablePanel>
+
     <DraggablePanel panel-id="dark-piece-pool">
       <template #header>
         <h3 class="section-title">
@@ -805,14 +839,27 @@
   } from '@/utils/eloCalculator'
   import { marked } from 'marked'
   import DOMPurify from 'dompurify'
+  import {
+    START_FEN,
+    JIEQI_MODEL_FEATURE_DIM as FEATURE_DIM,
+    JIEQI_MODEL_INTERCEPT as MODEL_INTERCEPT,
+    JIEQI_MODEL_WEIGHTS as MODEL_WEIGHTS,
+    JIEQI_MODEL_SCALER_MEANS as SCALER_MEANS,
+    JIEQI_MODEL_SCALER_SCALES as SCALER_SCALES,
+    JIEQI_MODEL_PIECE_TO_INDEX as PIECE_TO_INDEX,
+  } from '@/utils/constants'
 
   const { t } = useI18n()
 
   const { restoreDefaultLayout } = usePanelManager()
 
   // Get interface settings
-  const { parseUciInfo, engineLogLineLimit, showChineseNotation } =
-    useInterfaceSettings()
+  const {
+    parseUciInfo,
+    engineLogLineLimit,
+    showChineseNotation,
+    showLuckIndex,
+  } = useInterfaceSettings()
 
   // Get persistent game settings
   const { enablePonder } = useGameSettings()
@@ -2450,6 +2497,121 @@
     })
   }
 
+  /* ---------- Luck Index ---------- */
+
+  const hasPositionEdit = computed(() => {
+    const end = currentMoveIndex.value
+    const h = history.value.slice(0, end)
+    return h.some(
+      (e: HistoryEntry) =>
+        e.type === 'adjust' &&
+        typeof e.data === 'string' &&
+        e.data.startsWith('position_edit:')
+    )
+  })
+
+  const isStandardStart = computed(() => {
+    return (initialFen.value || '').trim() === START_FEN.trim()
+  })
+
+  const shouldShowLuckIndex = computed(() => {
+    return (
+      isStandardStart.value && !hasPositionEdit.value && showLuckIndex.value
+    )
+  })
+
+  const revealSequence = computed(() => {
+    if (!shouldShowLuckIndex.value) return ''
+    const seqChars: string[] = []
+    const limit = currentMoveIndex.value
+    for (let i = 0; i < limit; i++) {
+      const entry = history.value[i]
+      if (!entry || entry.type !== 'move') continue
+      const uci = (entry.data || '').trim()
+      if (uci.length <= 4) continue
+      const flipInfo = uci.substring(4)
+      const moverIsRed = i % 2 === 0
+      for (const ch of flipInfo) {
+        const isLetter = ch.toLowerCase() !== ch.toUpperCase()
+        if (!isLetter) continue
+        const isUpper = ch === ch.toUpperCase()
+        const isRevealed = (moverIsRed && isUpper) || (!moverIsRed && !isUpper)
+        if (isRevealed) seqChars.push(ch)
+      }
+    }
+    return seqChars.join('')
+  })
+
+  function sequenceToFeatures(sequence: string): number[] {
+    const features: number[] = []
+    const counts = new Array(12).fill(0)
+    const timings = new Array(12).fill(0)
+    for (let i = 0; i < sequence.length; i++) {
+      const piece = sequence[i]
+      const idx = PIECE_TO_INDEX[piece]
+      if (idx == null) continue
+      counts[idx] += 1
+      if (timings[idx] === 0) timings[idx] = i + 1
+    }
+    const totalMoves = sequence.length
+    features.push(...counts)
+    features.push(...timings)
+    features.push(totalMoves)
+    return features
+  }
+
+  function sigmoid(z: number): number {
+    return 1 / (1 + Math.exp(-z))
+  }
+
+  const luckWinRate = computed(() => {
+    if (!shouldShowLuckIndex.value) return 0.5
+    const seq = revealSequence.value
+    const feats = sequenceToFeatures(seq)
+    if (feats.length !== FEATURE_DIM) return 0.5
+    const scaled = new Array(FEATURE_DIM)
+    for (let i = 0; i < FEATURE_DIM; i++) {
+      const scale = (SCALER_SCALES as readonly number[])[i]
+      const mean = (SCALER_MEANS as readonly number[])[i]
+      scaled[i] = scale !== 0 ? (feats[i] - mean) / scale : feats[i] - mean
+    }
+    let z = MODEL_INTERCEPT
+    for (let i = 0; i < FEATURE_DIM; i++) {
+      z += scaled[i] * (MODEL_WEIGHTS as readonly number[])[i]
+    }
+    return sigmoid(z)
+  })
+
+  const luckIndex = computed(() => {
+    // Map win rate to [-100, 100]
+    const v = Math.round((luckWinRate.value - 0.5) * 200)
+    return Math.max(-100, Math.min(100, v))
+  })
+
+  const luckClass = computed(() => {
+    if (luckIndex.value > 5) return 'luck-positive'
+    if (luckIndex.value < -5) return 'luck-negative'
+    return 'luck-neutral'
+  })
+
+  const axisTicks = computed(() => {
+    // Show ticks at -100, -50, 0, +50, +100
+    return [
+      { pos: 0, label: '-100' },
+      { pos: 25, label: '-50' },
+      { pos: 50, label: '0' },
+      { pos: 75, label: '50' },
+      { pos: 100, label: '100' },
+    ]
+  })
+
+  const markerStyle = computed(() => {
+    const pos = (luckIndex.value + 100) / 2 // 0..100
+    return {
+      left: `calc(${pos}% )`,
+    } as Record<string, string>
+  })
+
   /* ---------- Ponder Helper Functions ---------- */
 
   // Handle ponder logic after a move is played
@@ -2712,6 +2874,113 @@
       Roboto,
       Arial,
       sans-serif;
+  }
+
+  /* ---------- Luck Index Styles ---------- */
+  .luck-index-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .luck-description {
+    font-size: 12px;
+    color: rgb(var(--v-theme-on-surface));
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .luck-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .luck-row .label {
+    font-weight: 600;
+    color: rgb(var(--v-theme-on-surface));
+    opacity: 0.8;
+  }
+  .luck-value {
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .luck-positive {
+    color: #d32f2f;
+  }
+  .luck-negative {
+    color: #2e7d32;
+  }
+  .luck-neutral {
+    color: rgb(var(--v-theme-on-surface));
+    opacity: 0.85;
+  }
+  .luck-axis {
+    position: relative;
+    height: 42px;
+    padding: 10px 0 14px 0;
+    margin: 0 4px; /* Add margin to ensure ticks are visible when undocked */
+  }
+  .axis-track {
+    position: absolute;
+    left: 4px; /* Adjust to account for margin */
+    right: 4px; /* Adjust to account for margin */
+    top: 18px;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #2e7d32, #9e9e9e, #d32f2f);
+    opacity: 0.9;
+  }
+  .axis-tick {
+    position: absolute;
+    top: 10px;
+    width: 0;
+    height: 18px;
+  }
+  .axis-tick::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 8px;
+    width: 2px;
+    height: 12px;
+    background: rgba(var(--v-border-color), var(--v-border-opacity));
+  }
+  .tick-label {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgb(var(--v-theme-on-surface));
+    opacity: 0.8;
+    white-space: nowrap; /* Prevent label wrapping */
+  }
+  .axis-zero {
+    position: absolute;
+    top: 12px;
+    width: 0;
+    height: 30px;
+    border-left: 2px dashed rgba(var(--v-border-color), var(--v-border-opacity));
+  }
+  .axis-marker {
+    position: absolute;
+    top: 2px;
+    transform: translateX(-50%);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(var(--v-theme-surface), 0.9);
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  .marker-value {
+    font-family: 'Courier New', Courier, monospace;
+  }
+  .luck-legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: rgb(var(--v-theme-on-surface));
+    opacity: 0.8;
   }
 
   .wdl-info {

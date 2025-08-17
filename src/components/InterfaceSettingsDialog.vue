@@ -59,6 +59,11 @@
           :label="$t('interfaceSettings.showChineseNotation')"
           color="primary"
         ></v-switch>
+        <v-switch
+          v-model="showLuckIndex"
+          :label="$t('interfaceSettings.showLuckIndex')"
+          color="primary"
+        ></v-switch>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -87,6 +92,7 @@
     useNewFenFormat,
     engineLogLineLimit,
     showChineseNotation,
+    showLuckIndex,
   } = useInterfaceSettings()
 
   const closeDialog = () => {

@@ -254,6 +254,12 @@ export default {
     stopped: '已停止',
     noMatchEngine: '未載入比賽引擎',
     noAnalysis: '無分析資料',
+    // 幸運指數相關
+    luckIndex: '幸運指數',
+    luckIndexBasedOnFlipSequence: '基於翻子順序估計',
+    blackFavor: '黑方好',
+    redFavor: '紅方好',
+    currentValue: '當前值',
     // 導航按鈕
     goToFirst: '回到第一步',
     goToPrevious: '上一步',
@@ -379,6 +385,7 @@ export default {
     useNewFenFormat: '使用新FEN格式',
     engineLogLineLimit: '引擎日誌行數限制',
     showChineseNotation: '顯示中文記譜法',
+    showLuckIndex: '顯示幸運指數',
   },
 
   // UCI訊息

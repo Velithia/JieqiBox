@@ -26,6 +26,7 @@ const defaultPanelStates: Record<string, Omit<PanelState, 'id'>> = {
     width: 400,
     height: 200,
   },
+  'luck-index': { isDocked: true, x: 0, y: 0, width: 400, height: 120 },
   notation: { isDocked: true, x: 0, y: 0, width: 400, height: 200 },
   'move-comments': { isDocked: true, x: 0, y: 0, width: 400, height: 250 },
   'engine-log': { isDocked: true, x: 0, y: 0, width: 400, height: 200 },

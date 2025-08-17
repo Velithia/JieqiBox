@@ -258,6 +258,12 @@ export default {
     stopped: 'Đã dừng',
     noMatchEngine: 'Chưa tải engine trận đấu',
     noAnalysis: 'Không có dữ liệu phân tích',
+    // Chỉ số may mắn
+    luckIndex: 'Chỉ số may mắn',
+    luckIndexBasedOnFlipSequence: 'Ước tính dựa trên trình tự lật quân',
+    blackFavor: 'Đen có lợi',
+    redFavor: 'Đỏ có lợi',
+    currentValue: 'Giá trị hiện tại',
     // Nút điều hướng
     goToFirst: 'Đi đến nước đầu tiên',
     goToPrevious: 'Đi đến nước trước',
@@ -387,6 +393,7 @@ export default {
     useNewFenFormat: 'Sử dụng định dạng FEN mới',
     engineLogLineLimit: 'Giới hạn dòng nhật ký động cơ',
     showChineseNotation: 'Hiển thị ký hiệu Trung Quốc',
+    showLuckIndex: 'Hiển thị chỉ số may mắn',
   },
 
   // Tin nhắn UCI

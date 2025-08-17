@@ -214,12 +214,13 @@
 
       <!-- Panel -->
       <div class="panel">
-        <v-btn 
-          v-if="!isAndroid" 
-          @click="copyFenToClipboard" 
-          size="small" 
+        <v-btn
+          v-if="!isAndroid"
+          @click="copyFenToClipboard"
+          size="small"
           color="button"
-        >{{ $t('chessboard.copyFen') }}</v-btn>
+          >{{ $t('chessboard.copyFen') }}</v-btn
+        >
         <v-btn
           @click="pasteFenFromClipboard"
           size="small"
@@ -232,7 +233,11 @@
           size="small"
           color="button"
           :disabled="isMatchRunning"
-          >{{ isAndroid ? $t('chessboard.inputCopyFen') : $t('chessboard.inputFen') }}</v-btn
+          >{{
+            isAndroid
+              ? $t('chessboard.inputCopyFen')
+              : $t('chessboard.inputFen')
+          }}</v-btn
         >
         <v-btn
           @click="setupNewGameWithArrow"
