@@ -214,6 +214,10 @@ export default {
     blackAiOff: '黑方電腦(關)',
     freeFlipMode: '自由翻子模式',
     darkPiecePool: '暗子池',
+    captureHistory: '吃子記錄',
+    myCaptured: '我方吃子',
+    opponentCaptured: '對方吃子',
+    noCaptured: '暫無',
     engineAnalysis: '引擎分析',
     notation: '棋譜',
     moveComments: '棋步註釋',
@@ -238,6 +242,9 @@ export default {
     // 比賽模式相關
     enterMatchMode: '比賽模式',
     exitMatchMode: '退出比賽模式',
+    // 人機對戰模式相關
+    enterHumanVsAiMode: '人機對戰',
+    exitHumanVsAiMode: '退出人機對戰',
     startMatch: '開始比賽',
     stopMatch: '停止比賽',
     jaiSettings: '比賽選項',
@@ -326,6 +333,7 @@ export default {
     blackDarkPiecesMismatch: '錯誤: 黑方{darkCount}暗子 > {poolCount}池',
     pieceCountExceeded: '錯誤: {pieceName} 總數超限!',
     engineLoadFailed: '載入引擎 {name} 失敗: {error}',
+    jaiEngineLoadFailed: '載入JAI比賽引擎 {name} 失敗: {error}',
     engineUnloadFailed: '卸載引擎失敗',
     failedToOpenFileSelector: '開啟檔案選擇器失敗',
     failedToProcessEngine: '處理引擎檔案失敗',
@@ -479,8 +487,6 @@ export default {
     },
     resultsSection: 'Elo 表現',
     performance: 'Elo 差值（含 95% 誤差）',
-
-    errorMargin: '誤差範圍 (95%)',
     confidenceInterval: '95% 信賴區間',
     scoreRate: '得分率',
     los: 'LOS 優勢機率',
@@ -499,5 +505,24 @@ export default {
       '您正在歷史局面中走子，這將清空後續的所有棋譜記錄。確定要繼續嗎？',
     confirm: '確定',
     cancel: '取消',
+  },
+
+  // 人機對戰模式
+  humanVsAi: {
+    title: '人機對戰模式',
+    selectAiSide: '選擇AI方',
+    redAiBlackHuman: '紅方AI，黑方人類',
+    blackAiRedHuman: '黑方AI，紅方人類',
+    options: '選項',
+    showEngineAnalysis: '顯示引擎分析',
+    engineAnalysisHint: '開啟後，可以查看引擎的分析結果，但不影響遊戲規則',
+    ponderNote: '關於後台思考：',
+    ponderUnifiedHint: '後台思考功能使用全局設置，可在正常模式的側邊欄中開啟或關閉',
+    rulesTitle: '遊戲規則',
+    rule1: '自動強制開啟隨機翻子模式',
+    rule2: '您只能看到自己吃掉AI的暗子',
+    rule3: 'AI只能看到自己吃掉您的暗子',
+    rule4: '符合標準揭棋規則的有限信息對戰',
+    startGame: '開始遊戲',
   },
 }

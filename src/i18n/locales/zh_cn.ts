@@ -214,6 +214,10 @@ export default {
     blackAiOff: '黑方电脑(关)',
     freeFlipMode: '自由翻子模式',
     darkPiecePool: '暗子池',
+    captureHistory: '吃子记录',
+    myCaptured: '我方吃子',
+    opponentCaptured: '对方吃子',
+    noCaptured: '暂无',
     engineAnalysis: '引擎分析',
     notation: '棋谱',
     moveComments: '棋步注释',
@@ -238,6 +242,9 @@ export default {
     // 比赛模式相关
     enterMatchMode: '比赛模式',
     exitMatchMode: '退出比赛模式',
+    // 人机对战模式相关
+    enterHumanVsAiMode: '人机对战',
+    exitHumanVsAiMode: '退出人机对战',
     startMatch: '开始比赛',
     stopMatch: '停止比赛',
     jaiSettings: '比赛选项',
@@ -387,7 +394,6 @@ export default {
     },
     resultsSection: 'Elo表现',
     performance: 'Elo差值（含95%误差）',
-
     confidenceInterval: '95%置信区间',
     scoreRate: '得分率',
     los: 'LOS 优势概率',
@@ -499,5 +505,24 @@ export default {
       '您正在历史局面中走子，这将清空后续的所有棋谱记录。确定要继续吗？',
     confirm: '确定',
     cancel: '取消',
+  },
+
+  // 人机对战模式
+  humanVsAi: {
+    title: '人机对战模式',
+    selectAiSide: '选择AI方',
+    redAiBlackHuman: '红方AI，黑方人类',
+    blackAiRedHuman: '黑方AI，红方人类',
+    options: '选项',
+    showEngineAnalysis: '显示引擎分析',
+    engineAnalysisHint: '开启后，可以查看引擎的分析结果，但不影响游戏规则',
+    ponderNote: '关于后台思考：',
+    ponderUnifiedHint: '后台思考功能使用全局设置，可在正常模式的侧边栏中开启或关闭',
+    rulesTitle: '游戏规则',
+    rule1: '自动强制开启随机翻子模式',
+    rule2: '您只能看到自己吃掉AI的暗子',
+    rule3: 'AI只能看到自己吃掉您的暗子',
+    rule4: '符合标准揭棋规则的有限信息对战',
+    startGame: '开始游戏',
   },
 }

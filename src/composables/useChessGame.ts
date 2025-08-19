@@ -9,6 +9,7 @@ import { MATE_SCORE_BASE } from '@/utils/constants'
 import { isAndroidPlatform as checkAndroidPlatform } from '../utils/platform'
 import { useInterfaceSettings } from './useInterfaceSettings'
 import { useGameSettings } from './useGameSettings'
+import { useHumanVsAiSettings } from './useHumanVsAiSettings'
 import { convertXQFToJieqiNotation } from '@/utils/xqf'
 
 export interface Piece {
@@ -58,6 +59,9 @@ export function useChessGame() {
   // Get persistent game settings
   const { flipMode } = useGameSettings()
 
+  // Get human vs AI settings
+  const { isHumanVsAiMode, aiSide } = useHumanVsAiSettings()
+
   const pieces = ref<Piece[]>([])
   const selectedPieceId = ref<number | null>(null)
   const copySuccessVisible = ref(false)
@@ -70,6 +74,12 @@ export function useChessGame() {
   const openingComment = ref<string>('')
   const unrevealedPieceCounts = ref<{ [key: string]: number }>({})
   const isBoardFlipped = ref(false) // board flip state
+
+  // Get current unrevealed counts for display purposes (God view)
+  const getCurrentUnrevealedCounts = () => {
+    const { godViewPool } = calculateDualPools()
+    return godViewPool
+  }
 
   const pendingFlip = ref<{
     pieceToMove: Piece
@@ -298,10 +308,143 @@ export function useChessGame() {
       // Convert baseFen to the target format
       return convertFenFormat(baseFen, targetFormat)
     } else {
-      // Generate current position FEN in the target format
-      const currentFen = generateFen()
-      return convertFenFormat(currentFen, targetFormat)
+      // In human vs AI mode, generate FEN with limited knowledge
+      if (isHumanVsAiMode.value) {
+        const currentFen = generateLimitedKnowledgeFen()
+        return convertFenFormat(currentFen, targetFormat)
+      } else {
+        // Generate current position FEN in the target format
+        const currentFen = generateFen()
+        return convertFenFormat(currentFen, targetFormat)
+      }
     }
+  }
+
+  // Parse UCI extended format to extract flip and capture information
+  const parseUciExtended = (uciMove: string, movingSide: 'red' | 'black') => {
+    if (uciMove.length <= 4) {
+      return { flipChar: null, captureChar: null }
+    }
+    
+    const extension = uciMove.slice(4) // Everything after position info
+    
+    if (extension.length === 1) {
+      // 5 characters total: could be flip or capture
+      const char = extension[0]
+      const isUpperCase = char === char.toUpperCase()
+      const charSide = isUpperCase ? 'red' : 'black'
+      
+      if (charSide === movingSide) {
+        // Same side as mover: this is a flip (revealing own piece)
+        return { flipChar: char, captureChar: null }
+      } else {
+        // Different side: this is a capture (eating opponent's piece)
+        return { flipChar: null, captureChar: char }
+      }
+    } else if (extension.length === 2) {
+      // 6 characters total: first is flip, second is capture
+      return { flipChar: extension[0], captureChar: extension[1] }
+    }
+    
+    return { flipChar: null, captureChar: null }
+  }
+
+  // Calculate pool counts from two perspectives: God view (true) and Engine view (limited)
+  const calculateDualPools = () => {
+    // God view pool: true state of all unrevealed pieces
+    const godViewPool = { ...INITIAL_PIECE_COUNTS }
+    
+    // Subtract all revealed pieces from god view
+    pieces.value.forEach(p => {
+      if (p.isKnown) {
+        const char = FEN_MAP[p.name]
+        if (char && godViewPool[char] !== undefined) {
+          godViewPool[char]--
+        }
+      }
+    })
+    
+    // Engine view pool: starts same as god view, but hide human captures
+    const engineViewPool = { ...godViewPool }
+    
+    // In human vs AI mode, hide human captures from engine
+    if (isHumanVsAiMode.value && history.value && currentMoveIndex.value > 0) {
+      const humanSide = aiSide.value === 'red' ? 'black' : 'red'
+      
+      // Parse history to find human captures and add them back to engine pool
+      for (let i = 0; i <= currentMoveIndex.value && i < history.value.length; i++) {
+        const move = history.value[i]
+        if (!move.data || move.type !== 'move') continue
+        
+        const uciMove = move.data
+        const isHumanMove = (i % 2 === 0 && humanSide === 'red') || 
+                           (i % 2 === 1 && humanSide === 'black')
+        
+        if (isHumanMove && uciMove.length > 4) {
+          const movingSide = (i % 2 === 0) ? 'red' : 'black'
+          const { captureChar } = parseUciExtended(uciMove, movingSide)
+          
+          if (captureChar && engineViewPool[captureChar] !== undefined) {
+            // Add back to engine pool (engine doesn't know this piece was captured)
+            engineViewPool[captureChar]++
+            console.log(`[DEBUG] Human vs AI: Adding ${captureChar} back to engine pool (god: ${godViewPool[captureChar]}, engine: ${engineViewPool[captureChar]})`)
+          }
+        }
+      }
+    }
+    
+    // Ensure no negative counts
+    Object.keys(godViewPool).forEach(char => {
+      if (godViewPool[char] < 0) godViewPool[char] = 0
+      if (engineViewPool[char] < 0) engineViewPool[char] = 0
+    })
+    
+    return { godViewPool, engineViewPool }
+  }
+
+  // Generate FEN for human vs AI mode where engine doesn't see human's captured pieces
+  const generateLimitedKnowledgeFen = (): string => {
+    const board: (Piece | null)[][] = Array.from({ length: 10 }, () =>
+      Array(9).fill(null)
+    )
+    
+    // If the board is flipped, need to remap positions to generate FEN that engine can understand
+    pieces.value.forEach(p => {
+      const actualRow = isBoardFlipped.value ? 9 - p.row : p.row
+      const actualCol = isBoardFlipped.value ? 8 - p.col : p.col
+      board[actualRow][actualCol] = p
+    })
+    
+    const boardFen = board
+      .map((row) => {
+        let empty = 0
+        let str = ''
+        row.forEach(p => {
+          if (p) {
+            if (empty > 0) {
+              str += empty
+              empty = 0
+            }
+            str += p.isKnown ? FEN_MAP[p.name] : (p.name.startsWith('red') ? 'X' : 'x')
+          } else {
+            empty++
+          }
+        })
+        if (empty > 0) str += empty
+        return str
+      })
+      .join('/')
+
+    // Use dual pool system to get engine's perspective
+    const { engineViewPool } = calculateDualPools()
+
+    const poolFen = Object.entries(engineViewPool)
+      .filter(([, count]) => count > 0)
+      .map(([char, count]) => `${char}${count}`)
+      .join('')
+
+    const side = sideToMove.value === 'red' ? 'w' : 'b'
+    return `${boardFen} ${side} - - ${halfmoveClock.value} ${fullmoveNumber.value} ${poolFen}`
   }
 
   const generateFen = (): string => {
@@ -338,11 +481,14 @@ export function useChessGame() {
         return str
       })
       .join('/')
+    // Use god view pool for standard FEN generation (real state)
+    const currentCounts = isHumanVsAiMode.value ? getCurrentUnrevealedCounts() : unrevealedPieceCounts.value
+    
     let hiddenStr = ''
     const hiddenOrder = 'RNBAKCP'
     hiddenOrder.split('').forEach(char => {
-      const redCount = unrevealedPieceCounts.value[char] || 0
-      const blackCount = unrevealedPieceCounts.value[char.toLowerCase()] || 0
+      const redCount = currentCounts[char] || 0
+      const blackCount = currentCounts[char.toLowerCase()] || 0
       if (redCount > 0) hiddenStr += char + redCount
       if (blackCount > 0) hiddenStr += char.toLowerCase() + blackCount
     })
@@ -881,8 +1027,10 @@ export function useChessGame() {
     // Append flipped piece letter to UCI move (e.g., a3a4R)
     const flippedChar = getCharFromPieceName(chosenPieceName)
     let uciMoveWithFlip = `${uciMove}${flippedChar}`
+    
+    // Always append captured piece info to maintain complete UCI format
+    // The display logic will handle what information to show to humans
     if (capturedHiddenChar) {
-      // Ensure order is Flip first, then Captured (e.g., a3a4Rp)
       uciMoveWithFlip += capturedHiddenChar
     }
     console.log(
@@ -2301,6 +2449,8 @@ export function useChessGame() {
     getRoleByPosition,
     generateFen,
     generateFenForEngine,
+    getCurrentUnrevealedCounts,
+    calculateDualPools,
     detectFenFormat,
     convertFenFormat,
     copyFenToClipboard,

@@ -58,7 +58,7 @@
     </div>
 
     <!-- Analysis control and execution button group -->
-    <div v-if="!isMatchMode" class="button-group">
+    <div v-if="!isMatchMode && !isHumanVsAiMode" class="button-group">
       <v-btn
         @click="handleAnalysisButtonClick"
         :disabled="!isEngineLoaded"
@@ -127,7 +127,19 @@
       </div>
     </div>
 
-    <!-- Enter match mode button (when not in match mode) -->
+    <!-- Exit human vs AI mode button (when in human vs AI mode) -->
+    <div v-else-if="isHumanVsAiMode" class="button-group">
+      <v-btn
+        @click="exitHumanVsAiMode"
+        color="teal"
+        class="grouped-btn"
+        size="small"
+      >
+        {{ $t('analysis.exitHumanVsAiMode') }}
+      </v-btn>
+    </div>
+
+    <!-- Enter match mode and human vs AI mode buttons (when not in any special mode) -->
     <div v-else class="button-group">
       <v-btn
         @click="toggleMatchMode"
@@ -136,6 +148,14 @@
         size="small"
       >
         {{ $t('analysis.enterMatchMode') }}
+      </v-btn>
+      <v-btn
+        @click="showHumanVsAiDialog = true"
+        color="teal"
+        class="grouped-btn"
+        size="small"
+      >
+        {{ $t('analysis.enterHumanVsAiMode') }}
       </v-btn>
     </div>
 
@@ -165,7 +185,7 @@
     </div>
 
     <!-- AI auto-play settings - Disabled when engine is not loaded or during manual analysis -->
-    <div v-if="!isMatchMode" class="autoplay-settings">
+    <div v-if="!isMatchMode && !isHumanVsAiMode" class="autoplay-settings">
       <v-btn
         @click="toggleRedAi"
         :color="isRedAi ? 'error' : 'blue-grey-darken-1'"
@@ -199,7 +219,7 @@
       </v-btn>
     </div>
 
-    <div v-if="!isMatchMode" class="switch-row">
+    <div v-if="!isMatchMode && !isHumanVsAiMode" class="switch-row">
       <v-switch
         v-model="flipMode"
         :label="$t('analysis.freeFlipMode')"
@@ -255,7 +275,9 @@
       </div>
     </DraggablePanel>
 
-    <DraggablePanel panel-id="dark-piece-pool">
+    <CaptureHistoryPanel v-if="isHumanVsAiMode" />
+
+    <DraggablePanel v-if="!isHumanVsAiMode" panel-id="dark-piece-pool">
       <template #header>
         <h3 class="section-title">
           {{ $t('analysis.darkPiecePool') }}
@@ -298,7 +320,7 @@
       </div>
     </DraggablePanel>
 
-    <DraggablePanel panel-id="engine-analysis">
+    <DraggablePanel v-if="!isHumanVsAiMode || showEngineAnalysis" panel-id="engine-analysis">
       <template #header>
         <h3>
           {{
@@ -518,7 +540,7 @@
         >
           <template v-if="entry.type === 'move'">
             <span class="move-number">{{ getMoveNumber(idx) }}</span>
-            <span class="move-uci">{{ entry.data }}</span>
+            <span class="move-uci">{{ isHumanVsAiMode ? entry.data.slice(0, 4) : entry.data }}</span>
             <span
               v-if="entry.annotation"
               class="move-annot"
@@ -530,8 +552,10 @@
             </span>
             <div
               v-if="
-                entry.engineScore !== undefined ||
-                entry.engineTime !== undefined
+                !isHumanVsAiMode && (
+                  entry.engineScore !== undefined ||
+                  entry.engineTime !== undefined
+                )
               "
               class="engine-analysis"
             >
@@ -803,6 +827,10 @@
       :initial-losses="jaiEngine?.matchLosses?.value || 0"
       :initial-draws="jaiEngine?.matchDraws?.value || 0"
     />
+    <HumanVsAiModeDialog
+      v-model="showHumanVsAiDialog"
+      @confirm="handleHumanVsAiModeConfirm"
+    />
   </div>
 </template>
 
@@ -821,11 +849,14 @@
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
   import { uciToChineseMoves } from '@/utils/chineseNotation'
   import { useGameSettings } from '@/composables/useGameSettings'
+  import { useHumanVsAiSettings } from '@/composables/useHumanVsAiSettings'
   import AboutDialog from './AboutDialog.vue'
   // Import Engine Manager components and types
   import EngineManagerDialog from './EngineManagerDialog.vue'
   import JaiOptionsDialog from './JaiOptionsDialog.vue'
   import EloCalculatorDialog from './EloCalculatorDialog.vue'
+  import HumanVsAiModeDialog from './HumanVsAiModeDialog.vue'
+  import CaptureHistoryPanel from './CaptureHistoryPanel.vue'
   import {
     useConfigManager,
     type ManagedEngine,
@@ -863,6 +894,9 @@
 
   // Get persistent game settings
   const { enablePonder } = useGameSettings()
+
+  // Get human vs AI settings
+  const { isHumanVsAiMode, showEngineAnalysis } = useHumanVsAiSettings()
 
   /* ---------- Injected State ---------- */
   const gameState = inject('game-state') as any
@@ -919,6 +953,7 @@
   /* ---------- Engine Management State ---------- */
   const configManager = useConfigManager()
   const showEngineManager = ref(false)
+  const showHumanVsAiDialog = ref(false)
   const managedEngines = ref<ManagedEngine[]>([])
   const selectedEngineId = ref<string | null>(null)
 
@@ -1654,6 +1689,63 @@
       jaiEngine.unloadEngine()
     }
     showJaiOptionsDialog.value = false
+  }
+
+  // Human vs AI mode handlers
+  const handleHumanVsAiModeConfirm = async (settings: { aiSide: 'red' | 'black'; showEngineAnalysis: boolean }) => {
+    // Import the settings management functions
+    const { toggleHumanVsAiMode, setAiSide, toggleShowEngineAnalysis } = useHumanVsAiSettings()
+    
+    // Enable human vs AI mode
+    toggleHumanVsAiMode()
+    
+    // Set global flag for human vs AI mode
+    ;(window as any).__HUMAN_VS_AI_MODE__ = true
+    
+    // Set AI side
+    setAiSide(settings.aiSide)
+    
+    // Set engine analysis visibility
+    if (settings.showEngineAnalysis !== showEngineAnalysis.value) {
+      toggleShowEngineAnalysis()
+    }
+
+    // No need to set ponder mode - it uses unified setting
+
+    // Force random flip mode for human vs AI mode
+    if (flipMode.value !== 'random') {
+      flipMode.value = 'random'
+    }
+
+    // Set AI player based on selected side
+    if (settings.aiSide === 'red') {
+      if (!isRedAi.value) toggleRedAi()
+      if (isBlackAi.value) toggleBlackAi()
+    } else {
+      if (isRedAi.value) toggleRedAi()
+      if (!isBlackAi.value) toggleBlackAi()
+    }
+
+    console.log('[DEBUG] Human vs AI mode enabled:', {
+      aiSide: settings.aiSide,
+      showEngineAnalysis: settings.showEngineAnalysis
+    })
+  }
+
+  const exitHumanVsAiMode = async () => {
+    const { toggleHumanVsAiMode } = useHumanVsAiSettings()
+    
+    // Disable human vs AI mode
+    toggleHumanVsAiMode()
+
+    // Clear global flag for human vs AI mode
+    ;(window as any).__HUMAN_VS_AI_MODE__ = false
+
+    // Turn off both AI players
+    if (isRedAi.value) toggleRedAi()
+    if (isBlackAi.value) toggleBlackAi()
+
+    console.log('[DEBUG] Human vs AI mode disabled')
   }
 
   const handleMatchButtonClick = () => {
@@ -2689,7 +2781,10 @@
       // Get the FEN before this move
       const fenBeforeMove =
         moveIndex === 0 ? initialFen.value : history.value[moveIndex - 1].fen
-      const chineseMoves = uciToChineseMoves(fenBeforeMove, entry.data)
+      
+      // In human vs AI mode, only use first 4 characters of UCI move (hide extensions)
+      const uciMove = isHumanVsAiMode ? entry.data.slice(0, 4) : entry.data
+      const chineseMoves = uciToChineseMoves(fenBeforeMove, uciMove)
       return chineseMoves[0] || ''
     } catch (error) {
       console.warn('Failed to convert move to Chinese notation:', error)

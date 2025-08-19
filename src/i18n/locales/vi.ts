@@ -218,6 +218,10 @@ export default {
     blackAiOff: 'AI Đen (Tắt)',
     freeFlipMode: 'Chế độ lật tự do',
     darkPiecePool: 'Kho quân úp',
+    captureHistory: 'Lịch sử ăn quân',
+    myCaptured: 'Quân tôi ăn',
+    opponentCaptured: 'Quân đối thủ ăn',
+    noCaptured: 'Không có',
     engineAnalysis: 'Phân tích engine',
     notation: 'Biên bản',
     moveComments: 'Ghi chú nước đi',
@@ -242,6 +246,9 @@ export default {
     // Chế độ trận đấu
     enterMatchMode: 'Chế độ trận đấu',
     exitMatchMode: 'Thoát chế độ trận đấu',
+    // Chế độ người chơi vs AI
+    enterHumanVsAiMode: 'Người chơi vs AI',
+    exitHumanVsAiMode: 'Thoát chế độ Người chơi vs AI',
     startMatch: 'Bắt đầu trận đấu',
     stopMatch: 'Dừng trận đấu',
     jaiSettings: 'Tùy chọn trận đấu',
@@ -334,6 +341,7 @@ export default {
       'Lỗi: Bên đen {darkCount} quân úp > {poolCount} trong kho',
     pieceCountExceeded: 'Lỗi: Tổng số {pieceName} vượt giới hạn!',
     engineLoadFailed: 'Không thể tải engine {name}: {error}',
+    jaiEngineLoadFailed: 'Không thể tải engine trận đấu JAI {name}: {error}',
     engineUnloadFailed: 'Gỡ bỏ engine thất bại',
     failedToOpenFileSelector: 'Không thể mở trình chọn tệp',
     failedToProcessEngine: 'Không thể xử lý tệp engine',
@@ -490,8 +498,6 @@ export default {
     },
     resultsSection: 'Hiệu suất Elo',
     performance: 'Chênh lệch Elo (kèm sai số 95%)',
-
-    errorMargin: 'Sai số (95%)',
     confidenceInterval: 'Khoảng tin cậy 95%',
     scoreRate: 'Tỉ lệ điểm',
     los: 'LOS (xác suất vượt trội)',
@@ -510,5 +516,24 @@ export default {
       'Bạn đang thực hiện nước đi trong vị trí lịch sử. Điều này sẽ xóa tất cả lịch sử nước đi tiếp theo. Bạn có chắc chắn muốn tiếp tục không?',
     confirm: 'Xác nhận',
     cancel: 'Hủy',
+  },
+
+  // Chế độ người chơi vs AI
+  humanVsAi: {
+    title: 'Chế độ Người chơi vs AI',
+    selectAiSide: 'Chọn phía AI',
+    redAiBlackHuman: 'AI Đỏ, Người chơi Đen',
+    blackAiRedHuman: 'AI Đen, Người chơi Đỏ',
+    options: 'Tùy chọn',
+    showEngineAnalysis: 'Hiển thị phân tích engine',
+    engineAnalysisHint: 'Khi bật, bạn có thể xem kết quả phân tích engine, nhưng không ảnh hưởng đến luật chơi',
+    ponderNote: 'Về suy nghĩ nền:',
+    ponderUnifiedHint: 'Tính năng suy nghĩ nền sử dụng cài đặt toàn cục, có thể bật/tắt trong thanh bên ở chế độ bình thường',
+    rulesTitle: 'Luật chơi',
+    rule1: 'Tự động bắt buộc bật chế độ lật ngẫu nhiên',
+    rule2: 'Bạn chỉ có thể thấy quân úp mà bạn ăn từ AI',
+    rule3: 'AI chỉ có thể thấy quân úp mà nó ăn từ bạn',
+    rule4: 'Trận chiến thông tin hạn chế theo luật Cờ úp tiêu chuẩn',
+    startGame: 'Bắt đầu trò chơi',
   },
 }

@@ -19,6 +19,13 @@ const defaultPanelStates: Record<string, Omit<PanelState, 'id'>> = {
     width: 300,
     height: 250,
   },
+  'capture-history': {
+    isDocked: true,
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 200,
+  },
   'engine-analysis': {
     isDocked: true,
     x: 0,

@@ -216,6 +216,10 @@ export default {
     blackAiOff: '黒AI(オフ)',
     freeFlipMode: '自由めくりモード',
     darkPiecePool: '暗子プール',
+    captureHistory: '駒取り履歴',
+    myCaptured: '私が取った駒',
+    opponentCaptured: '相手が取った駒',
+    noCaptured: 'なし',
     engineAnalysis: 'エンジン解析',
     notation: '棋譜',
     moveComments: '手のコメント',
@@ -240,6 +244,9 @@ export default {
     // マッチモード関連
     enterMatchMode: 'マッチモード',
     exitMatchMode: 'マッチモードを終了',
+    // 人対AIモード関連
+    enterHumanVsAiMode: '人対AI',
+    exitHumanVsAiMode: '人対AIモードを終了',
     startMatch: 'マッチ開始',
     stopMatch: 'マッチ停止',
     jaiSettings: 'マッチオプション',
@@ -331,6 +338,7 @@ export default {
     redDarkPiecesMismatch: 'エラー: 赤方{darkCount}暗子 > {poolCount}池',
     blackDarkPiecesMismatch: 'エラー: 黒方{darkCount}暗子 > {poolCount}池',
     pieceCountExceeded: 'エラー: {pieceName} 総数超過!',
+    jaiEngineLoadFailed: 'JAIマッチエンジン {name} の読み込みに失敗しました: {error}',
     engineUnloadFailed: 'エンジンのアンロードに失敗しました',
     failedToOpenFileSelector:
       'ファイル選択ダイアログを開くことができませんでした',
@@ -487,8 +495,6 @@ export default {
     },
     resultsSection: 'Elo パフォーマンス',
     performance: 'Elo差（95%誤差含む）',
-
-    errorMargin: '誤差範囲 (95%)',
     confidenceInterval: '95% 信頼区間',
     scoreRate: '得点率',
     los: 'LOS (優越確率)',
@@ -508,5 +514,24 @@ export default {
       '履歴局面で手を指しています。これにより、後続のすべての棋譜記録がクリアされます。続行しますか？',
     confirm: '確認',
     cancel: 'キャンセル',
+  },
+
+  // 人対AIモード
+  humanVsAi: {
+    title: '人対AIモード',
+    selectAiSide: 'AI側を選択',
+    redAiBlackHuman: '赤AI、黒人間',
+    blackAiRedHuman: '黒AI、赤人間',
+    options: 'オプション',
+    showEngineAnalysis: 'エンジン解析を表示',
+    engineAnalysisHint: '有効にすると、エンジン解析結果を確認できますが、ゲームルールには影響しません',
+    ponderNote: 'バックグラウンド思考について：',
+    ponderUnifiedHint: 'バックグラウンド思考機能はグローバル設定を使用し、通常モードのサイドバーでオン/オフできます',
+    rulesTitle: 'ゲームルール',
+    rule1: 'ランダムめくりモードが自動的に強制されます',
+    rule2: 'あなたはAIから取った暗子のみを見ることができます',
+    rule3: 'AIはあなたから取った暗子のみを見ることができます',
+    rule4: '標準揭棋ルールに従った限定情報戦',
+    startGame: 'ゲーム開始',
   },
 }

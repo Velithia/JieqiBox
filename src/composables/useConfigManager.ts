@@ -49,6 +49,11 @@ interface ConfigData {
   matchSettings: {
     isMatchMode: boolean
   }
+  humanVsAiSettings: {
+    isHumanVsAiMode: boolean
+    aiSide: 'red' | 'black'
+    showEngineAnalysis: boolean
+  }
   uciOptions: Record<string, Record<string, string | number | boolean>>
   jaiOptions: Record<string, Record<string, string | number | boolean>>
   locale: string
@@ -99,6 +104,11 @@ const defaultConfig: ConfigData = {
   },
   matchSettings: {
     isMatchMode: false,
+  },
+  humanVsAiSettings: {
+    isHumanVsAiMode: false,
+    aiSide: 'black',
+    showEngineAnalysis: false,
   },
   uciOptions: {},
   jaiOptions: {},
@@ -346,6 +356,21 @@ export function useConfigManager() {
     await saveConfig()
   }
 
+  // Human vs AI settings management
+  const getHumanVsAiSettings = () => {
+    return configData.value.humanVsAiSettings || defaultConfig.humanVsAiSettings
+  }
+
+  const updateHumanVsAiSettings = async (
+    settings: Partial<ConfigData['humanVsAiSettings']>
+  ): Promise<void> => {
+    configData.value.humanVsAiSettings = {
+      ...configData.value.humanVsAiSettings,
+      ...settings,
+    }
+    await saveConfig()
+  }
+
   // Reset all configuration to defaults
   const resetToDefaults = async (): Promise<void> => {
     configData.value = { ...defaultConfig }
@@ -380,6 +405,8 @@ export function useConfigManager() {
     updateGameSettings,
     getMatchSettings,
     updateMatchSettings,
+    getHumanVsAiSettings,
+    updateHumanVsAiSettings,
     getEngines,
     saveEngines,
     getLastSelectedEngineId,

@@ -753,6 +753,13 @@
     const isMatchMode = (window as any).__MATCH_MODE__ || false
     const jaiAnalysisInfo = jaiEngine?.analysisInfo?.value || ''
 
+    // Check if we're in human vs AI mode - if so, don't show ponder arrows
+    const isHumanVsAiMode = (window as any).__HUMAN_VS_AI_MODE__ || false
+    if (isHumanVsAiMode) {
+      arrs.value = []
+      return
+    }
+
     // 1. If in tournament mode and JAI engine has analysis info, display arrows from JAI analysis
     if (isMatchMode && jaiAnalysisInfo) {
       const jaiPvMoves = parseJaiAnalysisInfoForPV(jaiAnalysisInfo)

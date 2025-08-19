@@ -217,6 +217,10 @@ export default {
     blackAiOff: 'Black AI (Off)',
     freeFlipMode: 'Free Flip Mode',
     darkPiecePool: 'Dark Piece Pool',
+    captureHistory: 'Capture History',
+    myCaptured: 'My Captured',
+    opponentCaptured: 'Opponent Captured',
+    noCaptured: 'None',
     engineAnalysis: 'Engine Analysis',
     notation: 'Notation',
     moveComments: 'Move Comments',
@@ -241,6 +245,9 @@ export default {
     // Match mode related
     enterMatchMode: 'Match Mode',
     exitMatchMode: 'Exit Match Mode',
+    // Human vs AI mode related
+    enterHumanVsAiMode: 'Human vs AI',
+    exitHumanVsAiMode: 'Exit Human vs AI',
     startMatch: 'Start Match',
     stopMatch: 'Stop Match',
     jaiSettings: 'Match Options',
@@ -399,7 +406,6 @@ export default {
     },
     resultsSection: 'Elo Performance',
     performance: 'Elo Difference (with 95% error)',
-
     confidenceInterval: '95% Confidence Interval',
     scoreRate: 'Score Rate',
     los: 'LOS (Likelihood of Superiority)',
@@ -513,5 +519,24 @@ export default {
       'You are making a move in a historical position. This will clear all subsequent move history. Are you sure you want to continue?',
     confirm: 'Confirm',
     cancel: 'Cancel',
+  },
+
+  // Human vs AI mode
+  humanVsAi: {
+    title: 'Human vs AI Mode',
+    selectAiSide: 'Select AI Side',
+    redAiBlackHuman: 'Red AI, Black Human',
+    blackAiRedHuman: 'Black AI, Red Human',
+    options: 'Options',
+    showEngineAnalysis: 'Show Engine Analysis',
+    engineAnalysisHint: 'When enabled, you can view engine analysis results, but it does not affect game rules',
+    ponderNote: 'About Background Thinking:',
+    ponderUnifiedHint: 'Background thinking uses global settings, which can be toggled in the sidebar in normal mode',
+    rulesTitle: 'Game Rules',
+    rule1: 'Random flip mode is automatically enforced',
+    rule2: 'You can only see the dark pieces you capture from AI',
+    rule3: 'AI can only see the dark pieces it captures from you',
+    rule4: 'Limited information battle according to standard Jieqi rules',
+    startGame: 'Start Game',
   },
 }
