@@ -185,14 +185,6 @@ function fileLabelForMove(
 ): { useLabel: boolean; labelOrFileNum: string; prefixIsLabel: boolean } {
   const side: Side = isUpper(notationLetter) ? 'w' : 'b'
 
-  // Advisors/Elephants: never use 前/后；file number is always sufficient per Xiangqi convention.
-  const isAdvisorOrElephant =
-    notationLetter.toLowerCase() === 'a' || notationLetter.toLowerCase() === 'b'
-  if (isAdvisorOrElephant) {
-    const num = side === 'w' ? redFileNumChar(fromF) : blackFileNumChar(fromF)
-    return { useLabel: false, labelOrFileNum: num, prefixIsLabel: false }
-  }
-
   // Collect same-type pieces on this file BEFORE the move.
   const sameFileSameType: number[] = []
   for (let r = 0; r <= 9; r++) {
