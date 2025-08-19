@@ -325,15 +325,15 @@ export function useChessGame() {
     if (uciMove.length <= 4) {
       return { flipChar: null, captureChar: null }
     }
-    
+
     const extension = uciMove.slice(4) // Everything after position info
-    
+
     if (extension.length === 1) {
       // 5 characters total: could be flip or capture
       const char = extension[0]
       const isUpperCase = char === char.toUpperCase()
       const charSide = isUpperCase ? 'red' : 'black'
-      
+
       if (charSide === movingSide) {
         // Same side as mover: this is a flip (revealing own piece)
         return { flipChar: char, captureChar: null }
@@ -345,7 +345,7 @@ export function useChessGame() {
       // 6 characters total: first is flip, second is capture
       return { flipChar: extension[0], captureChar: extension[1] }
     }
-    
+
     return { flipChar: null, captureChar: null }
   }
 
@@ -353,7 +353,7 @@ export function useChessGame() {
   const calculateDualPools = () => {
     // God view pool: true state of all unrevealed pieces
     const godViewPool = { ...INITIAL_PIECE_COUNTS }
-    
+
     // Subtract all revealed pieces from god view
     pieces.value.forEach(p => {
       if (p.isKnown) {
@@ -363,42 +363,49 @@ export function useChessGame() {
         }
       }
     })
-    
+
     // Engine view pool: starts same as god view, but hide human captures
     const engineViewPool = { ...godViewPool }
-    
+
     // In human vs AI mode, hide human captures from engine
     if (isHumanVsAiMode.value && history.value && currentMoveIndex.value > 0) {
       const humanSide = aiSide.value === 'red' ? 'black' : 'red'
-      
+
       // Parse history to find human captures and add them back to engine pool
-      for (let i = 0; i <= currentMoveIndex.value && i < history.value.length; i++) {
+      for (
+        let i = 0;
+        i <= currentMoveIndex.value && i < history.value.length;
+        i++
+      ) {
         const move = history.value[i]
         if (!move.data || move.type !== 'move') continue
-        
+
         const uciMove = move.data
-        const isHumanMove = (i % 2 === 0 && humanSide === 'red') || 
-                           (i % 2 === 1 && humanSide === 'black')
-        
+        const isHumanMove =
+          (i % 2 === 0 && humanSide === 'red') ||
+          (i % 2 === 1 && humanSide === 'black')
+
         if (isHumanMove && uciMove.length > 4) {
-          const movingSide = (i % 2 === 0) ? 'red' : 'black'
+          const movingSide = i % 2 === 0 ? 'red' : 'black'
           const { captureChar } = parseUciExtended(uciMove, movingSide)
-          
+
           if (captureChar && engineViewPool[captureChar] !== undefined) {
             // Add back to engine pool (engine doesn't know this piece was captured)
             engineViewPool[captureChar]++
-            console.log(`[DEBUG] Human vs AI: Adding ${captureChar} back to engine pool (god: ${godViewPool[captureChar]}, engine: ${engineViewPool[captureChar]})`)
+            console.log(
+              `[DEBUG] Human vs AI: Adding ${captureChar} back to engine pool (god: ${godViewPool[captureChar]}, engine: ${engineViewPool[captureChar]})`
+            )
           }
         }
       }
     }
-    
+
     // Ensure no negative counts
     Object.keys(godViewPool).forEach(char => {
       if (godViewPool[char] < 0) godViewPool[char] = 0
       if (engineViewPool[char] < 0) engineViewPool[char] = 0
     })
-    
+
     return { godViewPool, engineViewPool }
   }
 
@@ -407,16 +414,16 @@ export function useChessGame() {
     const board: (Piece | null)[][] = Array.from({ length: 10 }, () =>
       Array(9).fill(null)
     )
-    
+
     // If the board is flipped, need to remap positions to generate FEN that engine can understand
     pieces.value.forEach(p => {
       const actualRow = isBoardFlipped.value ? 9 - p.row : p.row
       const actualCol = isBoardFlipped.value ? 8 - p.col : p.col
       board[actualRow][actualCol] = p
     })
-    
+
     const boardFen = board
-      .map((row) => {
+      .map(row => {
         let empty = 0
         let str = ''
         row.forEach(p => {
@@ -425,7 +432,11 @@ export function useChessGame() {
               str += empty
               empty = 0
             }
-            str += p.isKnown ? FEN_MAP[p.name] : (p.name.startsWith('red') ? 'X' : 'x')
+            str += p.isKnown
+              ? FEN_MAP[p.name]
+              : p.name.startsWith('red')
+                ? 'X'
+                : 'x'
           } else {
             empty++
           }
@@ -482,8 +493,10 @@ export function useChessGame() {
       })
       .join('/')
     // Use god view pool for standard FEN generation (real state)
-    const currentCounts = isHumanVsAiMode.value ? getCurrentUnrevealedCounts() : unrevealedPieceCounts.value
-    
+    const currentCounts = isHumanVsAiMode.value
+      ? getCurrentUnrevealedCounts()
+      : unrevealedPieceCounts.value
+
     let hiddenStr = ''
     const hiddenOrder = 'RNBAKCP'
     hiddenOrder.split('').forEach(char => {
@@ -1027,7 +1040,7 @@ export function useChessGame() {
     // Append flipped piece letter to UCI move (e.g., a3a4R)
     const flippedChar = getCharFromPieceName(chosenPieceName)
     let uciMoveWithFlip = `${uciMove}${flippedChar}`
-    
+
     // Always append captured piece info to maintain complete UCI format
     // The display logic will handle what information to show to humans
     if (capturedHiddenChar) {

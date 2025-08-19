@@ -25,6 +25,7 @@ interface ConfigData {
     engineLogLineLimit: number
     showChineseNotation: boolean
     showLuckIndex: boolean
+    showArrows: boolean
   }
   evaluationChartSettings: {
     showMoveLabels: boolean
@@ -81,6 +82,7 @@ const defaultConfig: ConfigData = {
     engineLogLineLimit: 256,
     showChineseNotation: true,
     showLuckIndex: false,
+    showArrows: true,
   },
   evaluationChartSettings: {
     showMoveLabels: true,

@@ -394,6 +394,7 @@ export default {
     engineLogLineLimit: '引擎日誌行數限制',
     showChineseNotation: '顯示中文記譜法',
     showLuckIndex: '顯示幸運指數',
+    showArrows: '顯示箭頭',
   },
 
   // UCI訊息
@@ -517,7 +518,8 @@ export default {
     showEngineAnalysis: '顯示引擎分析',
     engineAnalysisHint: '開啟後，可以查看引擎的分析結果，但不影響遊戲規則',
     ponderNote: '關於後台思考：',
-    ponderUnifiedHint: '後台思考功能使用全局設置，可在正常模式的側邊欄中開啟或關閉',
+    ponderUnifiedHint:
+      '後台思考功能使用全局設置，可在正常模式的側邊欄中開啟或關閉',
     rulesTitle: '遊戲規則',
     rule1: '自動強制開啟隨機翻子模式',
     rule2: '您只能看到自己吃掉AI的暗子',

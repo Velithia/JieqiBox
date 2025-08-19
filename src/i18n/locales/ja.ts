@@ -338,7 +338,8 @@ export default {
     redDarkPiecesMismatch: 'エラー: 赤方{darkCount}暗子 > {poolCount}池',
     blackDarkPiecesMismatch: 'エラー: 黒方{darkCount}暗子 > {poolCount}池',
     pieceCountExceeded: 'エラー: {pieceName} 総数超過!',
-    jaiEngineLoadFailed: 'JAIマッチエンジン {name} の読み込みに失敗しました: {error}',
+    jaiEngineLoadFailed:
+      'JAIマッチエンジン {name} の読み込みに失敗しました: {error}',
     engineUnloadFailed: 'エンジンのアンロードに失敗しました',
     failedToOpenFileSelector:
       'ファイル選択ダイアログを開くことができませんでした',
@@ -400,6 +401,7 @@ export default {
     engineLogLineLimit: 'エンジンログ行数制限',
     showChineseNotation: '中国式記譜法を表示',
     showLuckIndex: '運び指数を表示',
+    showArrows: '矢印を表示',
   },
 
   // UCIメッセージ
@@ -524,9 +526,11 @@ export default {
     blackAiRedHuman: '黒AI、赤人間',
     options: 'オプション',
     showEngineAnalysis: 'エンジン解析を表示',
-    engineAnalysisHint: '有効にすると、エンジン解析結果を確認できますが、ゲームルールには影響しません',
+    engineAnalysisHint:
+      '有効にすると、エンジン解析結果を確認できますが、ゲームルールには影響しません',
     ponderNote: 'バックグラウンド思考について：',
-    ponderUnifiedHint: 'バックグラウンド思考機能はグローバル設定を使用し、通常モードのサイドバーでオン/オフできます',
+    ponderUnifiedHint:
+      'バックグラウンド思考機能はグローバル設定を使用し、通常モードのサイドバーでオン/オフできます',
     rulesTitle: 'ゲームルール',
     rule1: 'ランダムめくりモードが自動的に強制されます',
     rule2: 'あなたはAIから取った暗子のみを見ることができます',

@@ -320,7 +320,10 @@
       </div>
     </DraggablePanel>
 
-    <DraggablePanel v-if="!isHumanVsAiMode || showEngineAnalysis" panel-id="engine-analysis">
+    <DraggablePanel
+      v-if="!isHumanVsAiMode || showEngineAnalysis"
+      panel-id="engine-analysis"
+    >
       <template #header>
         <h3>
           {{
@@ -540,7 +543,9 @@
         >
           <template v-if="entry.type === 'move'">
             <span class="move-number">{{ getMoveNumber(idx) }}</span>
-            <span class="move-uci">{{ isHumanVsAiMode ? entry.data.slice(0, 4) : entry.data }}</span>
+            <span class="move-uci">{{
+              isHumanVsAiMode ? entry.data.slice(0, 4) : entry.data
+            }}</span>
             <span
               v-if="entry.annotation"
               class="move-annot"
@@ -552,10 +557,9 @@
             </span>
             <div
               v-if="
-                !isHumanVsAiMode && (
-                  entry.engineScore !== undefined ||
-                  entry.engineTime !== undefined
-                )
+                !isHumanVsAiMode &&
+                (entry.engineScore !== undefined ||
+                  entry.engineTime !== undefined)
               "
               class="engine-analysis"
             >
@@ -1692,19 +1696,23 @@
   }
 
   // Human vs AI mode handlers
-  const handleHumanVsAiModeConfirm = async (settings: { aiSide: 'red' | 'black'; showEngineAnalysis: boolean }) => {
+  const handleHumanVsAiModeConfirm = async (settings: {
+    aiSide: 'red' | 'black'
+    showEngineAnalysis: boolean
+  }) => {
     // Import the settings management functions
-    const { toggleHumanVsAiMode, setAiSide, toggleShowEngineAnalysis } = useHumanVsAiSettings()
-    
+    const { toggleHumanVsAiMode, setAiSide, toggleShowEngineAnalysis } =
+      useHumanVsAiSettings()
+
     // Enable human vs AI mode
     toggleHumanVsAiMode()
-    
+
     // Set global flag for human vs AI mode
     ;(window as any).__HUMAN_VS_AI_MODE__ = true
-    
+
     // Set AI side
     setAiSide(settings.aiSide)
-    
+
     // Set engine analysis visibility
     if (settings.showEngineAnalysis !== showEngineAnalysis.value) {
       toggleShowEngineAnalysis()
@@ -1728,13 +1736,13 @@
 
     console.log('[DEBUG] Human vs AI mode enabled:', {
       aiSide: settings.aiSide,
-      showEngineAnalysis: settings.showEngineAnalysis
+      showEngineAnalysis: settings.showEngineAnalysis,
     })
   }
 
   const exitHumanVsAiMode = async () => {
     const { toggleHumanVsAiMode } = useHumanVsAiSettings()
-    
+
     // Disable human vs AI mode
     toggleHumanVsAiMode()
 
@@ -2781,9 +2789,11 @@
       // Get the FEN before this move
       const fenBeforeMove =
         moveIndex === 0 ? initialFen.value : history.value[moveIndex - 1].fen
-      
+
       // In human vs AI mode, only use first 4 characters of UCI move (hide extensions)
-      const uciMove = isHumanVsAiMode.value ? entry.data.slice(0, 4) : entry.data
+      const uciMove = isHumanVsAiMode.value
+        ? entry.data.slice(0, 4)
+        : entry.data
       const chineseMoves = uciToChineseMoves(fenBeforeMove, uciMove)
       return chineseMoves[0] || ''
     } catch (error) {

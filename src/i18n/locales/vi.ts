@@ -402,6 +402,7 @@ export default {
     engineLogLineLimit: 'Giới hạn dòng nhật ký động cơ',
     showChineseNotation: 'Hiển thị ký hiệu Trung Quốc',
     showLuckIndex: 'Hiển thị chỉ số may mắn',
+    showArrows: 'Hiển thị mũi tên',
   },
 
   // Tin nhắn UCI
@@ -526,9 +527,11 @@ export default {
     blackAiRedHuman: 'AI Đen, Người chơi Đỏ',
     options: 'Tùy chọn',
     showEngineAnalysis: 'Hiển thị phân tích engine',
-    engineAnalysisHint: 'Khi bật, bạn có thể xem kết quả phân tích engine, nhưng không ảnh hưởng đến luật chơi',
+    engineAnalysisHint:
+      'Khi bật, bạn có thể xem kết quả phân tích engine, nhưng không ảnh hưởng đến luật chơi',
     ponderNote: 'Về suy nghĩ nền:',
-    ponderUnifiedHint: 'Tính năng suy nghĩ nền sử dụng cài đặt toàn cục, có thể bật/tắt trong thanh bên ở chế độ bình thường',
+    ponderUnifiedHint:
+      'Tính năng suy nghĩ nền sử dụng cài đặt toàn cục, có thể bật/tắt trong thanh bên ở chế độ bình thường',
     rulesTitle: 'Luật chơi',
     rule1: 'Tự động bắt buộc bật chế độ lật ngẫu nhiên',
     rule2: 'Bạn chỉ có thể thấy quân úp mà bạn ăn từ AI',

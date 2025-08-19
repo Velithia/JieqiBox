@@ -23,6 +23,7 @@ const getInitialSettings = () => {
       engineLogLineLimit: 256,
       showChineseNotation: true,
       showLuckIndex: false,
+      showArrows: true,
     }
   }
 
@@ -40,6 +41,7 @@ const getInitialSettings = () => {
       engineLogLineLimit: settings.engineLogLineLimit || 256, // Default to 256
       showChineseNotation: settings.showChineseNotation !== false, // Default to true
       showLuckIndex: !!settings.showLuckIndex, // Default to false
+      showArrows: settings.showArrows !== false, // Default to true
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -56,6 +58,7 @@ const getInitialSettings = () => {
       engineLogLineLimit: 256,
       showChineseNotation: true,
       showLuckIndex: false,
+      showArrows: true,
     }
   }
 }
@@ -73,6 +76,7 @@ const {
   engineLogLineLimit: initialEngineLogLineLimit,
   showChineseNotation: initialShowChineseNotation,
   showLuckIndex: initialShowLuckIndex,
+  showArrows: initialShowArrows,
 } = getInitialSettings()
 
 const showCoordinates = ref<boolean>(initialShowCoordinates)
@@ -86,6 +90,7 @@ const useNewFenFormat = ref<boolean>(initialUseNewFenFormat)
 const engineLogLineLimit = ref<number>(initialEngineLogLineLimit)
 const showChineseNotation = ref<boolean>(initialShowChineseNotation)
 const showLuckIndex = ref<boolean>(initialShowLuckIndex)
+const showArrows = ref<boolean>(initialShowArrows)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -104,6 +109,7 @@ watch(
     engineLogLineLimit,
     showChineseNotation,
     showLuckIndex,
+    showArrows,
   ],
   async ([
     newShowCoordinates,
@@ -117,6 +123,7 @@ watch(
     newEngineLogLineLimit,
     newShowChineseNotation,
     newShowLuckIndex,
+    newShowArrows,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -133,6 +140,7 @@ watch(
       engineLogLineLimit: newEngineLogLineLimit,
       showChineseNotation: newShowChineseNotation,
       showLuckIndex: newShowLuckIndex,
+      showArrows: newShowArrows,
     }
 
     try {
@@ -163,6 +171,7 @@ export function useInterfaceSettings() {
       engineLogLineLimit.value = settings.engineLogLineLimit || 256
       showChineseNotation.value = !!settings.showChineseNotation
       showLuckIndex.value = settings.showLuckIndex !== false
+      showArrows.value = settings.showArrows !== false // Default to true
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -188,6 +197,7 @@ export function useInterfaceSettings() {
     engineLogLineLimit,
     showChineseNotation,
     showLuckIndex,
+    showArrows,
     loadSettings,
   }
 }

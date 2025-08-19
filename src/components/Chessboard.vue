@@ -175,7 +175,12 @@
       </div>
 
       <!-- Arrows (support MultiPV) -->
-      <svg class="ar" viewBox="0 0 90 100" preserveAspectRatio="none">
+      <svg
+        class="ar"
+        viewBox="0 0 90 100"
+        preserveAspectRatio="none"
+        v-if="showArrows"
+      >
         <defs>
           <marker
             v-for="(color, idx) in arrowColors"
@@ -326,6 +331,7 @@
     showAnimations,
     showPositionChart,
     showEvaluationBar,
+    showArrows,
   } = useInterfaceSettings()
 
   /* ===== Injections ===== */

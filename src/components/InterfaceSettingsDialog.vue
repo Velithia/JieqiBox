@@ -64,6 +64,11 @@
           :label="$t('interfaceSettings.showLuckIndex')"
           color="primary"
         ></v-switch>
+        <v-switch
+          v-model="showArrows"
+          :label="$t('interfaceSettings.showArrows')"
+          color="primary"
+        ></v-switch>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -93,6 +98,7 @@
     engineLogLineLimit,
     showChineseNotation,
     showLuckIndex,
+    showArrows,
   } = useInterfaceSettings()
 
   const closeDialog = () => {

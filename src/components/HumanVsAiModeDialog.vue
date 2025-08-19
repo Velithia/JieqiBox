@@ -8,7 +8,7 @@
       <v-card-text>
         <div class="selection-section">
           <h4 class="mb-3">{{ $t('humanVsAi.selectAiSide') }}</h4>
-          
+
           <v-radio-group v-model="selectedAiSide" column>
             <v-radio
               :label="$t('humanVsAi.redAiBlackHuman')"
@@ -27,14 +27,14 @@
 
         <div class="options-section">
           <h4 class="mb-3">{{ $t('humanVsAi.options') }}</h4>
-          
+
           <v-checkbox
             v-model="showEngineAnalysisOption"
             :label="$t('humanVsAi.showEngineAnalysis')"
             color="primary"
             hide-details
           />
-          
+
           <div class="mt-2">
             <small class="text-caption">
               {{ $t('humanVsAi.engineAnalysisHint') }}
@@ -43,7 +43,8 @@
 
           <div class="mt-3">
             <small class="text-caption">
-              <strong>{{ $t('humanVsAi.ponderNote') }}</strong><br/>
+              <strong>{{ $t('humanVsAi.ponderNote') }}</strong
+              ><br />
               {{ $t('humanVsAi.ponderUnifiedHint') }}
             </small>
           </div>
@@ -64,11 +65,7 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn
-          color="grey"
-          variant="text"
-          @click="handleCancel"
-        >
+        <v-btn color="grey" variant="text" @click="handleCancel">
           {{ $t('common.cancel') }}
         </v-btn>
         <v-btn
@@ -85,60 +82,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+  import { ref, computed } from 'vue'
 
-interface Props {
-  modelValue: boolean
-}
+  interface Props {
+    modelValue: boolean
+  }
 
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'confirm', settings: { aiSide: 'red' | 'black'; showEngineAnalysis: boolean }): void
-}
+  interface Emits {
+    (e: 'update:modelValue', value: boolean): void
+    (
+      e: 'confirm',
+      settings: { aiSide: 'red' | 'black'; showEngineAnalysis: boolean }
+    ): void
+  }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+  const props = defineProps<Props>()
+  const emit = defineEmits<Emits>()
 
-// Local state
-const selectedAiSide = ref<'red' | 'black'>('black')
-const showEngineAnalysisOption = ref<boolean>(false)
+  // Local state
+  const selectedAiSide = ref<'red' | 'black'>('black')
+  const showEngineAnalysisOption = ref<boolean>(false)
 
-// Computed visibility
-const isVisible = computed({
-  get: () => props.modelValue,
-  set: (value: boolean) => emit('update:modelValue', value)
-})
-
-// Event handlers
-const handleCancel = () => {
-  emit('update:modelValue', false)
-}
-
-const handleConfirm = () => {
-  emit('confirm', {
-    aiSide: selectedAiSide.value,
-    showEngineAnalysis: showEngineAnalysisOption.value
+  // Computed visibility
+  const isVisible = computed({
+    get: () => props.modelValue,
+    set: (value: boolean) => emit('update:modelValue', value),
   })
-  emit('update:modelValue', false)
-}
+
+  // Event handlers
+  const handleCancel = () => {
+    emit('update:modelValue', false)
+  }
+
+  const handleConfirm = () => {
+    emit('confirm', {
+      aiSide: selectedAiSide.value,
+      showEngineAnalysis: showEngineAnalysisOption.value,
+    })
+    emit('update:modelValue', false)
+  }
 </script>
 
 <style scoped lang="scss">
-.selection-section {
-  margin-bottom: 16px;
-}
+  .selection-section {
+    margin-bottom: 16px;
+  }
 
-.options-section {
-  margin-bottom: 16px;
-}
+  .options-section {
+    margin-bottom: 16px;
+  }
 
-.rules-section {
-  ul {
-    padding-left: 20px;
-    
-    li {
-      margin-bottom: 4px;
+  .rules-section {
+    ul {
+      padding-left: 20px;
+
+      li {
+        margin-bottom: 4px;
+      }
     }
   }
-}
 </style>
