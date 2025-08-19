@@ -22,7 +22,7 @@ const getInitialSettings = () => {
       useNewFenFormat: true,
       engineLogLineLimit: 256,
       showChineseNotation: true,
-      showLuckIndex: true,
+      showLuckIndex: false,
     }
   }
 
@@ -39,7 +39,7 @@ const getInitialSettings = () => {
       useNewFenFormat: settings.useNewFenFormat !== false, // Default to true
       engineLogLineLimit: settings.engineLogLineLimit || 256, // Default to 256
       showChineseNotation: settings.showChineseNotation !== false, // Default to true
-      showLuckIndex: settings.showLuckIndex !== false, // Default to true
+      showLuckIndex: !!settings.showLuckIndex, // Default to false
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -55,7 +55,7 @@ const getInitialSettings = () => {
       useNewFenFormat: true,
       engineLogLineLimit: 256,
       showChineseNotation: true,
-      showLuckIndex: true,
+      showLuckIndex: false,
     }
   }
 }

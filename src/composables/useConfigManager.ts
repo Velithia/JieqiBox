@@ -75,7 +75,7 @@ const defaultConfig: ConfigData = {
     useNewFenFormat: true,
     engineLogLineLimit: 256,
     showChineseNotation: true,
-    showLuckIndex: true,
+    showLuckIndex: false,
   },
   evaluationChartSettings: {
     showMoveLabels: true,
