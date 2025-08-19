@@ -2783,7 +2783,7 @@
         moveIndex === 0 ? initialFen.value : history.value[moveIndex - 1].fen
       
       // In human vs AI mode, only use first 4 characters of UCI move (hide extensions)
-      const uciMove = isHumanVsAiMode ? entry.data.slice(0, 4) : entry.data
+      const uciMove = isHumanVsAiMode.value ? entry.data.slice(0, 4) : entry.data
       const chineseMoves = uciToChineseMoves(fenBeforeMove, uciMove)
       return chineseMoves[0] || ''
     } catch (error) {
