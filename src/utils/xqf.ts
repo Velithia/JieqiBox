@@ -3,6 +3,19 @@
  * TypeScript implementation for reading and writing XQF files
  */
 
+import MersenneTwister from 'mersenne-twister'
+
+// Create a global instance of Mersenne Twister for this module
+const mt = new MersenneTwister()
+
+// Set seed based on current date and time for better randomness
+mt.init_seed(new Date().getTime())
+
+// Custom random function using Mersenne Twister
+const mtRandom = (): number => {
+  return mt.random()
+}
+
 // Types for GameNotation compatibility
 export type HistoryEntry = {
   type: 'move' | 'adjust'
@@ -1117,7 +1130,7 @@ export function convertXQFToJieqiNotation(
         return isRedHidden ? k === k.toUpperCase() : k === k.toLowerCase()
       })
       if (poolChars.length > 0) {
-        const pick = Math.floor(Math.random() * poolChars.length)
+        const pick = Math.floor(mtRandom() * poolChars.length)
         const key = poolChars[pick]
         currentHiddenCounts[key] = Math.max(0, currentHiddenCounts[key] - 1)
       }

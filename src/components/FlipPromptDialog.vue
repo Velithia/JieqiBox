@@ -53,6 +53,18 @@
 
 <script setup lang="ts">
   import { computed, inject, ref, onMounted, onUnmounted } from 'vue'
+  import MersenneTwister from 'mersenne-twister'
+  
+  // Create a global instance of Mersenne Twister for this component
+  const mt = new MersenneTwister()
+  
+  // Set seed based on current date and time for better randomness
+  mt.init_seed(new Date().getTime())
+  
+  // Custom random function using Mersenne Twister
+  const mtRandom = (): number => {
+    return mt.random()
+  }
 
   const gameState: any = inject('game-state')
 
@@ -206,7 +218,7 @@
 
       if (pool.length > 0) {
         // Randomly select a piece
-        const randomIndex = Math.floor(Math.random() * pool.length)
+        const randomIndex = Math.floor(mtRandom() * pool.length)
         const chosenName = pool[randomIndex]
         gameState.pendingFlip.value.callback(chosenName)
       } else {

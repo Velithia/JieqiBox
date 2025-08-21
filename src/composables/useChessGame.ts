@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import MersenneTwister from 'mersenne-twister'
 import {
   START_FEN,
   FEN_MAP,
@@ -11,6 +12,17 @@ import { useInterfaceSettings } from './useInterfaceSettings'
 import { useGameSettings } from './useGameSettings'
 import { useHumanVsAiSettings } from './useHumanVsAiSettings'
 import { convertXQFToJieqiNotation } from '@/utils/xqf'
+
+// Create a global instance of Mersenne Twister
+const mt = new MersenneTwister()
+
+// Set seed based on current date and time for better randomness
+mt.init_seed(new Date().getTime())
+
+// Custom random function using Mersenne Twister
+const mtRandom = (): number => {
+  return mt.random()
+}
 
 export interface Piece {
   id: number
@@ -188,7 +200,7 @@ export function useChessGame() {
 
   const shuffle = <T>(arr: T[]): T[] => {
     for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
+      const j = Math.floor(mtRandom() * (i + 1))
       ;[arr[i], arr[j]] = [arr[j], arr[i]]
     }
     return arr

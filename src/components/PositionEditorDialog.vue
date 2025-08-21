@@ -223,8 +223,20 @@
 <script setup lang="ts">
   import { ref, computed, inject, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import MersenneTwister from 'mersenne-twister'
   import type { Piece } from '@/composables/useChessGame'
   import { START_FEN, INITIAL_PIECE_COUNTS, FEN_MAP } from '@/utils/constants'
+
+  // Create a global instance of Mersenne Twister for this component
+  const mt = new MersenneTwister()
+
+  // Set seed based on current date and time for better randomness
+  mt.init_seed(new Date().getTime())
+
+  // Custom random function using Mersenne Twister
+  const mtRandom = (): number => {
+    return mt.random()
+  }
 
   interface Props {
     modelValue: boolean
@@ -503,7 +515,7 @@
   const selectPieceType = (pieceName: string, isKnown: boolean) => {
     // Create a temporary piece for selection
     selectedPiece.value = {
-      id: Date.now() + Math.random(),
+      id: Date.now() + mtRandom(),
       name: pieceName,
       row: -1,
       col: -1,
@@ -579,7 +591,7 @@
       }
 
       const newPiece: Piece = {
-        id: Date.now() + Math.random(),
+        id: Date.now() + mtRandom(),
         name: finalPieceName,
         row,
         col,
