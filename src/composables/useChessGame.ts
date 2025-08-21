@@ -1584,33 +1584,57 @@ export function useChessGame() {
     if (wasDarkPiece && !skipFlipLogic && !isMatchMode) {
       console.log(`[DEBUG] movePiece: Dark piece move detected.`)
       if (flipMode.value === 'free') {
-        console.log(
-          `[DEBUG] movePiece: Free flip mode. Setting 'pendingFlip' to open dialog.`
-        )
-        // For highlighting, we need to use display coordinates, which respect board flip.
-        const displayHighlightMove = {
-          from: {
-            row: isBoardFlipped.value ? 9 - originalRow : originalRow,
-            col: isBoardFlipped.value ? 8 - originalCol : originalCol, // Horizontal mirror flip
-          },
-          to: {
-            row: isBoardFlipped.value ? 9 - targetRow : targetRow,
-            col: isBoardFlipped.value ? 8 - targetCol : targetCol, // Horizontal mirror flip
-          },
-        }
-        lastMovePositions.value = displayHighlightMove
+        // In free flip mode, check if there's only one type of piece that can be flipped
+        const availablePieceTypes = Object.entries(unrevealedPieceCounts.value)
+          .filter(([, count]) => count > 0)
+          .map(([char]) => {
+            const name = getPieceNameFromChar(char)
+            // Return the piece type (e.g., 'red_pawn', 'black_cannon', etc.)
+            return name.startsWith(pieceSide) ? name : null
+          })
+          .filter(name => name !== null) as string[]
 
-        pendingFlip.value = {
-          pieceToMove: piece,
-          uciMove: uciMove,
-          side: pieceSide,
-          callback: chosenName =>
-            completeFlipAfterMove(
-              piece,
-              uciMove,
-              chosenName,
-              capturedHiddenChar
-            ),
+        // Get unique piece types
+        const uniquePieceTypes = [...new Set(availablePieceTypes)]
+
+        if (uniquePieceTypes.length === 1) {
+          // Only one type of piece can be flipped, flip it directly without showing dialog
+          console.log(
+            `[DEBUG] movePiece: Free flip mode with only one piece type. Flipping directly.`
+          )
+          // Get any piece of that type (we'll just take the first one)
+          const chosenName = uniquePieceTypes[0]
+          completeFlipAfterMove(piece, uciMove, chosenName, capturedHiddenChar)
+        } else {
+          // Multiple types available, show flip dialog
+          console.log(
+            `[DEBUG] movePiece: Free flip mode. Setting 'pendingFlip' to open dialog.`
+          )
+          // For highlighting, we need to use display coordinates, which respect board flip.
+          const displayHighlightMove = {
+            from: {
+              row: isBoardFlipped.value ? 9 - originalRow : originalRow,
+              col: isBoardFlipped.value ? 8 - originalCol : originalCol, // Horizontal mirror flip
+            },
+            to: {
+              row: isBoardFlipped.value ? 9 - targetRow : targetRow,
+              col: isBoardFlipped.value ? 8 - targetCol : targetCol, // Horizontal mirror flip
+            },
+          }
+          lastMovePositions.value = displayHighlightMove
+
+          pendingFlip.value = {
+            pieceToMove: piece,
+            uciMove: uciMove,
+            side: pieceSide,
+            callback: chosenName =>
+              completeFlipAfterMove(
+                piece,
+                uciMove,
+                chosenName,
+                capturedHiddenChar
+              ),
+          }
         }
       } else {
         const pool = Object.entries(unrevealedPieceCounts.value)
