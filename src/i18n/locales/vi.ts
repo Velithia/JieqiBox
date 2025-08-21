@@ -390,6 +390,9 @@ export default {
     noData: 'Không có dữ liệu phân tích',
     newGame: 'Ván mới',
     copied: '✓ Đã sao chép',
+    saveChartImage: 'Lưu hình ảnh',
+    chartImageSaved: 'Hình ảnh đã được lưu vào {path}',
+    saveChartImageFailed: 'Lưu hình ảnh thất bại',
   },
 
   // Lựa chọn ngôn ngữ

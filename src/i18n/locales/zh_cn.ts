@@ -464,6 +464,9 @@ export default {
     noData: '暂无分析数据',
     newGame: '新对局',
     copied: '✓ 已复制',
+    saveChartImage: '保存图片',
+    chartImageSaved: '图片已保存到 {path}',
+    saveChartImageFailed: '保存图片失败',
   },
 
   // 语言选择

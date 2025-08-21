@@ -126,6 +126,12 @@
             class="color-scheme-select"
           />
         </div>
+        <!-- Save Chart Image -->
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" @click="saveChartImage">
+          <v-icon small class="mr-2">mdi-download</v-icon>
+          {{ $t('evaluationChart.saveChartImage') }}
+        </div>
       </div>
     </Teleport>
   </div>
@@ -134,11 +140,13 @@
 <script setup lang="ts">
   import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { useTheme } from 'vuetify'
   import type { HistoryEntry } from '@/composables/useChessGame'
   import { useEvaluationChartSettings } from '@/composables/useEvaluationChartSettings'
   import { isMobilePlatform } from '@/utils/platform'
 
   const { t } = useI18n()
+  const theme = useTheme()
 
   /* ---------- Component Props ---------- */
   interface Props {
@@ -225,6 +233,76 @@
   }
   const toggleEnableYAxisClamp = () => {
     enableYAxisClamp.value = !enableYAxisClamp.value
+  }
+
+  // Save chart as image
+  const saveChartImage = async () => {
+    contextMenuVisible.value = false
+    if (!chartContainer.value) return
+
+    try {
+      // Create a high-resolution canvas for saving
+      const saveCanvas = document.createElement('canvas')
+      const saveCtx = saveCanvas.getContext('2d')
+      if (!saveCtx) throw new Error('Failed to get canvas context')
+
+      // Set higher resolution (2x the original size)
+      const scale = 2
+      const originalWidth = chartWidth.value
+      const originalHeight = chartHeight.value
+      saveCanvas.width = originalWidth * scale
+      saveCanvas.height = originalHeight * scale
+
+      // Scale the context for high-resolution rendering
+      saveCtx.scale(scale, scale)
+      saveCtx.imageSmoothingEnabled = true
+      saveCtx.imageSmoothingQuality = 'high'
+
+      // Set appropriate background based on current theme
+      const isDarkMode = theme.global.current.value.dark
+      saveCtx.fillStyle = isDarkMode ? '#1e1e1e' : 'white'
+      saveCtx.fillRect(0, 0, originalWidth, originalHeight)
+
+      // Temporarily override the chart context
+      const originalContext = chartContext.value
+      chartContext.value = saveCtx
+
+      // Redraw the chart with appropriate background
+      drawChart()
+
+      // Restore original context
+      chartContext.value = originalContext
+
+      // Get canvas data as base64 PNG
+      const imageData = saveCanvas.toDataURL('image/png')
+
+      // Check platform
+      const { isAndroidPlatform } = await import('@/utils/platform')
+      const isAndroid = isAndroidPlatform()
+
+      if (isAndroid) {
+        // Use Tauri command to save to Android internal storage
+        const filename = `chart_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`
+        const { invoke } = await import('@tauri-apps/api/core')
+        const savedPath = await invoke('save_chart_image', {
+          content: imageData,
+          filename,
+        })
+        console.log('Chart image saved to:', savedPath)
+        alert(t('evaluationChart.chartImageSaved', { path: savedPath }))
+      } else {
+        // Use browser download for desktop platforms
+        const a = document.createElement('a')
+        a.href = imageData
+        a.download = `揭棋局势图_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      }
+    } catch (error) {
+      console.error('保存图片失败:', error)
+      alert(t('evaluationChart.saveChartImageFailed'))
+    }
   }
 
   // Context menu event handlers
@@ -404,6 +482,13 @@
     if (!chartCanvas.value || !chartContext.value) return
     const ctx = chartContext.value
     ctx.clearRect(0, 0, chartCanvas.value.width, chartCanvas.value.height)
+
+    // Draw appropriate background based on dark mode setting
+    // In dark mode, use a dark background; in light mode, use white background
+    const isDarkMode = theme.global.current.value.dark
+    ctx.fillStyle = isDarkMode ? '#1e1e1e' : 'white'
+    ctx.fillRect(0, 0, chartCanvas.value.width, chartCanvas.value.height)
+
     const points = chartData.value
     if (points.length < 2) return
     const area = {
@@ -1041,6 +1126,12 @@
       yAxisClampValue,
       colorScheme,
     ],
+    () => nextTick(drawChart)
+  )
+  
+  // Watch for theme changes and redraw chart with appropriate background
+  watch(
+    () => theme.global.current.value.dark,
     () => nextTick(drawChart)
   )
 

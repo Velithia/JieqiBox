@@ -478,6 +478,9 @@ export default {
     noData: 'No analysis data available',
     newGame: 'New Game',
     copied: '✓ Copied',
+    saveChartImage: 'Save Chart Image',
+    chartImageSaved: 'Chart image saved to {path}',
+    saveChartImageFailed: 'Failed to save chart image',
   },
 
   // Language selection

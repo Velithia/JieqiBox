@@ -11,6 +11,7 @@ use std::process::Command;
 use encoding_rs::GBK;
 use std::path::Path;
 use std::fs;
+use base64::Engine;
 #[cfg(target_os = "android")]
 use std::os::unix::fs::PermissionsExt;
 
@@ -129,6 +130,43 @@ async fn save_game_notation(content: String, filename: String, app: AppHandle) -
     // Write the provided content to the file
     if let Err(e) = fs::write(file_path, content) {
         let error_msg = format!("Failed to write notation file: {}", e);
+        return Err(error_msg);
+    }
+
+    Ok(file_path_str)
+}
+
+/// Save chart image to Android's external, user-accessible storage.
+#[tauri::command]
+async fn save_chart_image(content: String, filename: String, app: AppHandle) -> Result<String, String> {
+    if !cfg!(target_os = "android") {
+        return Err("This function is only available on Android".to_string());
+    }
+
+    // Use dynamic bundle identifier for external storage path
+    let bundle_identifier = &app.config().identifier;
+    let external_dir = format!("/storage/emulated/0/Android/data/{}/files/charts", bundle_identifier);
+    
+    // Create the "charts" directory if it doesn't exist
+    if let Err(e) = fs::create_dir_all(&external_dir) {
+        let error_msg = format!("Failed to create charts directory: {}", e);
+        return Err(error_msg);
+    }
+
+    // Decode base64 content
+    let cleaned_content = content.replace("data:image/png;base64,", "");
+    let decoded_content = match base64::engine::general_purpose::STANDARD.decode(&cleaned_content) {
+        Ok(data) => data,
+        Err(e) => return Err(format!("Failed to decode image data: {}", e)),
+    };
+
+    // Generate the full file path for the new chart image file
+    let file_path_str = format!("{}/{}", external_dir, filename);
+    let file_path = Path::new(&file_path_str);
+
+    // Write the provided content to the file
+    if let Err(e) = fs::write(file_path, decoded_content) {
+        let error_msg = format!("Failed to write chart image file: {}", e);
         return Err(error_msg);
     }
 
@@ -639,6 +677,7 @@ pub fn run() {
             send_to_engine, 
             open_external_url,
             save_game_notation,
+            save_chart_image,
             load_config,
             save_config,
             clear_config,

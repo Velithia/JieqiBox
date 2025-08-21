@@ -382,6 +382,9 @@ export default {
     noData: '暫無分析數據',
     newGame: '新對局',
     copied: '✓ 已複製',
+    saveChartImage: '儲存圖片',
+    chartImageSaved: '圖片已儲存到 {path}',
+    saveChartImageFailed: '儲存圖片失敗',
   },
 
   // 語言選擇

@@ -390,6 +390,9 @@ export default {
     noData: '分析データがありません',
     newGame: '新しいゲーム',
     copied: '✓ コピーしました',
+    saveChartImage: '画像を保存',
+    chartImageSaved: '画像が {path} に保存されました',
+    saveChartImageFailed: '画像の保存に失敗しました',
   },
 
   // 言語選択
