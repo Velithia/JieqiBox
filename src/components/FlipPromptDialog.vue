@@ -54,13 +54,13 @@
 <script setup lang="ts">
   import { computed, inject, ref, onMounted, onUnmounted } from 'vue'
   import MersenneTwister from 'mersenne-twister'
-  
+
   // Create a global instance of Mersenne Twister for this component
   const mt = new MersenneTwister()
-  
+
   // Set seed based on current date and time for better randomness
   mt.init_seed(new Date().getTime())
-  
+
   // Custom random function using Mersenne Twister
   const mtRandom = (): number => {
     return mt.random()
