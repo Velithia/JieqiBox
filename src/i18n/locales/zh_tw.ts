@@ -78,6 +78,19 @@ export default {
     },
   },
 
+  // UCI Terminal對話框
+  uciTerminal: {
+    title: 'UCI終端機',
+    enterCommand: '輸入UCI指令...',
+    sendCommand: '傳送指令',
+    noEngineLoaded: '目前未載入任何引擎。',
+    pleaseLoadEngineFirst: '請先載入引擎以使用終端機。',
+    quickCommands: '快速指令',
+    clear: '清除終端機',
+    commandHistory: '指令歷史',
+    terminalOutput: '終端機輸出',
+  },
+
   // 時間對話框
   timeDialog: {
     title: '引擎分析參數設定',
@@ -228,6 +241,7 @@ export default {
     opening: '開局',
     adjustment: '調整',
     engineLog: '引擎日誌',
+    uciTerminal: 'UCI終端機',
     about: '關於',
     undockPanel: '取消停靠面板',
     dockPanel: '停靠面板',

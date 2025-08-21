@@ -301,7 +301,8 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
         analysisLines.length = 0
         isInfinitePondering.value = false // Reset infinite pondering flag when analysis completes
       }
-      if (ln === 'uciok') send('isready')
+      if (ln === 'uciok' && !(window as any).__UCI_TERMINAL_ACTIVE__)
+        send('isready')
       if (ln === 'readyok') analysis.value = t('uci.engineReady')
 
       // record UCI options

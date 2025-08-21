@@ -81,6 +81,19 @@ export default {
     },
   },
 
+  // Hộp thoại terminal UCI
+  uciTerminal: {
+    title: 'Terminal UCI',
+    enterCommand: 'Nhập lệnh UCI...',
+    sendCommand: 'Gửi lệnh',
+    noEngineLoaded: 'Chưa có engine nào được tải.',
+    pleaseLoadEngineFirst: 'Vui lòng tải engine trước để sử dụng terminal.',
+    quickCommands: 'Lệnh nhanh',
+    clear: 'Xóa terminal',
+    commandHistory: 'Lịch sử lệnh',
+    terminalOutput: 'Đầu ra terminal',
+  },
+
   // Hộp thoại thời gian
   timeDialog: {
     title: 'Cài đặt tham số phân tích engine',
@@ -232,6 +245,7 @@ export default {
     opening: 'Khai cuộc',
     adjustment: 'Điều chỉnh',
     engineLog: 'Nhật ký engine',
+    uciTerminal: 'Terminal UCI',
     about: 'Về',
     undockPanel: 'Tách panel',
     dockPanel: 'Ghép panel',

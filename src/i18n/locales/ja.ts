@@ -79,6 +79,20 @@ export default {
     },
   },
 
+  // UCIターミナルダイアログ
+  uciTerminal: {
+    title: 'UCIターミナル',
+    enterCommand: 'UCIコマンドを入力...',
+    sendCommand: 'コマンドを送信',
+    noEngineLoaded: 'エンジンがロードされていません。',
+    pleaseLoadEngineFirst:
+      'ターミナルを使用するには、まずエンジンを読み込んでください。',
+    quickCommands: 'クイックコマンド',
+    clear: 'ターミナルをクリア',
+    commandHistory: 'コマンド履歴',
+    terminalOutput: 'ターミナル出力',
+  },
+
   // 時間ダイアログ
   timeDialog: {
     title: 'エンジン解析パラメータ設定',
@@ -230,6 +244,7 @@ export default {
     opening: '開局',
     adjustment: '調整',
     engineLog: 'エンジンログ',
+    uciTerminal: 'UCIターミナル',
     about: 'について',
     undockPanel: 'パネルを切り離し',
     dockPanel: 'パネルをドック',

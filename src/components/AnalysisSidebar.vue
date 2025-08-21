@@ -805,6 +805,21 @@
       </div>
     </DraggablePanel>
 
+    <!-- UCI Terminal Button -->
+    <div class="uci-terminal-section">
+      <v-btn
+        @click="showUciTerminalDialog = true"
+        :disabled="!isEngineLoaded"
+        color="purple"
+        variant="outlined"
+        class="full-btn"
+        size="small"
+        prepend-icon="mdi-console"
+      >
+        {{ $t('analysis.uciTerminal') }}
+      </v-btn>
+    </div>
+
     <div class="about-section">
       <v-btn
         @click="openAboutDialog"
@@ -820,6 +835,7 @@
 
     <AboutDialog ref="aboutDialogRef" />
     <EngineManagerDialog v-model="showEngineManager" />
+    <UciTerminalDialog v-model="showUciTerminalDialog" />
     <JaiOptionsDialog
       v-if="isMatchMode"
       v-model="showJaiOptionsDialog"
@@ -857,6 +873,7 @@
   import AboutDialog from './AboutDialog.vue'
   // Import Engine Manager components and types
   import EngineManagerDialog from './EngineManagerDialog.vue'
+  import UciTerminalDialog from './UciTerminalDialog.vue'
   import JaiOptionsDialog from './JaiOptionsDialog.vue'
   import EloCalculatorDialog from './EloCalculatorDialog.vue'
   import HumanVsAiModeDialog from './HumanVsAiModeDialog.vue'
@@ -965,6 +982,7 @@
   const isMatchMode = ref(false)
   const showJaiOptionsDialog = ref(false)
   const showEloCalculatorDialog = ref(false)
+  const showUciTerminalDialog = ref(false)
 
   // JAI engine state properties - use reactive references from JAI engine
   const isMatchRunning = computed(

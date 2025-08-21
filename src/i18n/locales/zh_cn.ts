@@ -78,6 +78,19 @@ export default {
     },
   },
 
+  // UCI终端对话框
+  uciTerminal: {
+    title: 'UCI终端',
+    enterCommand: '输入UCI命令...',
+    sendCommand: '发送命令',
+    noEngineLoaded: '当前未加载任何引擎。',
+    pleaseLoadEngineFirst: '请先加载引擎以使用终端。',
+    quickCommands: '快速命令',
+    clear: '清空终端',
+    commandHistory: '命令历史',
+    terminalOutput: '终端输出',
+  },
+
   // 时间对话框
   timeDialog: {
     title: '引擎分析参数设置',
@@ -228,6 +241,7 @@ export default {
     opening: '开局',
     adjustment: '调整',
     engineLog: '引擎日志',
+    uciTerminal: 'UCI终端',
     about: '关于',
     undockPanel: '取消停靠面板',
     dockPanel: '停靠面板',

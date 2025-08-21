@@ -80,6 +80,19 @@ export default {
     },
   },
 
+  // UCI Terminal dialog
+  uciTerminal: {
+    title: 'UCI Terminal',
+    enterCommand: 'Enter UCI command...',
+    sendCommand: 'Send Command',
+    noEngineLoaded: 'No engine is currently loaded.',
+    pleaseLoadEngineFirst: 'Please load an engine first to use the terminal.',
+    quickCommands: 'Quick Commands',
+    clear: 'Clear Terminal',
+    commandHistory: 'Command History',
+    terminalOutput: 'Terminal Output',
+  },
+
   // Time dialog
   timeDialog: {
     title: 'Engine Analysis Parameters Settings',
@@ -231,6 +244,7 @@ export default {
     opening: 'Opening',
     adjustment: 'Adjustment',
     engineLog: 'Engine Log',
+    uciTerminal: 'UCI Terminal',
     about: 'About',
     undockPanel: 'Undock Panel',
     dockPanel: 'Dock Panel',
