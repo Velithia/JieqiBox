@@ -498,7 +498,7 @@
     .quick-commands {
       padding: 8px 16px;
       border-top: 1px solid rgb(var(--v-border-color));
-      background: rgb(var(--v-theme-surface-variant));
+      background: rgb(var(--v-theme-surface));
 
       .quick-commands-title {
         font-size: 12px;
