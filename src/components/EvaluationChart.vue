@@ -1128,7 +1128,7 @@
     ],
     () => nextTick(drawChart)
   )
-  
+
   // Watch for theme changes and redraw chart with appropriate background
   watch(
     () => theme.global.current.value.dark,

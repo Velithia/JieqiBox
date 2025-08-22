@@ -312,24 +312,74 @@ export function useChessGame() {
     }
   }
 
+  // Helper function to replace hidden piece pool in FEN for human vs AI mode
+  const replaceHiddenPoolInFen = (fen: string): string => {
+    if (!isHumanVsAiMode.value) {
+      return fen
+    }
+
+    const fenFormat = detectFenFormat(fen)
+    const fenParts = fen.split(' ')
+
+    // Get correct engine view pool
+    const { engineViewPool } = calculateDualPools()
+
+    // Generate new pool part
+    const newPoolFen = Object.entries(engineViewPool)
+      .filter(([, count]) => count > 0)
+      .map(([char, count]) => `${char}${count}`)
+      .join('')
+
+    let correctedFen: string
+
+    if (fenFormat === 'new') {
+      // New format: board side hiddenPart halfmove fullmove
+      if (fenParts.length >= 5) {
+        const [boardPart, sidePart, , halfmove, fullmove] = fenParts
+        correctedFen = `${boardPart} ${sidePart} ${newPoolFen} ${halfmove} ${fullmove}`
+      } else if (fenParts.length >= 3) {
+        const [boardPart, sidePart] = fenParts
+        correctedFen = `${boardPart} ${sidePart} ${newPoolFen}`
+      } else {
+        return fen
+      }
+    } else {
+      // Old format: board hiddenPart side castling enpassant halfmove fullmove
+      if (fenParts.length >= 7) {
+        const [boardPart, , sidePart, castling, enpassant, halfmove, fullmove] =
+          fenParts
+        correctedFen = `${boardPart} ${newPoolFen} ${sidePart} ${castling} ${enpassant} ${halfmove} ${fullmove}`
+      } else if (fenParts.length >= 3) {
+        const [boardPart, , sidePart] = fenParts
+        correctedFen = `${boardPart} ${newPoolFen} ${sidePart}`
+      } else {
+        return fen
+      }
+    }
+
+    return correctedFen
+  }
+
   // Generate FEN for engine communication (respects format settings)
   const generateFenForEngine = (baseFen?: string): string => {
     const targetFormat = useNewFenFormat.value ? 'new' : 'old'
 
+    let fenToProcess: string
+
     if (baseFen) {
-      // Convert baseFen to the target format
-      return convertFenFormat(baseFen, targetFormat)
+      // In human vs AI mode, replace hidden pool first, then convert format
+      fenToProcess = replaceHiddenPoolInFen(baseFen)
     } else {
       // In human vs AI mode, generate FEN with limited knowledge
       if (isHumanVsAiMode.value) {
-        const currentFen = generateLimitedKnowledgeFen()
-        return convertFenFormat(currentFen, targetFormat)
+        fenToProcess = generateLimitedKnowledgeFen()
       } else {
         // Generate current position FEN in the target format
-        const currentFen = generateFen()
-        return convertFenFormat(currentFen, targetFormat)
+        fenToProcess = generateFen()
       }
     }
+
+    return convertFenFormat(fenToProcess, targetFormat)
   }
 
   // Parse UCI extended format to extract flip and capture information
@@ -361,20 +411,71 @@ export function useChessGame() {
     return { flipChar: null, captureChar: null }
   }
 
-  // Calculate pool counts from two perspectives: God view (true) and Engine view (limited)
-  const calculateDualPools = () => {
-    // God view pool: true state of all unrevealed pieces
-    const godViewPool = { ...INITIAL_PIECE_COUNTS }
+  // Helper function to check if a move captured a revealed piece
+  // Based on CaptureHistoryPanel's checkBasicCapture logic
+  const checkBasicCaptureFromHistory = (
+    uciMove: string,
+    moveIndex: number
+  ): string | null => {
+    // Accept both 4-character moves and longer moves (extract first 4 characters)
+    if (uciMove.length < 4) return null
+    const basicUci = uciMove.slice(0, 4) // Extract basic move part
 
-    // Subtract all revealed pieces from god view
-    pieces.value.forEach(p => {
-      if (p.isKnown) {
-        const char = FEN_MAP[p.name]
-        if (char && godViewPool[char] !== undefined) {
-          godViewPool[char]--
+    // Get board state before this move
+    let fenBefore: string
+    if (moveIndex === 0) {
+      fenBefore = initialFen.value
+    } else {
+      fenBefore = history.value[moveIndex - 1].fen
+    }
+
+    // Parse target position from UCI
+    const toFile = basicUci[2]
+    const toRank = basicUci[3]
+    const toCol = toFile.charCodeAt(0) - 'a'.charCodeAt(0)
+    const toRow = 9 - parseInt(toRank) // Convert UCI rank to row index
+
+    // Check if there was a revealed piece at the target position
+    try {
+      // Parse FEN to get piece positions
+      const fenParts = fenBefore.split(' ')
+      const boardPart = fenParts[0]
+      const rows = boardPart.split('/')
+
+      if (rows[toRow]) {
+        const targetRow = rows[toRow]
+        let col = 0
+        for (let i = 0; i < targetRow.length; i++) {
+          const char = targetRow[i]
+
+          if (char >= '1' && char <= '9') {
+            const spaces = parseInt(char)
+            col += spaces
+          } else if (char !== 'x' && char !== 'X') {
+            // Found a revealed piece
+            if (col === toCol) {
+              const pieceName = getPieceNameFromChar(char)
+              return pieceName
+            }
+            col++
+          } else {
+            // Found dark piece
+            col++
+          }
         }
       }
-    })
+    } catch (error) {
+      console.warn('Failed to parse FEN for capture detection:', error)
+    }
+
+    return null
+  }
+
+  // Calculate pool counts from two perspectives: God view (true) and Engine view (limited)
+  const calculateDualPools = () => {
+    // God view pool: use the correctly maintained unrevealedPieceCounts
+    // This already accounts for all revealed pieces and captured pieces correctly
+    const godViewPool = { ...unrevealedPieceCounts.value }
 
     // Engine view pool: starts same as god view, but hide human captures
     const engineViewPool = { ...godViewPool }
@@ -402,11 +503,16 @@ export function useChessGame() {
           const { captureChar } = parseUciExtended(uciMove, movingSide)
 
           if (captureChar && engineViewPool[captureChar] !== undefined) {
-            // Add back to engine pool (engine doesn't know this piece was captured)
-            engineViewPool[captureChar]++
-            console.log(
-              `[DEBUG] Human vs AI: Adding ${captureChar} back to engine pool (god: ${godViewPool[captureChar]}, engine: ${engineViewPool[captureChar]})`
-            )
+            const basicCapture = checkBasicCaptureFromHistory(uciMove, i)
+
+            if (basicCapture) {
+              // Revealed piece was captured, don't add back to engine pool
+              // (revealed pieces are not in the hidden pool anyway)
+            } else {
+              // No revealed piece captured, so it was a hidden piece capture
+              // Add back to engine pool (engine doesn't know this piece was captured)
+              engineViewPool[captureChar]++
+            }
           }
         }
       }
