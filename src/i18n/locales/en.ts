@@ -543,8 +543,10 @@ export default {
   gameEnd: {
     humanWins: 'Congratulations! You Win!',
     aiWins: 'Game Over - AI Wins',
-    humanWinsMessage: 'You have defeated the AI! The AI has no legal moves remaining.',
-    aiWinsMessage: 'The AI has won this game. You have no legal moves remaining.',
+    humanWinsMessage:
+      'You have defeated the AI! The AI has no legal moves remaining.',
+    aiWinsMessage:
+      'The AI has won this game. You have no legal moves remaining.',
     ok: 'OK',
   },
 

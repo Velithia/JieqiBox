@@ -146,7 +146,7 @@
       if (!move.data || move.type !== 'move') continue
 
       const uciMove = move.data
-      
+
       // Calculate move number based on the actual move sequence
       // If red starts first, move 0,2,4... are red moves, 1,3,5... are black moves
       // If black starts first, move 0,2,4... are black moves, 1,3,5... are red moves
@@ -162,7 +162,7 @@
         const currentFen = move.fen
         const currentFenParts = currentFen.split(' ')
         const currentColorField = currentFenParts[1] || 'w'
-        
+
         // If color changed from 'w' to 'b', this is a new full move
         if (prevColorField === 'w' && currentColorField === 'b') {
           // This is the start of a new full move
@@ -189,7 +189,7 @@
         const mover = colorField === 'w' ? 'red' : 'black'
         isHumanMove = mover === humanSide
       }
-      
+
       // Determine moving side from the FEN color field before this move
       let movingSide: 'red' | 'black'
       if (i === 0) {

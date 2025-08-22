@@ -27,6 +27,12 @@ interface ConfigData {
     showLuckIndex: boolean
     showArrows: boolean
   }
+  windowSettings: {
+    width: number
+    height: number
+    x?: number
+    y?: number
+  }
   evaluationChartSettings: {
     showMoveLabels: boolean
     useLinearYAxis: boolean
@@ -84,6 +90,10 @@ const defaultConfig: ConfigData = {
     showLuckIndex: false,
     showArrows: true,
   },
+  windowSettings: {
+    width: 800,
+    height: 600,
+  },
   evaluationChartSettings: {
     showMoveLabels: true,
     useLinearYAxis: false,
@@ -139,6 +149,10 @@ export function useConfigManager() {
             ...defaultConfig.interfaceSettings,
             ...parsedConfig.interfaceSettings,
           },
+          windowSettings: {
+            ...defaultConfig.windowSettings,
+            ...parsedConfig.windowSettings,
+          },
           evaluationChartSettings: {
             ...defaultConfig.evaluationChartSettings,
             ...parsedConfig.evaluationChartSettings,
@@ -181,6 +195,20 @@ export function useConfigManager() {
   ): Promise<void> => {
     configData.value.interfaceSettings = {
       ...configData.value.interfaceSettings,
+      ...settings,
+    }
+    await saveConfig()
+  }
+
+  // Get window settings
+  const getWindowSettings = () => configData.value.windowSettings
+
+  // Update window settings
+  const updateWindowSettings = async (
+    settings: Partial<ConfigData['windowSettings']>
+  ): Promise<void> => {
+    configData.value.windowSettings = {
+      ...configData.value.windowSettings,
       ...settings,
     }
     await saveConfig()
@@ -399,6 +427,8 @@ export function useConfigManager() {
     saveConfig,
     getInterfaceSettings,
     updateInterfaceSettings,
+    getWindowSettings,
+    updateWindowSettings,
     getEvaluationChartSettings,
     updateEvaluationChartSettings,
     getAnalysisSettings,

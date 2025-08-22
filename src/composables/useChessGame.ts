@@ -399,7 +399,9 @@ export function useChessGame() {
       const char = extension[0]
       const isUpperCase = char === char.toUpperCase()
       const charSide = isUpperCase ? 'red' : 'black'
-      console.log(`parseUciExtended: uciMove="${uciMove}", movingSide="${movingSide}"`)
+      console.log(
+        `parseUciExtended: uciMove="${uciMove}", movingSide="${movingSide}"`
+      )
       if (charSide === movingSide) {
         // Same side as mover: this is a flip (revealing own piece)
         return { flipChar: char, captureChar: null }
@@ -492,12 +494,20 @@ export function useChessGame() {
       let startIndex = 0
       for (let i = currentMoveIndex.value - 1; i >= 0; i--) {
         const entry = history.value[i]
-        if (entry && entry.type === 'adjust' && 
-            typeof entry.data === 'string' && 
-            entry.data.startsWith('position_edit:')) {
+        if (
+          entry &&
+          entry.type === 'adjust' &&
+          typeof entry.data === 'string' &&
+          entry.data.startsWith('position_edit:')
+        ) {
           // Start from the move after the position-edit
           startIndex = i + 1
-          console.log('[DEBUG] DUAL_POOLS: Found position-edit at index', i, 'starting traversal from', startIndex)
+          console.log(
+            '[DEBUG] DUAL_POOLS: Found position-edit at index',
+            i,
+            'starting traversal from',
+            startIndex
+          )
           break
         }
       }
@@ -513,7 +523,7 @@ export function useChessGame() {
         if (!move.data || move.type !== 'move') continue
 
         const uciMove = move.data
-        
+
         // Determine whose move this is based on the FEN color field before this move
         let isHumanMove: boolean
         if (i === 0) {
@@ -546,7 +556,7 @@ export function useChessGame() {
             const colorField = fenParts[1] || 'w'
             movingSide = colorField === 'w' ? 'red' : 'black'
           }
-          
+
           const { captureChar } = parseUciExtended(uciMove, movingSide)
 
           if (captureChar && engineViewPool[captureChar] !== undefined) {
@@ -843,14 +853,14 @@ export function useChessGame() {
   const checkGameEndCondition = () => {
     // Get all legal moves for the current side to move
     const legalMoves = getAllLegalMovesForCurrentPosition()
-    
+
     // If no legal moves are available, the current side has lost
     if (legalMoves.length === 0) {
       const currentSide = sideToMove.value
       const humanSide = aiSide.value === 'red' ? 'black' : 'red'
-      
+
       console.log('[DEBUG] GAME_END: No legal moves for', currentSide)
-      
+
       if (currentSide === humanSide) {
         // Human has no legal moves, AI wins
         gameEndResult.value = 'ai_wins'
@@ -860,7 +870,7 @@ export function useChessGame() {
         gameEndResult.value = 'human_wins'
         console.log('[DEBUG] GAME_END: Human wins')
       }
-      
+
       // Show the game end dialog
       isGameEndDialogVisible.value = true
     }

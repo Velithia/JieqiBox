@@ -15,6 +15,7 @@
   import { useInterfaceSettings } from './composables/useInterfaceSettings'
   import { useConfigManager } from './composables/useConfigManager'
   import { useAutosave } from './composables/useAutosave'
+  import { useWindowManager } from './composables/useWindowManager'
   import { LANGUAGE_TO_HTML_LANG } from './utils/constants'
 
   const { locale } = useI18n()
@@ -70,10 +71,14 @@
   // Initialize autosave functionality after providing game state
   const autosave = useAutosave()
 
+  // Initialize window manager for window size persistence
+  const windowManager = useWindowManager()
+
   // Load configuration when app mounts
   onMounted(async () => {
     try {
       await configManager.loadConfig()
+
       // Set locale from config
       const savedLocale = configManager.getLocale()
       if (
@@ -94,6 +99,11 @@
 
       // Initialize autosave after configuration is loaded
       await autosave.initializeAutosave(game)
+
+      // Restore window size and position from saved config (after everything else is loaded)
+      // Use nextTick to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 200))
+      await windowManager.restoreWindowState()
     } catch (error) {
       console.error('Failed to load configuration on app startup:', error)
     }
@@ -102,6 +112,7 @@
   // Clean up autosave timer when app unmounts
   onUnmounted(() => {
     autosave.stopAutosaveTimer()
+    // Window manager cleanup is handled automatically by its own onUnmounted hook
   })
 </script>
 
@@ -121,7 +132,7 @@
       <GameEndDialog
         :visible="game.isGameEndDialogVisible.value"
         :game-result="game.gameEndResult.value"
-        :on-close="() => game.isGameEndDialogVisible.value = false"
+        :on-close="() => (game.isGameEndDialogVisible.value = false)"
       />
     </div>
   </div>
