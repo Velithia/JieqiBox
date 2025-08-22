@@ -536,6 +536,15 @@ export default {
     cancel: 'Hủy',
   },
 
+  // Thông báo kết thúc trò chơi
+  gameEnd: {
+    humanWins: 'Chúc mừng! Bạn đã thắng!',
+    aiWins: 'Kết thúc trò chơi - AI thắng',
+    humanWinsMessage: 'Bạn đã đánh bại AI! AI không còn nước đi hợp lệ.',
+    aiWinsMessage: 'AI đã thắng trận đấu này. Bạn không còn nước đi hợp lệ.',
+    ok: 'OK',
+  },
+
   // Chế độ người chơi vs AI
   humanVsAi: {
     title: 'Chế độ Người chơi vs AI',

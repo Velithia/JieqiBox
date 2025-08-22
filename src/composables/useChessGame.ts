@@ -108,6 +108,10 @@ export function useChessGame() {
   // Keep this in sync with .piece.animated { transition: all 0.2s ease; }
   const MOVE_ANIMATION_DURATION_MS = 200
 
+  // Game end dialog state
+  const isGameEndDialogVisible = ref(false)
+  const gameEndResult = ref<'human_wins' | 'ai_wins' | null>(null)
+
   // Schedule resetting z-indexes back to positional values after move animation completes
   const scheduleZIndexResetAfterAnimation = () => {
     window.setTimeout(() => {
@@ -395,7 +399,7 @@ export function useChessGame() {
       const char = extension[0]
       const isUpperCase = char === char.toUpperCase()
       const charSide = isUpperCase ? 'red' : 'black'
-
+      console.log(`parseUciExtended: uciMove="${uciMove}", movingSide="${movingSide}"`)
       if (charSide === movingSide) {
         // Same side as mover: this is a flip (revealing own piece)
         return { flipChar: char, captureChar: null }
@@ -484,9 +488,24 @@ export function useChessGame() {
     if (isHumanVsAiMode.value && history.value && currentMoveIndex.value > 0) {
       const humanSide = aiSide.value === 'red' ? 'black' : 'red'
 
+      // Find the last position-edit operation index, if any
+      let startIndex = 0
+      for (let i = currentMoveIndex.value - 1; i >= 0; i--) {
+        const entry = history.value[i]
+        if (entry && entry.type === 'adjust' && 
+            typeof entry.data === 'string' && 
+            entry.data.startsWith('position_edit:')) {
+          // Start from the move after the position-edit
+          startIndex = i + 1
+          console.log('[DEBUG] DUAL_POOLS: Found position-edit at index', i, 'starting traversal from', startIndex)
+          break
+        }
+      }
+
       // Parse history to find human captures and add them back to engine pool
+      // Start from position-edit if found, otherwise from beginning
       for (
-        let i = 0;
+        let i = startIndex;
         i <= currentMoveIndex.value && i < history.value.length;
         i++
       ) {
@@ -494,12 +513,40 @@ export function useChessGame() {
         if (!move.data || move.type !== 'move') continue
 
         const uciMove = move.data
-        const isHumanMove =
-          (i % 2 === 0 && humanSide === 'red') ||
-          (i % 2 === 1 && humanSide === 'black')
+        
+        // Determine whose move this is based on the FEN color field before this move
+        let isHumanMove: boolean
+        if (i === 0) {
+          // For the first move, check the initial FEN
+          const initialFenParts = initialFen.value.split(' ')
+          const colorField = initialFenParts[1] || 'w'
+          const firstMover = colorField === 'w' ? 'red' : 'black'
+          isHumanMove = firstMover === humanSide
+        } else {
+          // For subsequent moves, check the FEN before this move
+          const prevFen = history.value[i - 1].fen
+          const fenParts = prevFen.split(' ')
+          const colorField = fenParts[1] || 'w'
+          const mover = colorField === 'w' ? 'red' : 'black'
+          isHumanMove = mover === humanSide
+        }
 
         if (isHumanMove && uciMove.length > 4) {
-          const movingSide = i % 2 === 0 ? 'red' : 'black'
+          // Determine moving side from the FEN color field before this move
+          let movingSide: 'red' | 'black'
+          if (i === 0) {
+            // For the first move, check the initial FEN
+            const initialFenParts = initialFen.value.split(' ')
+            const colorField = initialFenParts[1] || 'w'
+            movingSide = colorField === 'w' ? 'red' : 'black'
+          } else {
+            // For subsequent moves, check the FEN before this move
+            const prevFen = history.value[i - 1].fen
+            const fenParts = prevFen.split(' ')
+            const colorField = fenParts[1] || 'w'
+            movingSide = colorField === 'w' ? 'red' : 'black'
+          }
+          
           const { captureChar } = parseUciExtended(uciMove, movingSide)
 
           if (captureChar && engineViewPool[captureChar] !== undefined) {
@@ -792,6 +839,33 @@ export function useChessGame() {
     }
   }
 
+  // Check for game end condition in human vs AI mode
+  const checkGameEndCondition = () => {
+    // Get all legal moves for the current side to move
+    const legalMoves = getAllLegalMovesForCurrentPosition()
+    
+    // If no legal moves are available, the current side has lost
+    if (legalMoves.length === 0) {
+      const currentSide = sideToMove.value
+      const humanSide = aiSide.value === 'red' ? 'black' : 'red'
+      
+      console.log('[DEBUG] GAME_END: No legal moves for', currentSide)
+      
+      if (currentSide === humanSide) {
+        // Human has no legal moves, AI wins
+        gameEndResult.value = 'ai_wins'
+        console.log('[DEBUG] GAME_END: AI wins')
+      } else {
+        // AI has no legal moves, human wins
+        gameEndResult.value = 'human_wins'
+        console.log('[DEBUG] GAME_END: Human wins')
+      }
+      
+      // Show the game end dialog
+      isGameEndDialogVisible.value = true
+    }
+  }
+
   const recordAndFinalize = (type: 'move' | 'adjust', data: string) => {
     // Record move history: slice to current index position, then add new move record
     const newHistory = history.value.slice(0, currentMoveIndex.value)
@@ -1045,6 +1119,14 @@ export function useChessGame() {
         )
         ponderState.handlePonderAfterMove(data, false)
       }
+    }
+
+    // Check for game end in human vs AI mode
+    if (type === 'move' && isHumanVsAiMode.value) {
+      // Use a small delay to ensure the UI updates are complete before checking game end
+      setTimeout(() => {
+        checkGameEndCondition()
+      }, 100)
     }
 
     if (type === 'move') {
@@ -2596,6 +2678,8 @@ export function useChessGame() {
     validationStatus,
     isFenInputDialogVisible,
     confirmFenInput,
+    isGameEndDialogVisible,
+    gameEndResult,
     isAnimating,
     lastMovePositions,
     initialFen,

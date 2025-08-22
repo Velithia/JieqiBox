@@ -146,13 +146,64 @@
       if (!move.data || move.type !== 'move') continue
 
       const uciMove = move.data
-      const moveNumber = Math.floor(i / 2) + 1
+      
+      // Calculate move number based on the actual move sequence
+      // If red starts first, move 0,2,4... are red moves, 1,3,5... are black moves
+      // If black starts first, move 0,2,4... are black moves, 1,3,5... are red moves
+      let moveNumber: number
+      if (i === 0) {
+        // First move is always move 1
+        moveNumber = 1
+      } else {
+        // For subsequent moves, check if this is a new full move
+        const prevFen = gameState.history.value[i - 1].fen
+        const fenParts = prevFen.split(' ')
+        const prevColorField = fenParts[1] || 'w'
+        const currentFen = move.fen
+        const currentFenParts = currentFen.split(' ')
+        const currentColorField = currentFenParts[1] || 'w'
+        
+        // If color changed from 'w' to 'b', this is a new full move
+        if (prevColorField === 'w' && currentColorField === 'b') {
+          // This is the start of a new full move
+          moveNumber = Math.floor(i / 2) + 1
+        } else {
+          // This is the second move of the current full move
+          moveNumber = Math.floor((i - 1) / 2) + 1
+        }
+      }
 
-      // Determine whose move this is based on move index
-      const isHumanMove =
-        (i % 2 === 0 && humanSide === 'red') ||
-        (i % 2 === 1 && humanSide === 'black')
-      const movingSide = i % 2 === 0 ? 'red' : 'black'
+      // Determine whose move this is based on the FEN color field before this move
+      let isHumanMove: boolean
+      if (i === 0) {
+        // For the first move, check the initial FEN
+        const initialFenParts = gameState.initialFen.value.split(' ')
+        const colorField = initialFenParts[1] || 'w'
+        const firstMover = colorField === 'w' ? 'red' : 'black'
+        isHumanMove = firstMover === humanSide
+      } else {
+        // For subsequent moves, check the FEN before this move
+        const prevFen = gameState.history.value[i - 1].fen
+        const fenParts = prevFen.split(' ')
+        const colorField = fenParts[1] || 'w'
+        const mover = colorField === 'w' ? 'red' : 'black'
+        isHumanMove = mover === humanSide
+      }
+      
+      // Determine moving side from the FEN color field before this move
+      let movingSide: 'red' | 'black'
+      if (i === 0) {
+        // For the first move, check the initial FEN
+        const initialFenParts = gameState.initialFen.value.split(' ')
+        const colorField = initialFenParts[1] || 'w'
+        movingSide = colorField === 'w' ? 'red' : 'black'
+      } else {
+        // For subsequent moves, check the FEN before this move
+        const prevFen = gameState.history.value[i - 1].fen
+        const fenParts = prevFen.split(' ')
+        const colorField = fenParts[1] || 'w'
+        movingSide = colorField === 'w' ? 'red' : 'black'
+      }
 
       console.log(`\nMove ${i}: ${uciMove}`)
       console.log(`Move number: ${moveNumber}`)

@@ -536,6 +536,15 @@ export default {
     cancel: 'キャンセル',
   },
 
+  // ゲーム終了通知
+  gameEnd: {
+    humanWins: 'おめでとうございます！あなたの勝利です！',
+    aiWins: 'ゲーム終了 - AIの勝利',
+    humanWinsMessage: 'AIを破りました！AIに合法手がありません。',
+    aiWinsMessage: 'AIがこの対局で勝利しました。あなたに合法手がありません。',
+    ok: 'OK',
+  },
+
   // 人対AIモード
   humanVsAi: {
     title: '人対AIモード',

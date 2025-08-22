@@ -7,6 +7,7 @@
   import AnalysisSidebar from './components/AnalysisSidebar.vue'
   import FlipPromptDialog from './components/FlipPromptDialog.vue'
   import FenInputDialog from './components/FenInputDialog.vue'
+  import GameEndDialog from './components/GameEndDialog.vue'
 
   import { useChessGame } from './composables/useChessGame'
   import { useUciEngine } from './composables/useUciEngine'
@@ -116,6 +117,11 @@
       <FenInputDialog
         v-model="game.isFenInputDialogVisible.value"
         @confirm="game.confirmFenInput"
+      />
+      <GameEndDialog
+        :visible="game.isGameEndDialogVisible.value"
+        :game-result="game.gameEndResult.value"
+        :on-close="() => game.isGameEndDialogVisible.value = false"
       />
     </div>
   </div>

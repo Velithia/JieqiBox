@@ -525,6 +525,15 @@ export default {
     cancel: '取消',
   },
 
+  // 游戏结束通知
+  gameEnd: {
+    humanWins: '恭喜！您获胜了！',
+    aiWins: '游戏结束 - AI获胜',
+    humanWinsMessage: '您击败了AI！AI已无合法走法。',
+    aiWinsMessage: 'AI获得了这局胜利。您已无合法走法。',
+    ok: '确定',
+  },
+
   // 人机对战模式
   humanVsAi: {
     title: '人机对战模式',
