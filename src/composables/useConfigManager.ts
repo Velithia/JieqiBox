@@ -32,6 +32,7 @@ interface ConfigData {
     height: number
     x?: number
     y?: number
+    isMaximized?: boolean
   }
   evaluationChartSettings: {
     showMoveLabels: boolean

@@ -8,6 +8,7 @@ export interface WindowSettings {
   height: number
   x?: number
   y?: number
+  isMaximized?: boolean
 }
 
 /**
@@ -36,6 +37,13 @@ export function useWindowManager() {
       if (savedSettings && savedSettings.width && savedSettings.height) {
         // Wait a bit for the window to be fully initialized
         await new Promise(resolve => setTimeout(resolve, 100))
+
+        // Restore maximized state first if it was maximized
+        if (savedSettings.isMaximized) {
+          await window.maximize()
+          console.log('Window maximized state restored')
+          return // Don't set size/position if maximized
+        }
 
         // Convert to numbers to ensure proper type
         const width = Number(savedSettings.width)
@@ -66,12 +74,14 @@ export function useWindowManager() {
       const window = getCurrentWindow()
       const size = await window.innerSize()
       const position = await window.outerPosition()
+      const isMaximized = await window.isMaximized()
 
       const windowSettings: WindowSettings = {
         width: size.width,
         height: size.height,
         x: position.x,
         y: position.y,
+        isMaximized: isMaximized,
       }
 
       await updateWindowSettings(windowSettings)
