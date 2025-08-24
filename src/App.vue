@@ -79,6 +79,9 @@
     try {
       await configManager.loadConfig()
 
+      // Restore window state immediately after config is loaded for faster startup
+      windowManager.restoreWindowState()
+
       // Set locale from config
       const savedLocale = configManager.getLocale()
       if (
@@ -99,11 +102,6 @@
 
       // Initialize autosave after configuration is loaded
       await autosave.initializeAutosave(game)
-
-      // Restore window size and position from saved config (after everything else is loaded)
-      // Use nextTick to ensure DOM is ready
-      await new Promise(resolve => setTimeout(resolve, 200))
-      await windowManager.restoreWindowState()
     } catch (error) {
       console.error('Failed to load configuration on app startup:', error)
     }

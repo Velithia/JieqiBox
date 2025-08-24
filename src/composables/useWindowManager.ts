@@ -9,6 +9,7 @@ export interface WindowSettings {
   x?: number
   y?: number
   isMaximized?: boolean
+  scaleFactor?: number // Store the DPI scale factor when the window was saved
 }
 
 /**
@@ -29,37 +30,78 @@ export function useWindowManager() {
   // Restore window size and position from config
   const restoreWindowState = async (): Promise<void> => {
     try {
-      const window = getCurrentWindow()
+      const tauriWindow = getCurrentWindow()
       const savedSettings = getWindowSettings()
 
       console.log('Restoring window state:', savedSettings)
 
       if (savedSettings && savedSettings.width && savedSettings.height) {
-        // Wait a bit for the window to be fully initialized
-        await new Promise(resolve => setTimeout(resolve, 100))
 
         // Restore maximized state first if it was maximized
         if (savedSettings.isMaximized) {
-          await window.maximize()
+          await tauriWindow.maximize()
           console.log('Window maximized state restored')
           return // Don't set size/position if maximized
         }
 
-        // Convert to numbers to ensure proper type
-        const width = Number(savedSettings.width)
-        const height = Number(savedSettings.height)
+        // Get current scale factor from browser window
+        const currentScaleFactor = (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1
+        const savedScaleFactor = savedSettings.scaleFactor || 1
 
-        // Restore window size
-        await window.setSize(new LogicalSize(width, height))
-        console.log('Window size restored to:', width, 'x', height)
+        // Debug logging to understand what we're restoring
+        console.log('=== RESTORING WINDOW STATE DEBUG ===')
+        console.log('Saved settings:', savedSettings)
+        console.log('Current scaleFactor:', currentScaleFactor)
+        console.log('Saved scaleFactor:', savedScaleFactor)
+
+        // Convert to numbers to ensure proper type
+        let width = Number(savedSettings.width)
+        let height = Number(savedSettings.height)
+
+        console.log('Original saved size:', width, 'x', height)
+
+        // Since we now save logical pixels, we need to handle DPI changes properly
+        if (Math.abs(currentScaleFactor - savedScaleFactor) > 0.01) {
+          // The saved values are logical pixels at the saved scale factor
+          // We need to convert them to logical pixels at the current scale factor
+          // Physical pixels = logical pixels × scale factor (constant)
+          // So: logical_new = logical_old × (scale_old / scale_new)
+          const scalingRatio = savedScaleFactor / currentScaleFactor
+          width = width * scalingRatio
+          height = height * scalingRatio
+          
+          console.log(`DPI scale factor changed from ${savedScaleFactor} to ${currentScaleFactor}`)
+          console.log(`Scaling ratio: ${scalingRatio}`)
+          console.log(`Adjusted window size from ${savedSettings.width}x${savedSettings.height} to ${width}x${height}`)
+        } else {
+          console.log('No DPI scaling adjustment needed - using saved logical size')
+        }
+
+        // Restore window size using logical dimensions
+        await tauriWindow.setSize(new LogicalSize(width, height))
+        console.log('Window size set to LogicalSize:', width, 'x', height)
 
         // Restore window position if available
         if (savedSettings.x !== undefined && savedSettings.y !== undefined) {
-          const x = Number(savedSettings.x)
-          const y = Number(savedSettings.y)
-          await window.setPosition(new LogicalPosition(x, y))
-          console.log('Window position restored to:', x, ',', y)
+          let x = Number(savedSettings.x)
+          let y = Number(savedSettings.y)
+          
+          console.log('Original saved position:', x, ',', y)
+          
+          // Apply the same scaling ratio to position if DPI changed
+          if (Math.abs(currentScaleFactor - savedScaleFactor) > 0.01) {
+            const scalingRatio = savedScaleFactor / currentScaleFactor
+            x = x * scalingRatio
+            y = y * scalingRatio
+            console.log(`Position adjusted for DPI change: (${savedSettings.x}, ${savedSettings.y}) -> (${x}, ${y})`)
+          } else {
+            console.log('No position DPI adjustment needed - using saved logical position')
+          }
+          
+          await tauriWindow.setPosition(new LogicalPosition(x, y))
+          console.log('Window position set to LogicalPosition:', x, ',', y)
         }
+        console.log('=== END RESTORE DEBUG ===')
       } else {
         console.log('No saved window settings found, using defaults')
       }
@@ -71,18 +113,36 @@ export function useWindowManager() {
   // Save current window state to config
   const saveWindowState = async (): Promise<void> => {
     try {
-      const window = getCurrentWindow()
-      const size = await window.innerSize()
-      const position = await window.outerPosition()
-      const isMaximized = await window.isMaximized()
+      const tauriWindow = getCurrentWindow()
+      const size = await tauriWindow.innerSize()
+      const position = await tauriWindow.outerPosition()
+      const isMaximized = await tauriWindow.isMaximized()
+      
+      // Get current scale factor from browser window to save along with dimensions
+      const scaleFactor = (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1
 
+      // Debug logging to understand what we're actually getting
+      console.log('=== SAVING WINDOW STATE DEBUG ===')
+      console.log('innerSize():', size.width, 'x', size.height)
+      console.log('outerPosition():', position.x, ',', position.y)
+      console.log('scaleFactor:', scaleFactor)
+      console.log('Converting size to logical:', size.width / scaleFactor, 'x', size.height / scaleFactor)
+      console.log('Converting position to logical:', position.x / scaleFactor, ',', position.y / scaleFactor)
+
+      // Convert physical pixels to logical pixels for storage
+      // innerSize() and outerPosition() return physical pixels
+      // We need to store logical pixels to work with LogicalSize/LogicalPosition
       const windowSettings: WindowSettings = {
-        width: size.width,
-        height: size.height,
-        x: position.x,
-        y: position.y,
+        width: size.width / scaleFactor,
+        height: size.height / scaleFactor,
+        x: position.x / scaleFactor,
+        y: position.y / scaleFactor,
         isMaximized: isMaximized,
+        scaleFactor: scaleFactor, // Save current scale factor
       }
+
+      console.log('Final windowSettings to save:', windowSettings)
+      console.log('=== END SAVE DEBUG ===')
 
       await updateWindowSettings(windowSettings)
     } catch (error) {
@@ -93,10 +153,10 @@ export function useWindowManager() {
   // Set up window event listeners
   const setupWindowListeners = async (): Promise<void> => {
     try {
-      const window = getCurrentWindow()
+      const tauriWindow = getCurrentWindow()
 
       // Listen for window resize events
-      unlisten = await window.onResized(() => {
+      unlisten = await tauriWindow.onResized(() => {
         // Debounce the save operation to avoid too frequent saves
         debouncedSaveWindowState()
       })
