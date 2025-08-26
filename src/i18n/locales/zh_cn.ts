@@ -460,6 +460,7 @@ export default {
     colorScheme: '配色方案',
     redGreen: '红绿配色',
     blueOrange: '蓝橙配色',
+    showSeparateLines: '分别显示红黑双方评估线',
     opening: '开局',
     noData: '暂无分析数据',
     newGame: '新对局',

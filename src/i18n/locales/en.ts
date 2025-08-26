@@ -474,6 +474,7 @@ export default {
     colorScheme: 'Color Scheme',
     redGreen: 'Red-Green',
     blueOrange: 'Blue-Orange',
+    showSeparateLines: 'Show Separate Lines for Red & Black',
     opening: 'Opening',
     noData: 'No analysis data available',
     newGame: 'New Game',

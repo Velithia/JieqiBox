@@ -386,6 +386,7 @@ export default {
     colorScheme: 'Bảng màu',
     redGreen: 'Đỏ-Xanh lá',
     blueOrange: 'Xanh dương-Cam',
+    showSeparateLines: 'Hiển thị riêng đường đánh giá Đỏ & Đen',
     opening: 'Khai cuộc',
     noData: 'Không có dữ liệu phân tích',
     newGame: 'Ván mới',

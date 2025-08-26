@@ -43,6 +43,7 @@ interface ConfigData {
     enableYAxisClamp: boolean
     yAxisClampValue: number
     colorScheme: string
+    showSeparateLines: boolean
   }
   analysisSettings: {
     movetime: number
@@ -104,6 +105,7 @@ const defaultConfig: ConfigData = {
     enableYAxisClamp: false,
     yAxisClampValue: 500,
     colorScheme: 'default',
+    showSeparateLines: false,
   },
   analysisSettings: {
     movetime: 1000,

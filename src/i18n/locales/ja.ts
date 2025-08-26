@@ -386,6 +386,7 @@ export default {
     colorScheme: 'カラースキーム',
     redGreen: '赤緑配色',
     blueOrange: '青橙配色',
+    showSeparateLines: '赤黒の評価線を別々に表示',
     opening: '序盤',
     noData: '分析データがありません',
     newGame: '新しいゲーム',

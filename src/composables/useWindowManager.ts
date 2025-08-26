@@ -36,7 +36,6 @@ export function useWindowManager() {
       console.log('Restoring window state:', savedSettings)
 
       if (savedSettings && savedSettings.width && savedSettings.height) {
-
         // Restore maximized state first if it was maximized
         if (savedSettings.isMaximized) {
           await tauriWindow.maximize()
@@ -45,7 +44,8 @@ export function useWindowManager() {
         }
 
         // Get current scale factor from browser window
-        const currentScaleFactor = (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1
+        const currentScaleFactor =
+          (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1
         const savedScaleFactor = savedSettings.scaleFactor || 1
 
         // Debug logging to understand what we're restoring
@@ -69,12 +69,18 @@ export function useWindowManager() {
           const scalingRatio = savedScaleFactor / currentScaleFactor
           width = width * scalingRatio
           height = height * scalingRatio
-          
-          console.log(`DPI scale factor changed from ${savedScaleFactor} to ${currentScaleFactor}`)
+
+          console.log(
+            `DPI scale factor changed from ${savedScaleFactor} to ${currentScaleFactor}`
+          )
           console.log(`Scaling ratio: ${scalingRatio}`)
-          console.log(`Adjusted window size from ${savedSettings.width}x${savedSettings.height} to ${width}x${height}`)
+          console.log(
+            `Adjusted window size from ${savedSettings.width}x${savedSettings.height} to ${width}x${height}`
+          )
         } else {
-          console.log('No DPI scaling adjustment needed - using saved logical size')
+          console.log(
+            'No DPI scaling adjustment needed - using saved logical size'
+          )
         }
 
         // Restore window size using logical dimensions
@@ -85,19 +91,23 @@ export function useWindowManager() {
         if (savedSettings.x !== undefined && savedSettings.y !== undefined) {
           let x = Number(savedSettings.x)
           let y = Number(savedSettings.y)
-          
+
           console.log('Original saved position:', x, ',', y)
-          
+
           // Apply the same scaling ratio to position if DPI changed
           if (Math.abs(currentScaleFactor - savedScaleFactor) > 0.01) {
             const scalingRatio = savedScaleFactor / currentScaleFactor
             x = x * scalingRatio
             y = y * scalingRatio
-            console.log(`Position adjusted for DPI change: (${savedSettings.x}, ${savedSettings.y}) -> (${x}, ${y})`)
+            console.log(
+              `Position adjusted for DPI change: (${savedSettings.x}, ${savedSettings.y}) -> (${x}, ${y})`
+            )
           } else {
-            console.log('No position DPI adjustment needed - using saved logical position')
+            console.log(
+              'No position DPI adjustment needed - using saved logical position'
+            )
           }
-          
+
           await tauriWindow.setPosition(new LogicalPosition(x, y))
           console.log('Window position set to LogicalPosition:', x, ',', y)
         }
@@ -117,17 +127,28 @@ export function useWindowManager() {
       const size = await tauriWindow.innerSize()
       const position = await tauriWindow.outerPosition()
       const isMaximized = await tauriWindow.isMaximized()
-      
+
       // Get current scale factor from browser window to save along with dimensions
-      const scaleFactor = (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1
+      const scaleFactor =
+        (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1
 
       // Debug logging to understand what we're actually getting
       console.log('=== SAVING WINDOW STATE DEBUG ===')
       console.log('innerSize():', size.width, 'x', size.height)
       console.log('outerPosition():', position.x, ',', position.y)
       console.log('scaleFactor:', scaleFactor)
-      console.log('Converting size to logical:', size.width / scaleFactor, 'x', size.height / scaleFactor)
-      console.log('Converting position to logical:', position.x / scaleFactor, ',', position.y / scaleFactor)
+      console.log(
+        'Converting size to logical:',
+        size.width / scaleFactor,
+        'x',
+        size.height / scaleFactor
+      )
+      console.log(
+        'Converting position to logical:',
+        position.x / scaleFactor,
+        ',',
+        position.y / scaleFactor
+      )
 
       // Convert physical pixels to logical pixels for storage
       // innerSize() and outerPosition() return physical pixels

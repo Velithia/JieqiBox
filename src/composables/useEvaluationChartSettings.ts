@@ -18,6 +18,7 @@ const getInitialSettings = () => {
       blackPerspective: false,
       enableYAxisClamp: false,
       yAxisClampValue: 500,
+      showSeparateLines: false,
     }
   }
 
@@ -31,6 +32,7 @@ const getInitialSettings = () => {
       enableYAxisClamp: !!settings.enableYAxisClamp, // Default to false
       yAxisClampValue: settings.yAxisClampValue || 500, // Default to 500
       colorScheme: settings.colorScheme || 'default', // Default to 'default'
+      showSeparateLines: !!settings.showSeparateLines, // Default to false
     }
   } catch (e) {
     console.error('Failed to get evaluation chart settings:', e)
@@ -43,6 +45,7 @@ const getInitialSettings = () => {
       enableYAxisClamp: false,
       yAxisClampValue: 500,
       colorScheme: 'default',
+      showSeparateLines: false,
     }
   }
 }
@@ -56,6 +59,7 @@ const {
   enableYAxisClamp: initialEnableYAxisClamp,
   yAxisClampValue: initialYAxisClampValue,
   colorScheme: initialColorScheme,
+  showSeparateLines: initialShowSeparateLines,
 } = getInitialSettings()
 
 const showMoveLabels = ref<boolean>(initialShowMoveLabels)
@@ -65,6 +69,7 @@ const blackPerspective = ref<boolean>(initialBlackPerspective)
 const enableYAxisClamp = ref<boolean>(initialEnableYAxisClamp)
 const yAxisClampValue = ref<number>(initialYAxisClampValue)
 const colorScheme = ref<string>(initialColorScheme || 'default')
+const showSeparateLines = ref<boolean>(initialShowSeparateLines)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -79,6 +84,7 @@ watch(
     enableYAxisClamp,
     yAxisClampValue,
     colorScheme,
+    showSeparateLines,
   ],
   async ([
     newShowMoveLabels,
@@ -88,6 +94,7 @@ watch(
     newEnableYAxisClamp,
     newYAxisClampValue,
     newColorScheme,
+    newShowSeparateLines,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -100,6 +107,7 @@ watch(
       enableYAxisClamp: newEnableYAxisClamp,
       yAxisClampValue: newYAxisClampValue,
       colorScheme: newColorScheme,
+      showSeparateLines: newShowSeparateLines,
     }
 
     try {
@@ -126,6 +134,7 @@ export function useEvaluationChartSettings() {
       enableYAxisClamp.value = !!settings.enableYAxisClamp
       yAxisClampValue.value = settings.yAxisClampValue || 500
       colorScheme.value = settings.colorScheme || 'default'
+      showSeparateLines.value = !!settings.showSeparateLines
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -147,6 +156,7 @@ export function useEvaluationChartSettings() {
     enableYAxisClamp,
     yAxisClampValue,
     colorScheme,
+    showSeparateLines,
     loadSettings,
   }
 }

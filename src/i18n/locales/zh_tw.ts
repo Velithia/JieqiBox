@@ -378,6 +378,7 @@ export default {
     colorScheme: '配色方案',
     redGreen: '紅綠配色',
     blueOrange: '藍橙配色',
+    showSeparateLines: '分別顯示紅黑雙方評估線',
     opening: '開局',
     noData: '暫無分析數據',
     newGame: '新對局',

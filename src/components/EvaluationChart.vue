@@ -84,6 +84,16 @@
             @click.stop
           />
         </div>
+        <div class="context-menu-item" @click="toggleShowSeparateLines">
+          <v-switch
+            v-model="showSeparateLines"
+            :label="$t('evaluationChart.showSeparateLines')"
+            color="primary"
+            hide-details
+            density="compact"
+            @click.stop
+          />
+        </div>
         <!-- Clamp Y-Axis Controls -->
         <div class="context-menu-divider"></div>
         <div class="context-menu-item" @click="toggleEnableYAxisClamp">
@@ -173,6 +183,7 @@
     enableYAxisClamp,
     yAxisClampValue,
     colorScheme,
+    showSeparateLines,
   } = useEvaluationChartSettings()
 
   const tooltipVisible = ref(false)
@@ -233,6 +244,9 @@
   }
   const toggleEnableYAxisClamp = () => {
     enableYAxisClamp.value = !enableYAxisClamp.value
+  }
+  const toggleShowSeparateLines = () => {
+    showSeparateLines.value = !showSeparateLines.value
   }
 
   // Save chart as image
@@ -381,6 +395,17 @@
   const inverseTransform = (v: number) => Math.sinh(v) * scaleFactor
 
   /* ---------- Data Preprocessing ---------- */
+  // Helper function to determine if current player is red based on FEN
+  const isRedTurnFromFen = (fen: string): boolean => {
+    // FEN format: pieces side castling en_passant halfmove fullmove
+    // side is 'w' for red (white) and 'b' for black
+    const parts = fen.split(' ')
+    if (parts.length >= 2) {
+      return parts[1] === 'w'
+    }
+    return true // Default to red if unable to parse
+  }
+
   const chartData = computed(() => {
     const data: Array<{
       moveIndex: number
@@ -403,7 +428,9 @@
       if (entry.type === 'move') {
         moveCount++
         const moveNumber = Math.floor((moveCount - 1) / 2) + 1
-        const isRedMove = (moveCount - 1) % 2 === 0
+        // Determine whose move this was based on the FEN after the move
+        // Since the FEN shows whose turn it is AFTER this move, we need to invert
+        const isRedMove = !isRedTurnFromFen(entry.fen)
         const moveText = `${moveNumber}${isRedMove ? '.' : '...'} ${entry.data}`
         let converted = entry.engineScore
         if (converted !== null && converted !== undefined && !isRedMove) {
@@ -717,7 +744,20 @@
   ) => {
     const startIndex = Math.floor(panOffset.value)
     const endIndex = Math.ceil(panOffset.value + visibleMoves)
-    if (showOnlyLines.value) {
+
+    if (showSeparateLines.value) {
+      // Draw separate lines for red and black moves
+      drawSeparateLines(
+        ctx,
+        area,
+        points,
+        minT,
+        rangeT,
+        visibleMoves,
+        startIndex,
+        endIndex
+      )
+    } else if (showOnlyLines.value) {
       drawGradientLine(
         ctx,
         area,
@@ -750,6 +790,92 @@
       ctx.stroke()
     }
   }
+  const drawSeparateLines = (
+    ctx: CanvasRenderingContext2D,
+    area: any,
+    points: any[],
+    minT: number,
+    rangeT: number,
+    visibleMoves: number,
+    startIndex: number,
+    endIndex: number
+  ) => {
+    // Create arrays to store points for each side, maintaining chronological order
+    const allPoints: Array<{
+      x: number
+      y: number
+      index: number
+      isRedMove: boolean
+    }> = []
+
+    for (let i = Math.max(0, startIndex); i <= endIndex + 1; i++) {
+      if (i >= points.length) break
+      const p = points[i]
+      if (p.score !== null && p.score !== undefined) {
+        const x = getX(i, area.width, visibleMoves)
+        const clampedScore = getClampedScore(p.score)
+        const t = useLinearYAxis.value ? clampedScore : transform(clampedScore)
+        const y = area.y + area.height - ((t - minT) / rangeT) * area.height
+
+        allPoints.push({ x, y, index: i, isRedMove: p.isRedMove })
+      }
+    }
+
+    // Draw red line connecting all red moves
+    const redPoints = allPoints.filter(p => p.isRedMove)
+    if (redPoints.length > 0) {
+      ctx.strokeStyle =
+        colorScheme.value === 'blueOrange' ? '#D55E00' : '#c62828'
+      ctx.lineWidth = 2
+      ctx.setLineDash([])
+
+      if (redPoints.length === 1) {
+        // Single point - draw a small circle
+        ctx.fillStyle = ctx.strokeStyle
+        ctx.beginPath()
+        ctx.arc(redPoints[0].x, redPoints[0].y, 2, 0, 2 * Math.PI)
+        ctx.fill()
+      } else {
+        ctx.beginPath()
+        redPoints.forEach((point, index) => {
+          if (index === 0) {
+            ctx.moveTo(point.x, point.y)
+          } else {
+            ctx.lineTo(point.x, point.y)
+          }
+        })
+        ctx.stroke()
+      }
+    }
+
+    // Draw black line connecting all black moves
+    const blackPoints = allPoints.filter(p => !p.isRedMove)
+    if (blackPoints.length > 0) {
+      ctx.strokeStyle =
+        colorScheme.value === 'blueOrange' ? '#0072B2' : '#2e7d32'
+      ctx.lineWidth = 2
+      ctx.setLineDash([])
+
+      if (blackPoints.length === 1) {
+        // Single point - draw a small circle
+        ctx.fillStyle = ctx.strokeStyle
+        ctx.beginPath()
+        ctx.arc(blackPoints[0].x, blackPoints[0].y, 2, 0, 2 * Math.PI)
+        ctx.fill()
+      } else {
+        ctx.beginPath()
+        blackPoints.forEach((point, index) => {
+          if (index === 0) {
+            ctx.moveTo(point.x, point.y)
+          } else {
+            ctx.lineTo(point.x, point.y)
+          }
+        })
+        ctx.stroke()
+      }
+    }
+  }
+
   const drawGradientLine = (
     ctx: CanvasRenderingContext2D,
     area: any,
@@ -811,7 +937,20 @@
         const clampedScore = getClampedScore(p.score)
         const t = useLinearYAxis.value ? clampedScore : transform(clampedScore)
         const y = area.y + area.height - ((t - minT) / rangeT) * area.height
-        const color = getScoreColor(p.score)
+
+        let color: string
+        if (showSeparateLines.value) {
+          // In separate lines mode, use fixed colors for red/black moves
+          if (p.isRedMove) {
+            color = colorScheme.value === 'blueOrange' ? '#D55E00' : '#c62828'
+          } else {
+            color = colorScheme.value === 'blueOrange' ? '#0072B2' : '#2e7d32'
+          }
+        } else {
+          // Use score-based coloring
+          color = getScoreColor(p.score)
+        }
+
         ctx.fillStyle = color
         ctx.beginPath()
         ctx.arc(x, y, 4, 0, 2 * Math.PI)
@@ -1125,6 +1264,7 @@
       enableYAxisClamp,
       yAxisClampValue,
       colorScheme,
+      showSeparateLines,
     ],
     () => nextTick(drawChart)
   )
