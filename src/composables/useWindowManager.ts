@@ -35,7 +35,40 @@ export function useWindowManager() {
 
       console.log('Restoring window state:', savedSettings)
 
-      if (savedSettings && savedSettings.width && savedSettings.height) {
+      // Additional validation for window settings
+      const validateWindowSettings = (settings: WindowSettings) => {
+        if (!settings || !settings.width || !settings.height) return false
+
+        const width = Number(settings.width)
+        const height = Number(settings.height)
+        const x = Number(settings.x || 0)
+        const y = Number(settings.y || 0)
+
+        // Check for abnormal values that would cause window issues
+        const isAbnormal =
+          width <= 0 ||
+          height <= 0 || // Invalid dimensions
+          x < -10000 ||
+          y < -10000 || // Window positioned far off-screen
+          x > 10000 ||
+          y > 10000 || // Window positioned far off-screen
+          isNaN(width) ||
+          isNaN(height) ||
+          isNaN(x) ||
+          isNaN(y) // Invalid numbers
+
+        if (isAbnormal) {
+          console.warn(
+            'Abnormal window settings detected during restore, skipping:',
+            settings
+          )
+          return false
+        }
+
+        return true
+      }
+
+      if (savedSettings && validateWindowSettings(savedSettings)) {
         // Restore maximized state first if it was maximized
         if (savedSettings.isMaximized) {
           await tauriWindow.maximize()
@@ -113,7 +146,7 @@ export function useWindowManager() {
         }
         console.log('=== END RESTORE DEBUG ===')
       } else {
-        console.log('No saved window settings found, using defaults')
+        console.log('No valid window settings found, using defaults')
       }
     } catch (error) {
       console.error('Failed to restore window state:', error)

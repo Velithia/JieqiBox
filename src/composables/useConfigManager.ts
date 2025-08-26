@@ -145,6 +145,45 @@ export function useConfigManager() {
       const loadedConfig = await invoke<string>('load_config')
       if (loadedConfig) {
         const parsedConfig = Ini.parse(loadedConfig)
+
+        // Validate window settings to detect abnormal values
+        const validateWindowSettings = (settings: any) => {
+          if (!settings) return false
+
+          const width = Number(settings.width)
+          const height = Number(settings.height)
+          const x = Number(settings.x)
+          const y = Number(settings.y)
+
+          // Check for abnormal values that would cause window issues
+          const isAbnormal =
+            width <= 0 ||
+            height <= 0 || // Invalid dimensions
+            x < -10000 ||
+            y < -10000 || // Window positioned far off-screen
+            x > 10000 ||
+            y > 10000 || // Window positioned far off-screen
+            isNaN(width) ||
+            isNaN(height) ||
+            isNaN(x) ||
+            isNaN(y) // Invalid numbers
+
+          if (isAbnormal) {
+            console.warn(
+              'Abnormal window settings detected, using defaults:',
+              settings
+            )
+            return false
+          }
+
+          return true
+        }
+
+        // Check if window settings are valid
+        const windowSettingsValid = validateWindowSettings(
+          parsedConfig.windowSettings
+        )
+
         // Merge with default config to ensure all properties exist
         configData.value = {
           ...defaultConfig,
@@ -153,10 +192,12 @@ export function useConfigManager() {
             ...defaultConfig.interfaceSettings,
             ...parsedConfig.interfaceSettings,
           },
-          windowSettings: {
-            ...defaultConfig.windowSettings,
-            ...parsedConfig.windowSettings,
-          },
+          windowSettings: windowSettingsValid
+            ? {
+                ...defaultConfig.windowSettings,
+                ...parsedConfig.windowSettings,
+              }
+            : defaultConfig.windowSettings, // Use defaults if invalid
           evaluationChartSettings: {
             ...defaultConfig.evaluationChartSettings,
             ...parsedConfig.evaluationChartSettings,
