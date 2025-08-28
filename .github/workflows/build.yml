@@ -65,6 +65,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Download model (best.onnx)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/models
+          curl -L --fail -o public/models/best.onnx \
+            https://github.com/Velithia/JieqiModels/releases/download/yolo-models/best.onnx
+          if [ ! -s public/models/best.onnx ]; then
+            echo "::error::best.onnx download failed or file is empty"
+            exit 1
+          fi
+          echo "best.onnx downloaded to public/models"
+
       - name: install frontend dependencies
         run: npm ci
 
@@ -119,6 +132,19 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
+
+      - name: Download model (best.onnx)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/models
+          curl -L --fail -o public/models/best.onnx \
+            https://github.com/Velithia/JieqiModels/releases/download/yolo-models/best.onnx
+          if [ ! -s public/models/best.onnx ]; then
+            echo "::error::best.onnx download failed or file is empty"
+            exit 1
+          fi
+          echo "best.onnx downloaded to public/models"
 
       - name: Install JS dependencies
         run: npm ci

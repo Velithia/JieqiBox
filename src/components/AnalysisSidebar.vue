@@ -1043,7 +1043,7 @@
 
   /* ---------- Notation Navigation State ---------- */
   const isPlaying = ref(false)
-  const playInterval = ref<number | null>(null)
+  const playInterval = ref<ReturnType<typeof setInterval> | null>(null)
   const playSpeed = ref(1000) // Play speed in milliseconds
 
   // Analysis settings
@@ -1111,7 +1111,7 @@
   }
 
   // Listen for config changes and update analysis settings in real-time
-  let configCheckInterval: number | null = null
+  let configCheckInterval: ReturnType<typeof setInterval> | null = null
 
   const watchConfigChanges = () => {
     // Listen for settings changes within the same page (via interval check)

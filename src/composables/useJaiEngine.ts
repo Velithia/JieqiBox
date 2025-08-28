@@ -49,7 +49,7 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
   const blackEngine = ref('')
 
   // Throttling mechanism for engine output processing
-  let outputThrottleTimer: number | null = null
+  let outputThrottleTimer: ReturnType<typeof setTimeout> | null = null
   let pendingOutputLines: string[] = []
   let lastProcessedTime = 0
   const OUTPUT_THROTTLE_DELAY = 50 // Process output every 50ms maximum

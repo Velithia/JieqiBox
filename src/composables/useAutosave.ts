@@ -72,7 +72,7 @@ export function useAutosave() {
   }
 
   // Set up periodic autosave when enabled
-  let autosaveTimer: number | null = null
+  let autosaveTimer: ReturnType<typeof setInterval> | null = null
   let currentGameState: any = null
   let isInitialized = false // Flag to prevent multiple initializations
 

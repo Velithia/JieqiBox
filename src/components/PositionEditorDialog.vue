@@ -52,6 +52,15 @@
                       : $t('positionEditor.resetPosition')
                   }}
                 </v-btn>
+                <v-btn
+                  @click="openImageRecognition"
+                  color="info"
+                  variant="outlined"
+                  size="small"
+                  :disabled="isProcessing"
+                >
+                  {{ $t('positionEditor.recognizeImage') }}
+                </v-btn>
               </div>
             </v-col>
           </v-row>
@@ -72,6 +81,149 @@
                     : $t('positionEditor.blackToMove')
                 }}
               </v-chip>
+            </v-col>
+          </v-row>
+
+          <!-- Image Recognition Panel -->
+          <v-row v-if="showImageRecognition" class="mb-2">
+            <v-col cols="12">
+              <v-card variant="outlined">
+                <v-card-title class="pb-2">
+                  <span class="text-h6">{{
+                    $t('positionEditor.imageRecognition')
+                  }}</span>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    icon="mdi-close"
+                    size="small"
+                    @click="closeImageRecognition"
+                  ></v-btn>
+                </v-card-title>
+                <v-card-text>
+                  <div class="image-recognition-container">
+                    <!-- Upload Area -->
+                    <div
+                      class="upload-area"
+                      :class="{ 'drag-over': isDragOver }"
+                      @dragover.prevent
+                      @dragleave.prevent="isDragOver = false"
+                      @drop.prevent="handleDrop"
+                      @click="triggerFileInput"
+                    >
+                      <input
+                        ref="fileInputRef"
+                        type="file"
+                        accept="image/*"
+                        @change="handleFileSelect"
+                        style="display: none"
+                      />
+                      <div v-if="!inputImage" class="upload-placeholder">
+                        <v-icon size="48" class="mb-2">mdi-image</v-icon>
+                        <p>{{ $t('positionEditor.clickOrDragImage') }}</p>
+                        <p class="text-caption">
+                          {{ $t('positionEditor.supportedFormats') }}
+                        </p>
+                      </div>
+                      <div v-else class="image-preview">
+                        <div class="image-stage">
+                          <img
+                            ref="imageDisplayRef"
+                            :src="inputImage.src"
+                            class="preview-image"
+                            alt="Chessboard image"
+                          />
+                          <canvas
+                            ref="canvasRef"
+                            class="overlay-canvas"
+                          ></canvas>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Status and Controls -->
+                    <div class="recognition-controls">
+                      <v-alert
+                        v-if="recognitionStatus"
+                        :type="
+                          recognitionStatus.includes('失败') ||
+                          recognitionStatus.includes('错误')
+                            ? 'error'
+                            : 'info'
+                        "
+                        variant="tonal"
+                        density="compact"
+                        class="mb-2"
+                      >
+                        {{ recognitionStatus }}
+                      </v-alert>
+
+                      <div class="d-flex gap-2 flex-wrap align-center">
+                        <v-btn
+                          @click="processCurrentImage"
+                          color="primary"
+                          :disabled="!inputImage || isProcessing"
+                          :loading="isProcessing"
+                        >
+                          {{ $t('positionEditor.startRecognition') }}
+                        </v-btn>
+                        <v-btn
+                          @click="applyRecognitionResults"
+                          color="success"
+                          :disabled="detectedBoxes.length === 0 || isProcessing"
+                        >
+                          {{ $t('positionEditor.applyResults') }}
+                        </v-btn>
+                        <v-btn
+                          @click="clearRecognition"
+                          color="error"
+                          variant="outlined"
+                          :disabled="isProcessing"
+                        >
+                          {{ $t('positionEditor.clear') }}
+                        </v-btn>
+
+                        <!-- Bounding boxes toggle -->
+                        <v-switch
+                          v-model="showBoundingBoxes"
+                          :label="$t('positionEditor.showBoundingBoxes')"
+                          color="primary"
+                          density="compact"
+                          hide-details
+                          @change="onBoundingBoxToggle"
+                        ></v-switch>
+                      </div>
+                    </div>
+
+                    <!-- Recognition Results Grid -->
+                    <div
+                      v-if="boardGrid && boardGrid.length > 0"
+                      class="recognition-results"
+                    >
+                      <h6 class="mb-2">
+                        {{ $t('positionEditor.recognitionResults') }}
+                      </h6>
+                      <div class="board-grid-display">
+                        <div
+                          v-for="(row, rowIndex) in boardGrid"
+                          :key="rowIndex"
+                          class="grid-row"
+                        >
+                          <div
+                            v-for="(cell, colIndex) in row"
+                            :key="`${rowIndex}-${colIndex}`"
+                            class="grid-cell"
+                            :class="{ 'has-piece': cell }"
+                          >
+                            <span v-if="cell">{{
+                              getDetectedPieceDisplayName(cell)
+                            }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
           </v-row>
 
@@ -221,11 +373,16 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, inject, watch } from 'vue'
+  import { ref, computed, inject, watch, nextTick } from 'vue'
   import { useI18n } from 'vue-i18n'
   import MersenneTwister from 'mersenne-twister'
   import type { Piece } from '@/composables/useChessGame'
   import { START_FEN, INITIAL_PIECE_COUNTS, FEN_MAP } from '@/utils/constants'
+  import {
+    useImageRecognition,
+    type DetectionBox,
+    LABELS,
+  } from '@/composables/useImageRecognition'
 
   // Create a global instance of Mersenne Twister for this component
   const mt = new MersenneTwister()
@@ -273,6 +430,27 @@
   const editingPieces = ref<Piece[]>([])
   const editingSideToMove = ref<'red' | 'black'>('red')
   const selectedPiece = ref<Piece | null>(null)
+
+  // Image recognition state
+  const showImageRecognition = ref(false)
+  const isDragOver = ref(false)
+  const fileInputRef = ref<HTMLInputElement | null>(null)
+  const imageDisplayRef = ref<HTMLImageElement | null>(null)
+  const canvasRef = ref<HTMLCanvasElement | null>(null)
+  const inputImage = ref<HTMLImageElement | null>(null)
+  const detectedBoxes = ref<DetectionBox[]>([])
+  const boardGrid = ref<(DetectionBox | null)[][] | null>(null)
+
+  // Image recognition composable
+  const {
+    isProcessing,
+    status: recognitionStatus,
+    detectedBoxes: recognitionDetectedBoxes,
+    showBoundingBoxes,
+    processImage,
+    drawBoundingBoxes,
+    updateBoardGrid,
+  } = useImageRecognition()
 
   // Calculate row/col to percentage coordinates
   const percentFromRC = (row: number, col: number) => ({
@@ -919,7 +1097,247 @@
   // Cancel edit
   const cancelEdit = () => {
     selectedPiece.value = null
+    closeImageRecognition()
     isVisible.value = false
+  }
+
+  // Image recognition methods
+  const openImageRecognition = () => {
+    showImageRecognition.value = true
+  }
+
+  const closeImageRecognition = () => {
+    showImageRecognition.value = false
+    clearRecognition()
+  }
+
+  const triggerFileInput = () => {
+    fileInputRef.value?.click()
+  }
+
+  const handleFileSelect = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (file) {
+      loadImage(file)
+    }
+  }
+
+  const handleDrop = (event: DragEvent) => {
+    isDragOver.value = false
+    const files = event.dataTransfer?.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      if (file.type.startsWith('image/')) {
+        loadImage(file)
+      }
+    }
+  }
+
+  // Support paste image from clipboard
+  window.addEventListener('paste', (e: ClipboardEvent) => {
+    if (!showImageRecognition.value) return
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file) loadImage(file)
+        break
+      }
+    }
+  })
+
+  const loadImage = async (file: File) => {
+    try {
+      const img = new Image()
+      const imageUrl = URL.createObjectURL(file)
+      // Ensure canvas clears when a new image loads
+      if (canvasRef.value) {
+        const ctx = canvasRef.value.getContext('2d')
+        if (ctx)
+          ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height)
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = reject
+        img.src = imageUrl
+      })
+
+      inputImage.value = img
+      detectedBoxes.value = []
+      boardGrid.value = null
+
+      // Do not revoke immediately; keep the blob URL while the image is displayed
+    } catch (error) {
+      console.error('Image loading failed:', error)
+    }
+  }
+
+  const processCurrentImage = async () => {
+    if (!inputImage.value) return
+
+    try {
+      // Convert HTMLImageElement to File object for processing
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      canvas.width = inputImage.value.naturalWidth
+      canvas.height = inputImage.value.naturalHeight
+      ctx.drawImage(inputImage.value, 0, 0)
+
+      canvas.toBlob(async blob => {
+        if (!blob) return
+
+        const file = new File([blob], 'chessboard.jpg', { type: 'image/jpeg' })
+        await processImage(file)
+
+        // Update detection results
+        await nextTick()
+        detectedBoxes.value = recognitionDetectedBoxes.value
+        boardGrid.value = updateBoardGrid(detectedBoxes.value)
+
+        // Draw bounding boxes
+        await nextTick()
+        if (imageDisplayRef.value && canvasRef.value) {
+          drawBoundingBoxes(
+            detectedBoxes.value,
+            imageDisplayRef.value,
+            canvasRef.value
+          )
+        }
+      }, 'image/jpeg')
+    } catch (error) {
+      console.error('Image processing failed:', error)
+    }
+  }
+
+  const applyRecognitionResults = () => {
+    if (!boardGrid.value) return
+
+    // Clear current board
+    editingPieces.value = []
+
+    // Convert recognition results to pieces
+    for (let row = 0; row < boardGrid.value.length; row++) {
+      for (let col = 0; col < boardGrid.value[row].length; col++) {
+        const detection = boardGrid.value[row][col]
+        if (detection) {
+          const pieceName = convertDetectionToPieceName(detection)
+          if (pieceName) {
+            const piece: Piece = {
+              id: Date.now() + mtRandom(),
+              name: pieceName,
+              row,
+              col,
+              isKnown: !pieceName.includes('unknown'),
+              initialRole: '',
+              initialRow: row,
+              initialCol: col,
+            }
+            editingPieces.value.push(piece)
+          }
+        }
+      }
+    }
+
+    // Reclassify dark pieces
+    reclassifyAllDarkPieces()
+  }
+
+  const convertDetectionToPieceName = (
+    detection: DetectionBox
+  ): string | null => {
+    const label = LABELS[detection.labelIndex]
+    if (!label) return null
+
+    const labelName = label.name
+
+    // Convert piece name
+    if (labelName === 'r_general') return 'red_king'
+    if (labelName === 'r_advisor') return 'red_advisor'
+    if (labelName === 'r_elephant') return 'red_elephant'
+    if (labelName === 'r_horse') return 'red_horse'
+    if (labelName === 'r_chariot') return 'red_chariot'
+    if (labelName === 'r_cannon') return 'red_cannon'
+    if (labelName === 'r_soldier') return 'red_pawn'
+
+    if (labelName === 'b_general') return 'black_king'
+    if (labelName === 'b_advisor') return 'black_advisor'
+    if (labelName === 'b_elephant') return 'black_elephant'
+    if (labelName === 'b_horse') return 'black_horse'
+    if (labelName === 'b_chariot') return 'black_chariot'
+    if (labelName === 'b_cannon') return 'black_cannon'
+    if (labelName === 'b_soldier') return 'black_pawn'
+
+    // Dark pieces
+    if (labelName.startsWith('dark_')) {
+      const baseName = labelName.substring(5)
+      if (baseName === 'r_advisor') return 'red_unknown'
+      if (baseName === 'r_cannon') return 'red_unknown'
+      if (baseName === 'r_chariot') return 'red_unknown'
+      if (baseName === 'r_elephant') return 'red_unknown'
+      if (baseName === 'r_general') return 'red_unknown'
+      if (baseName === 'r_horse') return 'red_unknown'
+      if (baseName === 'r_soldier') return 'red_unknown'
+
+      if (baseName === 'b_advisor') return 'black_unknown'
+      if (baseName === 'b_cannon') return 'black_unknown'
+      if (baseName === 'b_chariot') return 'black_unknown'
+      if (baseName === 'b_elephant') return 'black_unknown'
+      if (baseName === 'b_general') return 'black_unknown'
+      if (baseName === 'b_horse') return 'black_unknown'
+      if (baseName === 'b_soldier') return 'black_unknown'
+    }
+
+    if (labelName === 'dark') return 'red_unknown' // Default dark piece to red
+
+    return null
+  }
+
+  const getDetectedPieceDisplayName = (detection: DetectionBox): string => {
+    const pieceName = convertDetectionToPieceName(detection)
+    if (!pieceName) return '?'
+
+    if (pieceName === 'red_unknown' || pieceName === 'black_unknown') {
+      return '暗'
+    }
+
+    const piece = knownPieces.value.find(p => p.name === pieceName)
+    if (piece) {
+      return piece.displayName
+    }
+
+    return pieceName
+  }
+
+  const clearRecognition = () => {
+    inputImage.value = null
+    detectedBoxes.value = []
+    boardGrid.value = null
+    if (canvasRef.value) {
+      const ctx = canvasRef.value.getContext('2d')
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height)
+      }
+    }
+  }
+
+  const onBoundingBoxToggle = async () => {
+    // Redraw the canvas when toggle state changes
+    if (
+      imageDisplayRef.value &&
+      canvasRef.value &&
+      detectedBoxes.value.length > 0
+    ) {
+      await nextTick()
+      drawBoundingBoxes(
+        detectedBoxes.value,
+        imageDisplayRef.value,
+        canvasRef.value
+      )
+    }
   }
 
   // Apply changes with dark piece pool adjustment and auto-flip if needed
@@ -1305,6 +1723,106 @@
     }
   }
 
+  // Image recognition styles
+  .image-recognition-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .upload-area {
+    border: 2px dashed rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 8px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.drag-over {
+      border-color: rgb(var(--v-theme-primary));
+      background-color: rgba(var(--v-theme-primary), 0.05);
+    }
+
+    .upload-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: rgba(var(--v-theme-on-surface), 0.6);
+
+      p {
+        margin: 0;
+        font-size: 14px;
+      }
+    }
+
+    .image-preview {
+      display: flex;
+      justify-content: center;
+
+      .image-stage {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+      }
+
+      .preview-image {
+        display: block;
+        max-width: 100%;
+        max-height: 400px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .overlay-canvas {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .recognition-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .recognition-results {
+    .board-grid-display {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 2px;
+      max-width: 300px;
+      margin: 0 auto;
+
+      .grid-row {
+        display: contents;
+      }
+
+      .grid-cell {
+        aspect-ratio: 1;
+        border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        background-color: rgb(var(--v-theme-surface));
+        min-height: 24px;
+
+        &.has-piece {
+          background-color: rgba(var(--v-theme-primary), 0.1);
+          color: rgb(var(--v-theme-primary));
+        }
+      }
+    }
+  }
+
   // More compact layout for mobile portrait
   @media (max-width: 768px) {
     .piece-selector {
@@ -1391,6 +1909,42 @@
 
     .v-card-actions {
       padding: 8px !important;
+    }
+
+    // Mobile image recognition styles
+    .upload-area {
+      padding: 16px;
+      min-height: 120px;
+
+      .upload-placeholder {
+        p {
+          font-size: 12px;
+        }
+      }
+
+      .preview-image {
+        max-height: 200px;
+      }
+    }
+
+    .recognition-controls {
+      gap: 8px;
+
+      .v-btn {
+        font-size: 12px;
+        padding: 4px 12px;
+        min-width: auto;
+      }
+    }
+
+    .board-grid-display {
+      grid-template-columns: repeat(9, 1fr);
+      gap: 1px;
+
+      .grid-cell {
+        min-height: 20px;
+        font-size: 10px;
+      }
     }
   }
 </style>
