@@ -51,6 +51,7 @@ interface ConfigData {
     maxDepth: number
     maxNodes: number
     analysisMode: string
+    advancedScript?: string
   }
   gameSettings: {
     flipMode: 'random' | 'free'
@@ -113,6 +114,7 @@ const defaultConfig: ConfigData = {
     maxDepth: 20,
     maxNodes: 1000000,
     analysisMode: 'movetime',
+    advancedScript: '',
   },
   gameSettings: {
     flipMode: 'random',

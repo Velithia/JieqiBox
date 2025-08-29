@@ -1053,6 +1053,7 @@
     maxDepth: 20,
     maxNodes: 1000000,
     analysisMode: 'movetime',
+    advancedScript: '',
   })
 
   // Computed: split analysis lines by newline for display
@@ -1104,6 +1105,7 @@
         maxDepth: settings.maxDepth || 20,
         maxNodes: settings.maxNodes || 1000000,
         analysisMode: settings.analysisMode || 'movetime',
+        advancedScript: settings.advancedScript || '',
       }
     } catch (error) {
       console.error('Failed to load analysis settings:', error)
@@ -1126,7 +1128,8 @@
           settings.maxThinkTime !== currentSettings.maxThinkTime ||
           settings.maxDepth !== currentSettings.maxDepth ||
           settings.maxNodes !== currentSettings.maxNodes ||
-          settings.analysisMode !== currentSettings.analysisMode
+          settings.analysisMode !== currentSettings.analysisMode ||
+          settings.advancedScript !== currentSettings.advancedScript
         ) {
           analysisSettings.value = {
             movetime: settings.movetime || 1000,
@@ -1134,6 +1137,7 @@
             maxDepth: settings.maxDepth || 20,
             maxNodes: settings.maxNodes || 1000000,
             analysisMode: settings.analysisMode || 'movetime',
+            advancedScript: settings.advancedScript || '',
           }
         }
       } catch (error) {

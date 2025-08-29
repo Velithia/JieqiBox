@@ -43,6 +43,9 @@ export type HistoryEntry = {
   comment?: string // User comment for this move
   engineScore?: number // Engine analysis score for this move (only recorded if engine was thinking)
   engineTime?: number // Engine analysis time in milliseconds for this move (only recorded if engine was thinking)
+  engineDepth?: number // Engine analysis depth for this move
+  engineNodes?: number // Engine analysis nodes for this move
+  engineRequestedMovetime?: number // The movetime requested in the last go command
   annotation?: '!!' | '!' | '!?' | '?!' | '?' | '??' // Move quality annotation
 }
 
@@ -890,6 +893,8 @@ export function useChessGame() {
     // Get engine analysis data if engine was thinking before this move
     let engineScore: number | undefined
     let engineTime: number | undefined
+    let engineDepth: number | undefined
+    let engineNodes: number | undefined
     // Track whether this recorded move is an AI move (base-uci matched)
     let isAiMove = false
 
@@ -1049,6 +1054,22 @@ export function useChessGame() {
           )
         }
 
+        // Extract depth and nodes from the same info line if available
+        if (lastValidScoreLine) {
+          const depthMatch = lastValidScoreLine.match(/depth\s+(\d+)/)
+          const nodesMatch = lastValidScoreLine.match(/nodes\s+(\d+)/)
+          if (depthMatch) {
+            engineDepth = parseInt(depthMatch[1], 10)
+          }
+          if (nodesMatch) {
+            engineNodes = parseInt(nodesMatch[1], 10)
+          }
+          console.log('[DEBUG] RECORD_AND_FINALIZE: Extracted depth/nodes:', {
+            engineDepth,
+            engineNodes,
+          })
+        }
+
         // Get analysis time - prioritize JAI engine time if available
         const jaiEngineTime = (window as any).__JAI_ENGINE_TIME__
         if (engineState.lastAnalysisTime?.value) {
@@ -1087,7 +1108,26 @@ export function useChessGame() {
       engineTime,
     })
 
-    const newEntry = { type, data, fen, engineScore, engineTime }
+    // Capture requested movetime from engine state if available
+    let engineRequestedMovetime: number | undefined
+    try {
+      const engineState = (window as any).__ENGINE_STATE__
+      const lastReq = engineState?.lastRequestedLimits?.value
+      if (lastReq && typeof lastReq.movetime === 'number') {
+        engineRequestedMovetime = lastReq.movetime
+      }
+    } catch (_) {}
+
+    const newEntry = {
+      type,
+      data,
+      fen,
+      engineScore,
+      engineTime,
+      engineDepth,
+      engineNodes,
+      engineRequestedMovetime,
+    }
     console.log('[DEBUG] RECORD_AND_FINALIZE: New history entry:', newEntry)
 
     newHistory.push(newEntry)

@@ -108,6 +108,40 @@ export default {
       maxThinkTime: '按最大思考時間分析',
       depth: '按層數分析',
       nodes: '按節點數分析',
+      advanced: '進階程式設計模式',
+    },
+    advanced: '進階腳本',
+    advancedHint1: '支援簡單程式設計：賦值、算術、位元運算、if條件',
+    advancedHint2: '可用變數：movetime, depth, nodes, maxThinkTime, prev',
+    advancedPlaceholder: '請在此處撰寫您的腳本...',
+    advancedExamples: {
+      title: '範例程式碼',
+      basic: '基本設定',
+      basicCode: `depth=20
+movetime=1000
+nodes=2000000`,
+      conditional: '條件控制',
+      conditionalCode: `if (!prev.prev.exists()){
+  movetime=1000
+} else {
+  movetime=prev.prev.movetime / 1.05
+}`,
+      scoreBased: '基於分數調整',
+      scoreBasedCode: `if (-prev.score < -300){
+  movetime = 4000
+} else if (-prev.score < -200) {
+  movetime = 3000
+} else {
+  movetime = 2000
+}`,
+      variables: '可用變數說明',
+      variablesDesc: `prev.exists() - 檢查上一步是否存在
+prev.movetime - 上一步請求的步時
+prev.depth - 上一步的搜尋深度
+prev.nodes - 上一步的搜尋節點數
+prev.score - 上一步的分數
+prev.timeUsed - 上一步引擎實際耗時
+prev.prev - 上上步（支援無限巢狀）`,
     },
   },
 

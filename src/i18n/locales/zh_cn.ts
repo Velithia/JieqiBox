@@ -99,6 +99,7 @@ export default {
     maxDepth: '最大层数',
     maxNodes: '最大节点数',
     analysisMode: '分析模式',
+    advanced: '高级脚本',
     resetToDefaults: '恢复默认',
     clearSettings: '清除配置',
     confirmClearSettings: '确定要清除所有分析参数配置吗？此操作不可恢复。',
@@ -108,6 +109,39 @@ export default {
       maxThinkTime: '按最大思考时间分析',
       depth: '按层数分析',
       nodes: '按节点数分析',
+      advanced: '高级编程模式',
+    },
+    advancedHint1: '支持简单编程：赋值、算术、位运算、if条件',
+    advancedHint2: '可用变量：movetime, depth, nodes, maxThinkTime, prev',
+    advancedPlaceholder: '请在此处编写您的脚本...',
+    advancedExamples: {
+      title: '示例代码',
+      basic: '基础设置',
+      basicCode: `depth=20
+movetime=1000
+nodes=2000000`,
+      conditional: '条件控制',
+      conditionalCode: `if (!prev.prev.exists()){
+  movetime=1000
+} else {
+  movetime=prev.prev.movetime / 1.05
+}`,
+      scoreBased: '基于分数调整',
+      scoreBasedCode: `if (-prev.score < -300){
+  movetime = 4000
+} else if (-prev.score < -200) {
+  movetime = 3000
+} else {
+  movetime = 2000
+}`,
+      variables: '可用变量说明',
+      variablesDesc: `prev.exists() - 判断上一步是否存在
+prev.movetime - 上一步请求的步时
+prev.depth - 上一步的搜索深度
+prev.nodes - 上一步的搜索节点数
+prev.score - 上一步的分数
+prev.timeUsed - 上一步引擎实际耗时
+prev.prev - 上上步（支持无限嵌套）`,
     },
   },
 

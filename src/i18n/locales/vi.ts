@@ -112,6 +112,40 @@ export default {
       maxThinkTime: 'Phân tích theo thời gian suy nghĩ tối đa',
       depth: 'Phân tích theo độ sâu',
       nodes: 'Phân tích theo số nút',
+      advanced: 'Chế độ lập trình nâng cao',
+    },
+    advanced: 'Script nâng cao',
+    advancedHint1: 'Hỗ trợ lập trình đơn giản: gán, số học, bitwise, điều kiện if',
+    advancedHint2: 'Biến có sẵn: movetime, depth, nodes, maxThinkTime, prev',
+    advancedPlaceholder: 'Vui lòng viết script của bạn ở đây...',
+    advancedExamples: {
+      title: 'Mã mẫu',
+      basic: 'Cài đặt cơ bản',
+      basicCode: `depth=20
+movetime=1000
+nodes=2000000`,
+      conditional: 'Điều khiển có điều kiện',
+      conditionalCode: `if (!prev.prev.exists()){
+  movetime=1000
+} else {
+  movetime=prev.prev.movetime / 1.05
+}`,
+      scoreBased: 'Điều chỉnh dựa trên điểm số',
+      scoreBasedCode: `if (-prev.score < -300){
+  movetime = 4000
+} else if (-prev.score < -200) {
+  movetime = 3000
+} else {
+  movetime = 2000
+}`,
+      variables: 'Biến có sẵn',
+      variablesDesc: `prev.exists() - Kiểm tra xem nước đi trước có tồn tại không
+prev.movetime - Thời gian yêu cầu của nước đi trước
+prev.depth - Độ sâu tìm kiếm của nước đi trước
+prev.nodes - Số nút tìm kiếm của nước đi trước
+prev.score - Điểm số của nước đi trước
+prev.timeUsed - Thời gian thực tế engine sử dụng cho nước đi trước
+prev.prev - Nước đi trước-trước (hỗ trợ lồng nhau vô hạn)`,
     },
   },
 

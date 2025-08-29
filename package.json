@@ -17,6 +17,7 @@
     "@tauri-apps/plugin-opener": "^2",
     "@types/ini": "^4.1.1",
     "dompurify": "^3.2.6",
+    "highlight.js": "^11.11.1",
     "ini": "^5.0.0",
     "marked": "^16.1.2",
     "mersenne-twister": "^1.1.0",

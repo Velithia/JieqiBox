@@ -4,6 +4,7 @@ import { listen } from '@tauri-apps/api/event'
 import { useI18n } from 'vue-i18n'
 import { useConfigManager, type ManagedEngine } from './useConfigManager' // Import new types
 import { uciToChineseMoves } from '@/utils/chineseNotation'
+import { evaluateAdvancedScript, type PrevContext } from '@/utils/advancedScriptInterpreter'
 
 export interface EngineLine {
   text: string
@@ -37,6 +38,7 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
   const currentSearchMoves = ref<string[]>([]) // Current searchmoves restriction for variation analysis
   const analysisStartTime = ref<number | null>(null) // Track when analysis started
   const lastAnalysisTime = ref<number>(0) // Store the last analysis time
+  const lastRequestedLimits = ref<{ movetime?: number; depth?: number; nodes?: number; maxThinkTime?: number }>({})
 
   // Ponder-related state
   const isPondering = ref(false) // Whether engine is currently pondering
@@ -614,25 +616,120 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
     )
 
     let goCommand = ''
-    switch (finalSettings.analysisMode) {
+    // Advanced mode: evaluate custom script to produce combined limits
+    if (finalSettings.analysisMode === 'advanced') {
+      try {
+        // Build prev context from game history
+        const history = gameState.history?.value || []
+        const idx = gameState.currentMoveIndex?.value || history.length
+        const getPrevWrapper = (offset: number): PrevContext => {
+          const i = idx - 1 - offset
+          const exists = i >= 0 && i < history.length && history[i]?.type === 'move'
+          const entry = exists ? history[i] : undefined
+          return {
+            exists: () => !!exists,
+            get movetime() {
+              // Requested movetime (go movetime), not actual time used
+              return (entry?.engineRequestedMovetime ?? 0) * 1.0
+            },
+            get depth() {
+              return (entry?.engineDepth ?? 0) * 1.0
+            },
+            get nodes() {
+              return (entry?.engineNodes ?? 0) * 1.0
+            },
+            get score() {
+              return (entry?.engineScore ?? 0) * 1.0
+            },
+            get timeUsed() {
+              return (entry?.engineTime ?? 0) * 1.0
+            },
+            get prev() {
+              return getPrevWrapper(offset + 1)
+            },
+          }
+        }
+
+        const prevCtx = getPrevWrapper(0)
+
+        const code: string = String(finalSettings.advancedScript || '')
+        const result = evaluateAdvancedScript(code, prevCtx) || {}
+
+        const advMovetime =
+          typeof result.movetime === 'number' && isFinite(result.movetime)
+            ? result.movetime
+            : 0
+        const advDepth =
+          typeof result.depth === 'number' && isFinite(result.depth)
+            ? result.depth
+            : 0
+        const advNodes =
+          typeof result.nodes === 'number' && isFinite(result.nodes)
+            ? result.nodes
+            : 0
+        const advMaxThinkTime =
+          typeof result.maxThinkTime === 'number' && isFinite(result.maxThinkTime)
+            ? result.maxThinkTime
+            : 0
+
+        const parts: string[] = []
+        // Construct combined go command like: go depth 20 movetime 1000 nodes 2000000
+        if (advDepth > 0) parts.push(`depth ${Math.floor(advDepth)}`)
+        if (advNodes > 0) parts.push(`nodes ${Math.floor(advNodes)}`)
+        if (advMovetime > 0) parts.push(`movetime ${Math.floor(advMovetime)}`)
+        // If using wtime/btime style for overall cap
+        if (advMaxThinkTime > 0) {
+          parts.push(`wtime ${Math.floor(advMaxThinkTime)} btime ${Math.floor(advMaxThinkTime)} movestogo 1`)
+        }
+        // Record the requested limits for prev context
+        lastRequestedLimits.value = {
+          movetime: advMovetime > 0 ? Math.floor(advMovetime) : undefined,
+          depth: advDepth > 0 ? Math.floor(advDepth) : undefined,
+          nodes: advNodes > 0 ? Math.floor(advNodes) : undefined,
+          maxThinkTime: advMaxThinkTime > 0 ? Math.floor(advMaxThinkTime) : undefined,
+        }
+        const searchMovesStr2 = searchmoves.length > 0 ? ` searchmoves ${searchmoves.join(' ')}` : ''
+        goCommand = `go ${parts.join(' ')}${searchMovesStr2}`.trim()
+        if (goCommand === 'go') {
+          goCommand = `go infinite${searchMovesStr2}`
+        }
+      } catch (e) {
+        console.warn('[ADVANCED] Failed to evaluate advanced script:', e)
+        // Fallback to movetime
+        const searchMovesStr2 = searchmoves.length > 0 ? ` searchmoves ${searchmoves.join(' ')}` : ''
+        if (finalSettings.movetime > 0) {
+          lastRequestedLimits.value = { movetime: Math.floor(finalSettings.movetime) }
+          goCommand = `go movetime ${finalSettings.movetime}${searchMovesStr2}`
+        } else {
+          lastRequestedLimits.value = {}
+          goCommand = `go infinite${searchMovesStr2}`
+        }
+      }
+    } else switch (finalSettings.analysisMode) {
       case 'depth':
+        lastRequestedLimits.value = { depth: Math.floor(finalSettings.maxDepth) }
         goCommand = `go depth ${finalSettings.maxDepth}${searchMovesStr}`
         break
       case 'nodes':
+        lastRequestedLimits.value = { nodes: Math.floor(finalSettings.maxNodes) }
         goCommand = `go nodes ${finalSettings.maxNodes}${searchMovesStr}`
         break
       case 'maxThinkTime':
         if (finalSettings.maxThinkTime > 0) {
+          lastRequestedLimits.value = { maxThinkTime: Math.floor(finalSettings.maxThinkTime) }
           goCommand = `go wtime ${finalSettings.maxThinkTime} btime ${finalSettings.maxThinkTime} movestogo 1${searchMovesStr}`
         } else {
+          lastRequestedLimits.value = {}
           goCommand = `go infinite${searchMovesStr}`
         }
         break
       case 'movetime':
       default:
         if (finalSettings.movetime > 0) {
+          lastRequestedLimits.value = { movetime: Math.floor(finalSettings.movetime) }
           goCommand = `go movetime ${finalSettings.movetime}${searchMovesStr}`
         } else {
+          lastRequestedLimits.value = {}
           goCommand = `go infinite${searchMovesStr}`
         }
         break
@@ -1031,6 +1128,7 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
     bundleIdentifier,
     analysisStartTime,
     lastAnalysisTime,
+    lastRequestedLimits,
     // Ponder exports
     isPondering,
     isInfinitePondering,

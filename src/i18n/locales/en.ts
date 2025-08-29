@@ -101,6 +101,7 @@ export default {
     maxDepth: 'Max Depth',
     maxNodes: 'Max Nodes',
     analysisMode: 'Analysis Mode',
+    advanced: 'Advanced Script',
     resetToDefaults: 'Reset to Defaults',
     clearSettings: 'Clear Settings',
     confirmClearSettings:
@@ -111,6 +112,39 @@ export default {
       maxThinkTime: 'Analyze by Max Think Time',
       depth: 'Analyze by Depth',
       nodes: 'Analyze by Nodes',
+      advanced: 'Advanced Programming Mode',
+    },
+    advancedHint1: 'Supports simple programming: assignment, arithmetic, bitwise operations, if conditions',
+    advancedHint2: 'Available variables: movetime, depth, nodes, maxThinkTime, prev',
+    advancedPlaceholder: 'Please write your script here...',
+    advancedExamples: {
+      title: 'Example Code',
+      basic: 'Basic Settings',
+      basicCode: `depth=20
+movetime=1000
+nodes=2000000`,
+      conditional: 'Conditional Control',
+      conditionalCode: `if (!prev.prev.exists()){
+  movetime=1000
+} else {
+  movetime=prev.prev.movetime / 1.05
+}`,
+      scoreBased: 'Score-based Adjustment',
+      scoreBasedCode: `if (-prev.score < -300){
+  movetime = 4000
+} else if (-prev.score < -200) {
+  movetime = 3000
+} else {
+  movetime = 2000
+}`,
+      variables: 'Available Variables',
+      variablesDesc: `prev.exists() - Check if previous move exists
+prev.movetime - Previous move's requested time
+prev.depth - Previous move's search depth
+prev.nodes - Previous move's search nodes
+prev.score - Previous move's score
+prev.timeUsed - Previous move's actual time used
+prev.prev - Previous-previous move (supports infinite nesting)`,
     },
   },
 

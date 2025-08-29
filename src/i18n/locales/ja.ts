@@ -101,6 +101,7 @@ export default {
     maxDepth: '最大深さ',
     maxNodes: '最大ノード数',
     analysisMode: '解析モード',
+    advanced: '高度なスクリプト',
     resetToDefaults: 'デフォルトに戻す',
     clearSettings: '設定をクリア',
     confirmClearSettings:
@@ -111,6 +112,39 @@ export default {
       maxThinkTime: '最大思考時間による解析',
       depth: '深さによる解析',
       nodes: 'ノード数による解析',
+      advanced: '高度なプログラミングモード',
+    },
+    advancedHint1: '簡単なプログラミングをサポート：代入、算術、ビット演算、if条件',
+    advancedHint2: '利用可能な変数：movetime, depth, nodes, maxThinkTime, prev',
+    advancedPlaceholder: 'ここにスクリプトを記述してください...',
+    advancedExamples: {
+      title: 'サンプルコード',
+      basic: '基本設定',
+      basicCode: `depth=20
+movetime=1000
+nodes=2000000`,
+      conditional: '条件制御',
+      conditionalCode: `if (!prev.prev.exists()){
+  movetime=1000
+} else {
+  movetime=prev.prev.movetime / 1.05
+}`,
+      scoreBased: 'スコアベース調整',
+      scoreBasedCode: `if (-prev.score < -300){
+  movetime = 4000
+} else if (-prev.score < -200) {
+  movetime = 3000
+} else {
+  movetime = 2000
+}`,
+      variables: '利用可能な変数',
+      variablesDesc: `prev.exists() - 前の手が存在するかチェック
+prev.movetime - 前の手の要求時間
+prev.depth - 前の手の探索深さ
+prev.nodes - 前の手の探索ノード数
+prev.score - 前の手のスコア
+prev.timeUsed - 前の手の実際の使用時間
+prev.prev - 前々の手（無限ネスト対応）`,
     },
   },
 
