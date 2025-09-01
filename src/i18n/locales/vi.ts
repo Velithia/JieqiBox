@@ -115,7 +115,8 @@ export default {
       advanced: 'Chế độ lập trình nâng cao',
     },
     advanced: 'Script nâng cao',
-    advancedHint1: 'Hỗ trợ lập trình đơn giản: gán, số học, bitwise, điều kiện if',
+    advancedHint1:
+      'Hỗ trợ lập trình đơn giản: gán, số học, bitwise, điều kiện if',
     advancedHint2: 'Biến có sẵn: movetime, depth, nodes, maxThinkTime, prev',
     advancedPlaceholder: 'Vui lòng viết script của bạn ở đây...',
     advancedExamples: {

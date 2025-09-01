@@ -114,8 +114,10 @@ export default {
       nodes: 'Analyze by Nodes',
       advanced: 'Advanced Programming Mode',
     },
-    advancedHint1: 'Supports simple programming: assignment, arithmetic, bitwise operations, if conditions',
-    advancedHint2: 'Available variables: movetime, depth, nodes, maxThinkTime, prev',
+    advancedHint1:
+      'Supports simple programming: assignment, arithmetic, bitwise operations, if conditions',
+    advancedHint2:
+      'Available variables: movetime, depth, nodes, maxThinkTime, prev',
     advancedPlaceholder: 'Please write your script here...',
     advancedExamples: {
       title: 'Example Code',

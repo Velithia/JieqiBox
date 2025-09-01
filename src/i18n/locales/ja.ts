@@ -114,7 +114,8 @@ export default {
       nodes: 'ノード数による解析',
       advanced: '高度なプログラミングモード',
     },
-    advancedHint1: '簡単なプログラミングをサポート：代入、算術、ビット演算、if条件',
+    advancedHint1:
+      '簡単なプログラミングをサポート：代入、算術、ビット演算、if条件',
     advancedHint2: '利用可能な変数：movetime, depth, nodes, maxThinkTime, prev',
     advancedPlaceholder: 'ここにスクリプトを記述してください...',
     advancedExamples: {

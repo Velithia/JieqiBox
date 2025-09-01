@@ -4,7 +4,10 @@ import { listen } from '@tauri-apps/api/event'
 import { useI18n } from 'vue-i18n'
 import { useConfigManager, type ManagedEngine } from './useConfigManager' // Import new types
 import { uciToChineseMoves } from '@/utils/chineseNotation'
-import { evaluateAdvancedScript, type PrevContext } from '@/utils/advancedScriptInterpreter'
+import {
+  evaluateAdvancedScript,
+  type PrevContext,
+} from '@/utils/advancedScriptInterpreter'
 
 export interface EngineLine {
   text: string
@@ -38,7 +41,12 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
   const currentSearchMoves = ref<string[]>([]) // Current searchmoves restriction for variation analysis
   const analysisStartTime = ref<number | null>(null) // Track when analysis started
   const lastAnalysisTime = ref<number>(0) // Store the last analysis time
-  const lastRequestedLimits = ref<{ movetime?: number; depth?: number; nodes?: number; maxThinkTime?: number }>({})
+  const lastRequestedLimits = ref<{
+    movetime?: number
+    depth?: number
+    nodes?: number
+    maxThinkTime?: number
+  }>({})
 
   // Ponder-related state
   const isPondering = ref(false) // Whether engine is currently pondering
@@ -624,7 +632,8 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
         const idx = gameState.currentMoveIndex?.value || history.length
         const getPrevWrapper = (offset: number): PrevContext => {
           const i = idx - 1 - offset
-          const exists = i >= 0 && i < history.length && history[i]?.type === 'move'
+          const exists =
+            i >= 0 && i < history.length && history[i]?.type === 'move'
           const entry = exists ? history[i] : undefined
           return {
             exists: () => !!exists,
@@ -668,7 +677,8 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
             ? result.nodes
             : 0
         const advMaxThinkTime =
-          typeof result.maxThinkTime === 'number' && isFinite(result.maxThinkTime)
+          typeof result.maxThinkTime === 'number' &&
+          isFinite(result.maxThinkTime)
             ? result.maxThinkTime
             : 0
 
@@ -679,16 +689,20 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
         if (advMovetime > 0) parts.push(`movetime ${Math.floor(advMovetime)}`)
         // If using wtime/btime style for overall cap
         if (advMaxThinkTime > 0) {
-          parts.push(`wtime ${Math.floor(advMaxThinkTime)} btime ${Math.floor(advMaxThinkTime)} movestogo 1`)
+          parts.push(
+            `wtime ${Math.floor(advMaxThinkTime)} btime ${Math.floor(advMaxThinkTime)} movestogo 1`
+          )
         }
         // Record the requested limits for prev context
         lastRequestedLimits.value = {
           movetime: advMovetime > 0 ? Math.floor(advMovetime) : undefined,
           depth: advDepth > 0 ? Math.floor(advDepth) : undefined,
           nodes: advNodes > 0 ? Math.floor(advNodes) : undefined,
-          maxThinkTime: advMaxThinkTime > 0 ? Math.floor(advMaxThinkTime) : undefined,
+          maxThinkTime:
+            advMaxThinkTime > 0 ? Math.floor(advMaxThinkTime) : undefined,
         }
-        const searchMovesStr2 = searchmoves.length > 0 ? ` searchmoves ${searchmoves.join(' ')}` : ''
+        const searchMovesStr2 =
+          searchmoves.length > 0 ? ` searchmoves ${searchmoves.join(' ')}` : ''
         goCommand = `go ${parts.join(' ')}${searchMovesStr2}`.trim()
         if (goCommand === 'go') {
           goCommand = `go infinite${searchMovesStr2}`
@@ -696,44 +710,56 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
       } catch (e) {
         console.warn('[ADVANCED] Failed to evaluate advanced script:', e)
         // Fallback to movetime
-        const searchMovesStr2 = searchmoves.length > 0 ? ` searchmoves ${searchmoves.join(' ')}` : ''
+        const searchMovesStr2 =
+          searchmoves.length > 0 ? ` searchmoves ${searchmoves.join(' ')}` : ''
         if (finalSettings.movetime > 0) {
-          lastRequestedLimits.value = { movetime: Math.floor(finalSettings.movetime) }
+          lastRequestedLimits.value = {
+            movetime: Math.floor(finalSettings.movetime),
+          }
           goCommand = `go movetime ${finalSettings.movetime}${searchMovesStr2}`
         } else {
           lastRequestedLimits.value = {}
           goCommand = `go infinite${searchMovesStr2}`
         }
       }
-    } else switch (finalSettings.analysisMode) {
-      case 'depth':
-        lastRequestedLimits.value = { depth: Math.floor(finalSettings.maxDepth) }
-        goCommand = `go depth ${finalSettings.maxDepth}${searchMovesStr}`
-        break
-      case 'nodes':
-        lastRequestedLimits.value = { nodes: Math.floor(finalSettings.maxNodes) }
-        goCommand = `go nodes ${finalSettings.maxNodes}${searchMovesStr}`
-        break
-      case 'maxThinkTime':
-        if (finalSettings.maxThinkTime > 0) {
-          lastRequestedLimits.value = { maxThinkTime: Math.floor(finalSettings.maxThinkTime) }
-          goCommand = `go wtime ${finalSettings.maxThinkTime} btime ${finalSettings.maxThinkTime} movestogo 1${searchMovesStr}`
-        } else {
-          lastRequestedLimits.value = {}
-          goCommand = `go infinite${searchMovesStr}`
-        }
-        break
-      case 'movetime':
-      default:
-        if (finalSettings.movetime > 0) {
-          lastRequestedLimits.value = { movetime: Math.floor(finalSettings.movetime) }
-          goCommand = `go movetime ${finalSettings.movetime}${searchMovesStr}`
-        } else {
-          lastRequestedLimits.value = {}
-          goCommand = `go infinite${searchMovesStr}`
-        }
-        break
-    }
+    } else
+      switch (finalSettings.analysisMode) {
+        case 'depth':
+          lastRequestedLimits.value = {
+            depth: Math.floor(finalSettings.maxDepth),
+          }
+          goCommand = `go depth ${finalSettings.maxDepth}${searchMovesStr}`
+          break
+        case 'nodes':
+          lastRequestedLimits.value = {
+            nodes: Math.floor(finalSettings.maxNodes),
+          }
+          goCommand = `go nodes ${finalSettings.maxNodes}${searchMovesStr}`
+          break
+        case 'maxThinkTime':
+          if (finalSettings.maxThinkTime > 0) {
+            lastRequestedLimits.value = {
+              maxThinkTime: Math.floor(finalSettings.maxThinkTime),
+            }
+            goCommand = `go wtime ${finalSettings.maxThinkTime} btime ${finalSettings.maxThinkTime} movestogo 1${searchMovesStr}`
+          } else {
+            lastRequestedLimits.value = {}
+            goCommand = `go infinite${searchMovesStr}`
+          }
+          break
+        case 'movetime':
+        default:
+          if (finalSettings.movetime > 0) {
+            lastRequestedLimits.value = {
+              movetime: Math.floor(finalSettings.movetime),
+            }
+            goCommand = `go movetime ${finalSettings.movetime}${searchMovesStr}`
+          } else {
+            lastRequestedLimits.value = {}
+            goCommand = `go infinite${searchMovesStr}`
+          }
+          break
+      }
     console.log(`[DEBUG] START_ANALYSIS: Go command: ${goCommand}`)
     send(goCommand)
   }

@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isVisible" max-width="900px" persistent>
+  <v-dialog v-model="isVisible" :max-width="dialogMaxWidth" persistent>
     <v-card>
       <v-card-title class="dialog-title">
         <span>{{ $t('timeDialog.title') }}</span>
@@ -28,7 +28,10 @@
                 wrap="off"
               />
               <div class="editor-overlay" v-if="advancedScript">
-                <pre class="syntax-highlight" v-html="sanitizedHighlightedCode"></pre>
+                <pre
+                  class="syntax-highlight"
+                  v-html="sanitizedHighlightedCode"
+                ></pre>
               </div>
             </div>
             <v-expansion-panels class="mt-3">
@@ -41,19 +44,31 @@
                   <div class="examples-container">
                     <div class="example-section">
                       <h4>{{ $t('timeDialog.advancedExamples.basic') }}</h4>
-                      <pre class="code-block">{{ $t('timeDialog.advancedExamples.basicCode') }}</pre>
+                      <pre class="code-block">{{
+                        $t('timeDialog.advancedExamples.basicCode')
+                      }}</pre>
                     </div>
                     <div class="example-section">
-                      <h4>{{ $t('timeDialog.advancedExamples.conditional') }}</h4>
-                      <pre class="code-block">{{ $t('timeDialog.advancedExamples.conditionalCode') }}</pre>
+                      <h4>
+                        {{ $t('timeDialog.advancedExamples.conditional') }}
+                      </h4>
+                      <pre class="code-block">{{
+                        $t('timeDialog.advancedExamples.conditionalCode')
+                      }}</pre>
                     </div>
                     <div class="example-section">
-                      <h4>{{ $t('timeDialog.advancedExamples.scoreBased') }}</h4>
-                      <pre class="code-block">{{ $t('timeDialog.advancedExamples.scoreBasedCode') }}</pre>
+                      <h4>
+                        {{ $t('timeDialog.advancedExamples.scoreBased') }}
+                      </h4>
+                      <pre class="code-block">{{
+                        $t('timeDialog.advancedExamples.scoreBasedCode')
+                      }}</pre>
                     </div>
                     <div class="example-section">
                       <h4>{{ $t('timeDialog.advancedExamples.variables') }}</h4>
-                      <pre class="code-block">{{ $t('timeDialog.advancedExamples.variablesDesc') }}</pre>
+                      <pre class="code-block">{{
+                        $t('timeDialog.advancedExamples.variablesDesc')
+                      }}</pre>
                     </div>
                   </div>
                 </v-expansion-panel-text>
@@ -231,7 +246,9 @@
   const highlightedCode = computed(() => {
     if (!advancedScript.value) return ''
     try {
-      const result = hljs.highlight(advancedScript.value, { language: 'javascript' })
+      const result = hljs.highlight(advancedScript.value, {
+        language: 'javascript',
+      })
       return result.value
     } catch (error) {
       // Fallback to plain text if highlighting fails
@@ -250,7 +267,9 @@
       const isAllowedClass = (cls: string | null) => {
         if (!cls) return false
         // allow classes like "hljs", "hljs-keyword", etc.
-        return cls.split(/\s+/).every(c => c === 'hljs' || c.startsWith('hljs-'))
+        return cls
+          .split(/\s+/)
+          .every(c => c === 'hljs' || c.startsWith('hljs-'))
       }
       const walk = (node: Node): Node | null => {
         if (node.nodeType === Node.TEXT_NODE) return node
@@ -275,7 +294,8 @@
             if (attr.name !== 'class') el.removeAttribute(attr.name)
           })
           const clone = document.createElement('span')
-          if (isAllowedClass(className)) clone.setAttribute('class', className as string)
+          if (isAllowedClass(className))
+            clone.setAttribute('class', className as string)
           Array.from(el.childNodes).forEach(child => {
             const kept = walk(child)
             if (kept) clone.appendChild(kept)
@@ -301,9 +321,14 @@
     }
   }
 
-  const sanitizedHighlightedCode = computed(() => sanitizeHighlighted(highlightedCode.value))
+  const sanitizedHighlightedCode = computed(() =>
+    sanitizeHighlighted(highlightedCode.value)
+  )
 
-
+  // Computed property - dialog max width based on analysis mode
+  const dialogMaxWidth = computed(() => {
+    return analysisMode.value === 'advanced' ? '900px' : '500px'
+  })
 
   // Computed property - dialog visibility state
   const isVisible = computed({
@@ -480,13 +505,15 @@
   }
 
   .code-editor {
-    font-family: 'Consolas', 'Monaco', 'Courier New', 'JetBrains Mono', monospace !important;
+    font-family:
+      'Consolas', 'Monaco', 'Courier New', 'JetBrains Mono', monospace !important;
     font-size: 14px !important;
     line-height: 1.5 !important;
     letter-spacing: 0.5px;
-    
+
     :deep(.v-field__input) {
-      font-family: 'Consolas', 'Monaco', 'Courier New', 'JetBrains Mono', monospace !important;
+      font-family:
+        'Consolas', 'Monaco', 'Courier New', 'JetBrains Mono', monospace !important;
       font-size: 14px !important;
       line-height: 1.5 !important;
       letter-spacing: 0.5px;
@@ -495,7 +522,7 @@
       white-space: pre !important;
       tab-size: 2;
     }
-    
+
     :deep(.v-field__outline) {
       border-radius: 8px !important;
     }
@@ -510,7 +537,8 @@
     pointer-events: none;
     z-index: 1;
     padding: 16px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', 'JetBrains Mono', monospace;
+    font-family:
+      'Consolas', 'Monaco', 'Courier New', 'JetBrains Mono', monospace;
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: 0.5px;
