@@ -230,7 +230,7 @@
           <!-- Layout for mobile and desktop -->
           <v-row class="g-0">
             <!-- Board area -->
-            <v-col cols="12" :md="selectedPiece ? 7 : 8" class="pa-1 board-col">
+            <v-col cols="12" md="8" class="pa-1 board-col">
               <div class="position-editor-board">
                 <img src="@/assets/xiangqi.png" class="board-bg" alt="board" />
 
@@ -257,7 +257,7 @@
             <!-- Piece selector panel -->
             <v-col
               cols="12"
-              :md="selectedPiece ? 5 : 4"
+              md="4"
               class="pa-1 selector-col"
             >
               <div class="piece-selector">
