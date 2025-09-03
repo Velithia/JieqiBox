@@ -617,8 +617,8 @@
 
   // Helper: compute dark rows for each side based on king positions
   const getDarkRowsByKings = () => {
-    const topRegion = [0, 1, 2, 3]
-    const bottomRegion = [6, 7, 8, 9]
+    const topRegion = [0, 1, 2, 3, 4]
+    const bottomRegion = [5, 6, 7, 8, 9]
 
     const redKing = editingPieces.value.find(
       p => p.isKnown && p.name === 'red_king'
