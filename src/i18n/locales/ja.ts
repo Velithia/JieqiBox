@@ -79,6 +79,13 @@ export default {
     },
   },
 
+  // 検討分析ダイアログ
+  reviewDialog: {
+    title: '検討分析',
+    movetime: '1手あたりの時間 (ms)',
+    progress: '進捗: {current}/{total}',
+  },
+
   // UCIターミナルダイアログ
   uciTerminal: {
     title: 'UCIターミナル',

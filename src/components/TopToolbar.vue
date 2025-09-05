@@ -79,6 +79,15 @@
         :title="$t('toolbar.analysisParams')"
       />
       <v-btn
+        icon="mdi-clipboard-pulse"
+        size="small"
+        color="deep-orange"
+        variant="text"
+        @click="showReviewDialog = true"
+        :disabled="isMatchRunning || isAnalyzing"
+        :title="$t('toolbar.reviewAnalysis')"
+      />
+      <v-btn
         icon="mdi-close-circle"
         size="small"
         color="deep-purple"
@@ -118,6 +127,8 @@
       v-model="showNotationTextDialog"
       @apply="handleApplyNotationText"
     />
+
+    <ReviewAnalysisDialog v-model="showReviewDialog" />
   </div>
 </template>
 
@@ -130,6 +141,7 @@
   import LanguageSelector from './LanguageSelector.vue'
   import InterfaceSettingsDialog from './InterfaceSettingsDialog.vue'
   import NotationTextDialog from './NotationTextDialog.vue'
+  import ReviewAnalysisDialog from './ReviewAnalysisDialog.vue'
   import { useInterfaceSettings } from '../composables/useInterfaceSettings'
 
   const { t } = useI18n()
@@ -148,6 +160,7 @@
   const showPositionEditor = ref(false)
   const showInterfaceSettingsDialog = ref(false)
   const showNotationTextDialog = ref(false)
+  const showReviewDialog = ref(false)
 
   // State for variation restart logic
   const isWaitingToRestartForVariation = ref(false)
@@ -159,6 +172,8 @@
   const isSaving = ref(false)
   const isOpening = ref(false)
   const isApplyingText = ref(false)
+
+  // Review analysis managed in ReviewAnalysisDialog
 
   // Analysis settings
   const analysisSettings = ref({

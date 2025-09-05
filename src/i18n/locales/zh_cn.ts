@@ -37,6 +37,7 @@ export default {
     darkMode: '暗黑模式',
     lightMode: '亮色模式',
     viewPasteNotation: '查看/输入棋谱',
+    reviewAnalysis: '复盘分析',
   },
 
   // UCI选项对话框
@@ -76,6 +77,13 @@ export default {
       EvalFile:
         'NNUE评估参数文件的名称。根据GUI的不同，文件名可能需要包含包含该文件的文件夹/目录的完整路径。',
     },
+  },
+
+  // 复盘分析对话框
+  reviewDialog: {
+    title: '复盘分析',
+    movetime: '每步用时 (毫秒)',
+    progress: '进度: {current}/{total}',
   },
 
   // UCI终端对话框

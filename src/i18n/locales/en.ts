@@ -37,6 +37,7 @@ export default {
     darkMode: 'Dark Mode',
     lightMode: 'Light Mode',
     viewPasteNotation: 'View/Paste Notation',
+    reviewAnalysis: 'Review Analysis',
   },
 
   // UCI options dialog
@@ -78,6 +79,13 @@ export default {
       EvalFile:
         'The name of the NNUE evaluation parameter file. Depending on the GUI, the filename may need to include the full path to the folder containing the file.',
     },
+  },
+
+  // Review analysis dialog
+  reviewDialog: {
+    title: 'Review Analysis',
+    movetime: 'Per-move time (ms)',
+    progress: 'Progress: {current}/{total}',
   },
 
   // UCI Terminal dialog

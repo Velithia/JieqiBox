@@ -81,6 +81,13 @@ export default {
     },
   },
 
+  // Hộp thoại phân tích xem lại
+  reviewDialog: {
+    title: 'Phân tích xem lại',
+    movetime: 'Thời gian mỗi nước (ms)',
+    progress: 'Tiến độ: {current}/{total}',
+  },
+
   // Hộp thoại terminal UCI
   uciTerminal: {
     title: 'Terminal UCI',

@@ -255,11 +255,7 @@
             </v-col>
 
             <!-- Piece selector panel -->
-            <v-col
-              cols="12"
-              md="4"
-              class="pa-1 selector-col"
-            >
+            <v-col cols="12" md="4" class="pa-1 selector-col">
               <div class="piece-selector">
                 <!-- Selected Piece Info -->
                 <div v-if="selectedPiece" class="selected-piece-info mb-3">

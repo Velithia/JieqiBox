@@ -78,6 +78,13 @@ export default {
     },
   },
 
+  // 複盤分析對話框
+  reviewDialog: {
+    title: '複盤分析',
+    movetime: '每步用時 (毫秒)',
+    progress: '進度: {current}/{total}',
+  },
+
   // UCI Terminal對話框
   uciTerminal: {
     title: 'UCI終端機',
