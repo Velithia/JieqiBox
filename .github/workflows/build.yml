@@ -101,10 +101,17 @@ jobs:
       - name: build frontend
         run: npm run build
 
+      - name: Update productName for no-yolo build
+        if: ${{ !matrix.include_yolo }}
+        shell: bash
+        run: |
+          jq '.productName = "jieqibox-no-yolo"' src-tauri/tauri.conf.json > tauri.conf.json.tmp && mv tauri.conf.json.tmp src-tauri/tauri.conf.json
+          echo "Updated productName to jieqibox-no-yolo in tauri.conf.json"
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_BUNDLE_IDENTIFIER_SUFFIX: ${{ matrix.include_yolo && '' || '-no-yolo' }}
+          TAURI_BUNDLE_IDENTIFIER_SUFFIX: ${{ !matrix.include_yolo && '-no-yolo' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'JieqiBox ${{ github.ref_name }}'
@@ -178,16 +185,16 @@ jobs:
         run: npm run build
 
       - name: Init Tauri Android project
-        run: |
-          npm install -g @tauri-apps/cli
+        run: npm install -g @tauri-apps/cli
 
       - name: Build Tauri Android app (unsigned)
         run: npx tauri android build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_BUNDLE_IDENTIFIER_SUFFIX: ${{ matrix.include_yolo && '' || '-no-yolo' }}
+          TAURI_BUNDLE_IDENTIFIER_SUFFIX: ${{ !matrix.include_yolo && '-no-yolo' || '' }}
 
       - name: Manually sign the APK
+        id: sign_apk
         run: |
           KEYSTORE_PATH=$RUNNER_TEMP/keystore.jks
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > $KEYSTORE_PATH
@@ -217,10 +224,25 @@ jobs:
           $ANDROID_HOME/build-tools/34.0.0/apksigner verify "$SIGNED_APK_PATH"
           echo "APK signature verified successfully."
 
+          echo "SIGNED_APK_PATH=$SIGNED_APK_PATH" >> "$GITHUB_ENV"
+
+      - name: Rename APK for no-yolo build
+        if: ${{ !matrix.include_yolo }}
+        run: |
+          SIGNED_APK_PATH="${{ env.SIGNED_APK_PATH }}"
+          
+          DIRNAME=$(dirname "$SIGNED_APK_PATH")
+          BASENAME=$(basename "$SIGNED_APK_PATH" .apk)
+          NEW_PATH="${DIRNAME}/${BASENAME}-no-yolo.apk"
+          
+          echo "Renaming APK from ${SIGNED_APK_PATH} to ${NEW_PATH}"
+          mv "$SIGNED_APK_PATH" "$NEW_PATH"
+
+
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: jieqibox-android${{ matrix.include_yolo && '' || '-no-yolo' }}
+          name: jieqibox-android${{ !matrix.include_yolo && '-no-yolo' || '' }}
           path: |
             src-tauri/gen/android/app/build/outputs/apk/**/release/*.apk
             !src-tauri/gen/android/app/build/outputs/apk/**/release/*-unsigned.apk
