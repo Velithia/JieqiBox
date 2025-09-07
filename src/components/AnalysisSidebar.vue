@@ -301,21 +301,43 @@
             :alt="item.name"
             class="pool-piece-img"
           />
-          <v-btn
-            density="compact"
-            icon="mdi-minus"
-            size="x-small"
-            @click="adjustUnrevealedCount(item.char, -1)"
-            :disabled="item.count <= 0"
-          />
-          <span class="pool-count">{{ item.count }}</span>
-          <v-btn
-            density="compact"
-            icon="mdi-plus"
-            size="x-small"
-            @click="adjustUnrevealedCount(item.char, 1)"
-            :disabled="item.count >= item.max"
-          />
+          <div class="pool-controls">
+            <div class="control-group">
+              <v-btn
+                density="compact"
+                icon="mdi-plus"
+                size="x-small"
+                @click="adjustUnrevealedCount(item.char, 1)"
+                :disabled="item.count >= item.max"
+              />
+              <v-btn
+                density="compact"
+                icon="mdi-minus"
+                size="x-small"
+                @click="adjustUnrevealedCount(item.char, -1)"
+                :disabled="item.count <= 0"
+              />
+            </div>
+            <span class="pool-count"
+              >{{ item.count }}({{ item.capturedCount }})</span
+            >
+            <div class="control-group">
+              <v-btn
+                density="compact"
+                icon="mdi-plus"
+                size="x-small"
+                @click="adjustCapturedUnrevealedCount(item.char, 1)"
+                :disabled="item.count <= 0"
+              />
+              <v-btn
+                density="compact"
+                icon="mdi-minus"
+                size="x-small"
+                @click="adjustCapturedUnrevealedCount(item.char, -1)"
+                :disabled="item.capturedCount <= 0"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </DraggablePanel>
@@ -928,8 +950,10 @@
     playMoveFromUci,
     flipMode,
     unrevealedPieceCounts,
+    capturedUnrevealedPieceCounts,
     validationStatus,
     adjustUnrevealedCount,
+    adjustCapturedUnrevealedCount,
     getPieceNameFromChar,
     sideToMove,
     pendingFlip,
@@ -1245,13 +1269,16 @@
       {
         char,
         name: getPieceNameFromChar(char),
-        count: unrevealedPieceCounts.value[char] || 0,
+        count: unrevealedPieceCounts?.value?.[char] || 0,
+        capturedCount: capturedUnrevealedPieceCounts?.value?.[char] || 0,
         max: INITIAL_PIECE_COUNTS[char],
       },
       {
         char: char.toLowerCase(),
         name: getPieceNameFromChar(char.toLowerCase()),
-        count: unrevealedPieceCounts.value[char.toLowerCase()] || 0,
+        count: unrevealedPieceCounts?.value?.[char.toLowerCase()] || 0,
+        capturedCount:
+          capturedUnrevealedPieceCounts?.value?.[char.toLowerCase()] || 0,
         max: INITIAL_PIECE_COUNTS[char.toLowerCase()],
       },
     ])
@@ -3255,10 +3282,22 @@
     width: 20px;
     height: 20px;
   }
+  .pool-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    width: 100%;
+  }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
   .pool-count {
     font-weight: bold;
     font-size: 0.9rem;
-    width: 18px;
+    width: 40px;
     text-align: center;
   }
   .switch-row {

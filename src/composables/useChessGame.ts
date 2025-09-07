@@ -88,6 +88,7 @@ export function useChessGame() {
   const currentMoveIndex = ref<number>(0)
   const openingComment = ref<string>('')
   const unrevealedPieceCounts = ref<{ [key: string]: number }>({})
+  const capturedUnrevealedPieceCounts = ref<{ [key: string]: number }>({})
   const isBoardFlipped = ref(false) // board flip state
 
   // Get current unrevealed counts for display purposes (God view)
@@ -290,14 +291,28 @@ export function useChessGame() {
 
     let boardPart: string,
       hiddenPart: string = '-',
+      capturedHiddenPart: string = '-',
       sidePart: string,
       halfmove: string = '0',
       fullmove: string = '1'
 
     if (currentFormat === 'new') {
       // Convert from new to old format
-      if (parts.length >= 5) {
+      if (parts.length >= 6) {
+        ;[
+          boardPart,
+          sidePart,
+          hiddenPart,
+          capturedHiddenPart,
+          halfmove,
+          fullmove,
+        ] = parts
+      } else if (parts.length >= 5) {
         ;[boardPart, sidePart, hiddenPart, halfmove, fullmove] = parts
+      } else if (parts.length >= 4) {
+        ;[boardPart, sidePart, hiddenPart, capturedHiddenPart] = parts
+        halfmove = '0'
+        fullmove = '1'
       } else if (parts.length >= 3) {
         ;[boardPart, sidePart, hiddenPart] = parts
       } else {
@@ -314,8 +329,8 @@ export function useChessGame() {
       } else {
         ;[boardPart, sidePart] = parts
       }
-      // New format: board side hiddenPart halfmove fullmove
-      return `${boardPart} ${sidePart} ${hiddenPart} ${halfmove} ${fullmove}`
+      // New format: board side hiddenPart capturedHiddenPart halfmove fullmove
+      return `${boardPart} ${sidePart} ${hiddenPart} ${capturedHiddenPart} ${halfmove} ${fullmove}`
     }
   }
 
@@ -328,8 +343,8 @@ export function useChessGame() {
     const fenFormat = detectFenFormat(fen)
     const fenParts = fen.split(' ')
 
-    // Get correct engine view pool
-    const { engineViewPool } = calculateDualPools()
+    // Get correct engine view pools (both hidden and captured)
+    const { engineViewPool, engineViewCapturedPool } = calculateDualPools()
 
     // Generate new pool part
     const newPoolFen = Object.entries(engineViewPool)
@@ -337,16 +352,28 @@ export function useChessGame() {
       .map(([char, count]) => `${char}${count}`)
       .join('')
 
+    // Generate new captured pool part
+    const newCapturedPoolFen = Object.entries(engineViewCapturedPool)
+      .filter(([, count]) => count > 0)
+      .map(([char, count]) => `${char}${count}`)
+      .join('')
+
     let correctedFen: string
 
     if (fenFormat === 'new') {
-      // New format: board side hiddenPart halfmove fullmove
-      if (fenParts.length >= 5) {
+      // New format: board side hiddenPart capturedHiddenPart halfmove fullmove
+      if (fenParts.length >= 6) {
+        const [boardPart, sidePart, , , halfmove, fullmove] = fenParts
+        correctedFen = `${boardPart} ${sidePart} ${newPoolFen} ${newCapturedPoolFen || '-'} ${halfmove} ${fullmove}`
+      } else if (fenParts.length >= 5) {
         const [boardPart, sidePart, , halfmove, fullmove] = fenParts
-        correctedFen = `${boardPart} ${sidePart} ${newPoolFen} ${halfmove} ${fullmove}`
+        correctedFen = `${boardPart} ${sidePart} ${newPoolFen} ${newCapturedPoolFen || '-'} ${halfmove} ${fullmove}`
+      } else if (fenParts.length >= 4) {
+        const [boardPart, sidePart, ,] = fenParts
+        correctedFen = `${boardPart} ${sidePart} ${newPoolFen} ${newCapturedPoolFen || '-'}`
       } else if (fenParts.length >= 3) {
         const [boardPart, sidePart] = fenParts
-        correctedFen = `${boardPart} ${sidePart} ${newPoolFen}`
+        correctedFen = `${boardPart} ${sidePart} ${newPoolFen} ${newCapturedPoolFen || '-'}`
       } else {
         return fen
       }
@@ -489,9 +516,30 @@ export function useChessGame() {
     // Engine view pool: starts same as god view, but hide human captures
     const engineViewPool = { ...godViewPool }
 
+    // God view captured pool: use the correctly maintained capturedUnrevealedPieceCounts
+    const godViewCapturedPool = { ...capturedUnrevealedPieceCounts.value }
+
+    // Engine view captured pool: starts same as god view, but hide human captures
+    const engineViewCapturedPool = { ...godViewCapturedPool }
+
     // In human vs AI mode, hide human captures from engine
     if (isHumanVsAiMode.value && history.value && currentMoveIndex.value > 0) {
       const humanSide = aiSide.value === 'red' ? 'black' : 'red'
+
+      // Filter captured pool: engine can only see pieces captured by itself, not by human
+      // Human side pieces are uppercase (red) or lowercase (black), we need to hide human's captures
+      const humanCapturedChars = Object.keys(engineViewCapturedPool).filter(
+        char => {
+          const isUpperCase = char === char.toUpperCase()
+          const pieceSide = isUpperCase ? 'red' : 'black'
+          return pieceSide !== humanSide
+        }
+      )
+
+      // Remove human's captured pieces from engine view
+      humanCapturedChars.forEach(char => {
+        delete engineViewCapturedPool[char]
+      })
 
       // Find the last position-edit operation index, if any
       let startIndex = 0
@@ -584,7 +632,18 @@ export function useChessGame() {
       if (engineViewPool[char] < 0) engineViewPool[char] = 0
     })
 
-    return { godViewPool, engineViewPool }
+    // Ensure no negative counts for captured pools
+    Object.keys(godViewCapturedPool).forEach(char => {
+      if (godViewCapturedPool[char] < 0) godViewCapturedPool[char] = 0
+      if (engineViewCapturedPool[char] < 0) engineViewCapturedPool[char] = 0
+    })
+
+    return {
+      godViewPool,
+      engineViewPool,
+      godViewCapturedPool,
+      engineViewCapturedPool,
+    }
   }
 
   // Generate FEN for human vs AI mode where engine doesn't see human's captured pieces
@@ -683,13 +742,25 @@ export function useChessGame() {
       if (redCount > 0) hiddenStr += char + redCount
       if (blackCount > 0) hiddenStr += char.toLowerCase() + blackCount
     })
+
+    let capturedHiddenStr = ''
+    hiddenOrder.split('').forEach(char => {
+      const redCapturedCount = capturedUnrevealedPieceCounts.value[char] || 0
+      const blackCapturedCount =
+        capturedUnrevealedPieceCounts.value[char.toLowerCase()] || 0
+      if (redCapturedCount > 0) capturedHiddenStr += char + redCapturedCount
+      if (blackCapturedCount > 0)
+        capturedHiddenStr += char.toLowerCase() + blackCapturedCount
+    })
+
     // Generate FEN based on format setting
     const color = sideToMove.value === 'red' ? 'w' : 'b'
     const hiddenPart = hiddenStr || '-'
+    const capturedHiddenPart = capturedHiddenStr || '-'
 
     if (useNewFenFormat.value) {
-      // New FEN format: board color hiddenPieces halfmove fullmove
-      return `${boardFen} ${color} ${hiddenPart} ${halfmoveClock.value} ${fullmoveNumber.value}`
+      // New FEN format: board color hiddenPieces capturedHiddenPieces halfmove fullmove
+      return `${boardFen} ${color} ${hiddenPart} ${capturedHiddenPart} ${halfmoveClock.value} ${fullmoveNumber.value}`
     } else {
       // Old FEN format: board hiddenPieces color castling enpassant halfmove fullmove
       return `${boardFen} ${hiddenPart} ${color} - - ${halfmoveClock.value} ${fullmoveNumber.value}`
@@ -702,6 +773,7 @@ export function useChessGame() {
       const parts = fen.split(' ')
       let boardPart: string,
         hiddenPart: string = '-',
+        capturedHiddenPart: string = '-',
         sidePart: string,
         halfmove: string,
         fullmove: string
@@ -712,17 +784,36 @@ export function useChessGame() {
 
       if (isNewFormat) {
         // New FEN format parsing
-        if (parts.length >= 5) {
-          // Format: board color hiddenPart halfmove fullmove
+        if (parts.length >= 6) {
+          // Format: board color hiddenPart capturedHiddenPart halfmove fullmove
+          ;[
+            boardPart,
+            sidePart,
+            hiddenPart,
+            capturedHiddenPart,
+            halfmove,
+            fullmove,
+          ] = parts
+        } else if (parts.length >= 5) {
+          // Format: board color hiddenPart halfmove fullmove (no captured hidden)
           ;[boardPart, sidePart, hiddenPart, halfmove, fullmove] = parts
+          capturedHiddenPart = '-'
+        } else if (parts.length >= 4) {
+          // Format: board color hiddenPart capturedHiddenPart (missing moves)
+          ;[boardPart, sidePart, hiddenPart, capturedHiddenPart] = parts
+          halfmove = '0'
+          fullmove = '1'
         } else if (parts.length >= 3) {
-          // Format: board color hiddenPart (missing moves)
+          // Format: board color hiddenPart (missing captured and moves)
           ;[boardPart, sidePart, hiddenPart] = parts
+          capturedHiddenPart = '-'
           halfmove = '0'
           fullmove = '1'
         } else {
           // Format: board color (minimal)
           ;[boardPart, sidePart] = parts
+          hiddenPart = '-'
+          capturedHiddenPart = '-'
           halfmove = '0'
           fullmove = '1'
         }
@@ -752,6 +843,7 @@ export function useChessGame() {
             fullmove,
           ] = parts
         }
+        capturedHiddenPart = '-'
       }
 
       sideToMove.value = sidePart === 'w' ? 'red' : 'black'
@@ -800,16 +892,29 @@ export function useChessGame() {
       })
 
       const newCounts: { [key: string]: number } = {}
+      const newCapturedCounts: { [key: string]: number } = {}
       'RNBAKCP rnbakcp'
         .split('')
         .filter(c => c !== ' ')
-        .forEach(c => (newCounts[c] = 0))
+        .forEach(c => {
+          newCounts[c] = 0
+          newCapturedCounts[c] = 0
+        })
       if (hiddenPart && hiddenPart !== '-') {
         const hiddenMatches = hiddenPart.match(/[a-zA-Z]\d+/g) || []
         hiddenMatches.forEach(match => {
           const char = match[0]
           const count = parseInt(match.slice(1), 10)
           newCounts[char] = count
+        })
+      }
+      if (capturedHiddenPart && capturedHiddenPart !== '-') {
+        const capturedHiddenMatches =
+          capturedHiddenPart.match(/[a-zA-Z]\d+/g) || []
+        capturedHiddenMatches.forEach(match => {
+          const char = match[0]
+          const count = parseInt(match.slice(1), 10)
+          newCapturedCounts[char] = count
         })
       }
 
@@ -834,6 +939,7 @@ export function useChessGame() {
 
       pieces.value = newPieces
       unrevealedPieceCounts.value = newCounts
+      capturedUnrevealedPieceCounts.value = newCapturedCounts
       selectedPieceId.value = null
       lastMovePositions.value = null // Clear highlights when loading FEN
 
@@ -1203,6 +1309,13 @@ export function useChessGame() {
     openingComment.value = ''
     lastMovePositions.value = null // Clear highlights for new game
 
+    // Initialize captured unrevealed piece counts
+    capturedUnrevealedPieceCounts.value = {}
+    'RNBAKCP rnbakcp'
+      .split('')
+      .filter(c => c !== ' ')
+      .forEach(c => (capturedUnrevealedPieceCounts.value[c] = 0))
+
     // Ensure flip state is correct for new game
     detectAndSetBoardFlip()
 
@@ -1238,6 +1351,40 @@ export function useChessGame() {
 
     unrevealedPieceCounts.value[char] = currentCount + delta
     recordAndFinalize('adjust', `${char}${delta > 0 ? '+' : '-'}`)
+  }
+
+  const adjustCapturedUnrevealedCount = (char: string, delta: 1 | -1) => {
+    const currentCapturedCount = capturedUnrevealedPieceCounts.value[char] || 0
+    const currentUnrevealedCount = unrevealedPieceCounts.value[char] || 0
+
+    if (delta === -1 && currentCapturedCount <= 0) return
+
+    if (delta === 1) {
+      // When adding to captured unrevealed pieces pool, need to decrease unrevealed pieces pool simultaneously
+      if (currentUnrevealedCount <= 0) {
+        alert(
+          `暗子池中没有足够的${getPieceNameFromChar(char)}可以添加到吃暗子池！`
+        )
+        return
+      }
+      unrevealedPieceCounts.value[char] = currentUnrevealedCount - 1
+    } else if (delta === -1) {
+      // When decreasing captured unrevealed pieces pool, need to increase unrevealed pieces pool simultaneously
+      const revealedCount = pieces.value.filter(
+        p => p.isKnown && getCharFromPieceName(p.name) === char
+      ).length
+      if (
+        revealedCount + currentUnrevealedCount >=
+        INITIAL_PIECE_COUNTS[char as keyof typeof INITIAL_PIECE_COUNTS]
+      ) {
+        alert(`不能再增加了！${getPieceNameFromChar(char)} 总数已达上限。`)
+        return
+      }
+      unrevealedPieceCounts.value[char] = currentUnrevealedCount + 1
+    }
+
+    capturedUnrevealedPieceCounts.value[char] = currentCapturedCount + delta
+    recordAndFinalize('adjust', `captured_${char}${delta > 0 ? '+' : '-'}`)
   }
 
   const completeFlipAfterMove = (
@@ -1815,6 +1962,9 @@ export function useChessGame() {
         if (opponentPoolChars.length > 0) {
           const charToRemove = shuffle(opponentPoolChars)[0]
           unrevealedPieceCounts.value[charToRemove]--
+          // Add the captured piece to the captured unrevealed pool
+          capturedUnrevealedPieceCounts.value[charToRemove] =
+            (capturedUnrevealedPieceCounts.value[charToRemove] || 0) + 1
           // Remember which hidden piece was virtually captured for UCI annotation
           capturedHiddenChar = charToRemove
         }
@@ -2342,14 +2492,8 @@ export function useChessGame() {
     // Load current position or replay from initial
     if (notation.metadata.currentFen) {
       loadFen(notation.metadata.currentFen, false)
-      unrevealedPieceCounts.value = deriveUnrevealedPieceCountsFromFen(
-        notation.metadata.currentFen
-      )
     } else if (notation.metadata.initialFen) {
       loadFen(notation.metadata.initialFen, false)
-      unrevealedPieceCounts.value = deriveUnrevealedPieceCountsFromFen(
-        notation.metadata.initialFen
-      )
       if (currentMoveIndex.value > 0) {
         replayToMove(currentMoveIndex.value)
       }
@@ -2656,44 +2800,6 @@ export function useChessGame() {
 
   setupNewGame()
 
-  // Derive unrevealed piece counts from FEN string
-  const deriveUnrevealedPieceCountsFromFen = (
-    fen: string
-  ): { [key: string]: number } => {
-    const parts = fen.split(' ')
-
-    // Detect FEN format by checking if second part is color ('w' or 'b')
-    const isNewFormat =
-      parts.length >= 2 && (parts[1] === 'w' || parts[1] === 'b')
-
-    // In new format: board color hiddenPart halfmove fullmove
-    // In old format: board hiddenPart color castling enpassant halfmove fullmove
-    const hiddenPart = isNewFormat
-      ? parts.length >= 3
-        ? parts[2]
-        : '-'
-      : parts.length >= 2
-        ? parts[1]
-        : '-'
-
-    const newCounts: { [key: string]: number } = {}
-    'RNBAKCP rnbakcp'
-      .split('')
-      .filter(c => c !== ' ')
-      .forEach(c => (newCounts[c] = 0))
-
-    if (hiddenPart && hiddenPart !== '-') {
-      const hiddenMatches = hiddenPart.match(/[a-zA-Z]\d+/g) || []
-      hiddenMatches.forEach(match => {
-        const char = match[0]
-        const count = parseInt(match.slice(1), 10)
-        newCounts[char] = count
-      })
-    }
-
-    return newCounts
-  }
-
   // Determine game result based on current position
   const determineGameResult = (): string => {
     // Get all legal moves for the current side to move
@@ -2724,6 +2830,7 @@ export function useChessGame() {
     currentMoveIndex,
     flipMode,
     unrevealedPieceCounts,
+    capturedUnrevealedPieceCounts,
     pendingFlip,
     validationStatus,
     isFenInputDialogVisible,
@@ -2750,6 +2857,7 @@ export function useChessGame() {
     playMoveFromUci,
     replayToMove,
     adjustUnrevealedCount,
+    adjustCapturedUnrevealedCount,
     saveGameNotation,
     openGameNotation,
     loadGameNotationFromText,
