@@ -95,6 +95,18 @@ jobs:
           fi
           echo "best.onnx downloaded to public/models"
 
+      - name: Remove onnxruntime dependencies for no-yolo build
+        if: ${{ !matrix.include_yolo }}
+        shell: bash
+        run: |
+          # Remove onnxruntime-web from package.json
+          jq 'del(.dependencies."onnxruntime-web")' package.json > package.json.tmp && mv package.json.tmp package.json
+          echo "Removed onnxruntime-web dependency from package.json"
+          
+          # Modify vite.config.ts to remove onnxruntime static copy
+          sed -i.bak '/viteStaticCopy/,/]),/c\
+          echo "Modified vite.config.ts to remove onnxruntime static copy"
+
       - name: install frontend dependencies
         run: npm ci
 
@@ -177,6 +189,20 @@ jobs:
             exit 1
           fi
           echo "best.onnx downloaded to public/models"
+
+      - name: Remove onnxruntime dependencies for no-yolo build
+        if: ${{ !matrix.include_yolo }}
+        shell: bash
+        run: |
+          # Remove onnxruntime-web from package.json
+          jq 'del(.dependencies."onnxruntime-web")' package.json > package.json.tmp && mv package.json.tmp package.json
+          echo "Removed onnxruntime-web dependency from package.json"
+          
+          # Modify vite.config.ts to remove onnxruntime static copy
+          # Remove the viteStaticCopy plugin and its import
+          sed -i.bak '/import.*vite-plugin-static-copy/d' vite.config.ts
+          sed -i.bak '/viteStaticCopy/,/]),/c\    // viteStaticCopy removed for no-yolo build' vite.config.ts
+          echo "Modified vite.config.ts to remove onnxruntime static copy"
 
       - name: Install JS dependencies
         run: npm ci
