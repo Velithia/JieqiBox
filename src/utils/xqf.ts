@@ -1091,7 +1091,10 @@ export function convertXQFToJieqiNotation(
     const movingMask = hiddenBoard[from]
     const capturedMask = hiddenBoard[to]
 
-    // Reveal if moving from hidden
+    // Check if this is a capture
+    const isCapture = capturedMask !== '*'
+    
+    // Reveal if moving from hidden (flip)
     const actualPiece = pieceBoard[from]
     if (
       (movingMask === 'X' || movingMask === 'x') &&
@@ -1105,8 +1108,11 @@ export function convertXQFToJieqiNotation(
           currentHiddenCounts[actualPiece] - 1
         )
       }
-      halfmoveClock = 0
-    } else if (capturedMask !== '*') {
+      // Only reset halfmoveClock on capture, not on flip
+      if (isCapture) {
+        halfmoveClock = 0
+      }
+    } else if (isCapture) {
       // Capture resets halfmoveClock
       halfmoveClock = 0
     } else {

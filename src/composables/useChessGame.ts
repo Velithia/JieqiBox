@@ -1892,15 +1892,14 @@ export function useChessGame() {
     const pieceSide = getPieceSide(piece)
 
     // Update halfmove and fullmove counters
-    // A flip move is when an unknown piece is moved.
-    const isFlip = !piece.isKnown
     // Check for capture by checking if there is a piece at the target location before moving.
     const capturedPieceIndexAtTarget = pieces.value.findIndex(
       p => p.row === targetRow && p.col === targetCol
     )
     const isCapture = capturedPieceIndexAtTarget !== -1
 
-    if (isFlip || isCapture) {
+    // Only reset halfmove clock on capture, not on flip moves
+    if (isCapture) {
       halfmoveClock.value = 0
     } else {
       halfmoveClock.value++
