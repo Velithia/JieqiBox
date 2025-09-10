@@ -1093,7 +1093,7 @@ export function convertXQFToJieqiNotation(
 
     // Check if this is a capture
     const isCapture = capturedMask !== '*'
-    
+
     // Reveal if moving from hidden (flip)
     const actualPiece = pieceBoard[from]
     if (

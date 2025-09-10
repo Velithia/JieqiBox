@@ -421,18 +421,23 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
       // Automatically apply saved configuration after engine loads
       setTimeout(async () => {
         await applySavedSettings()
-        
+
         // Send ucinewgame after engine is loaded and configured
         // This ensures the engine starts with a clean state
         try {
-          console.log('[DEBUG] ENGINE_LOAD: Sending ucinewgame after engine initialization')
+          console.log(
+            '[DEBUG] ENGINE_LOAD: Sending ucinewgame after engine initialization'
+          )
           await sendUciNewGame()
           console.log('[DEBUG] ENGINE_LOAD: ucinewgame completed successfully')
         } catch (error) {
-          console.error('[DEBUG] ENGINE_LOAD: Failed to send ucinewgame:', error)
+          console.error(
+            '[DEBUG] ENGINE_LOAD: Failed to send ucinewgame:',
+            error
+          )
           // Don't fail engine loading if ucinewgame fails
         }
-        
+
         // Mark engine as loaded after all initialization is complete
         isEngineLoaded.value = true
       }, 100)
@@ -524,36 +529,42 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
     }
 
     console.log('[DEBUG] UCI_NEWGAME: Sending ucinewgame command')
-    
+
     // Send ucinewgame command
     send('ucinewgame')
-    
+
     // According to UCI protocol, we should send isready after ucinewgame
     // to wait for the engine to complete internal reset
     console.log('[DEBUG] UCI_NEWGAME: Sending isready after ucinewgame')
     send('isready')
-    
+
     // Wait for readyok response
     return new Promise<void>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error('ucinewgame timeout: No readyok received within 5 seconds'))
+        reject(
+          new Error('ucinewgame timeout: No readyok received within 5 seconds')
+        )
       }, 5000)
 
       // Listen for readyok response
       listen<string>('engine-output', event => {
         if (event.payload.trim() === 'readyok') {
-          console.log('[DEBUG] UCI_NEWGAME: Received readyok, new game initialized')
+          console.log(
+            '[DEBUG] UCI_NEWGAME: Received readyok, new game initialized'
+          )
           clearTimeout(timeoutId)
           resolve()
         }
-      }).then(unlisten => {
-        // Store the unlisten function to clean up if needed
-        timeoutId && clearTimeout(timeoutId)
-        return unlisten
-      }).catch(e => {
-        clearTimeout(timeoutId)
-        reject(e)
       })
+        .then(unlisten => {
+          // Store the unlisten function to clean up if needed
+          timeoutId && clearTimeout(timeoutId)
+          return unlisten
+        })
+        .catch(e => {
+          clearTimeout(timeoutId)
+          reject(e)
+        })
     })
   }
 

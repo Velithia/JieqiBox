@@ -102,7 +102,7 @@ jobs:
           # Remove onnxruntime-web from package.json
           jq 'del(.dependencies."onnxruntime-web")' package.json > package.json.tmp && mv package.json.tmp package.json
           echo "Removed onnxruntime-web dependency from package.json"
-          
+
           # Modify vite.config.ts to remove onnxruntime static copy
           sed -i.bak '/viteStaticCopy/,/]),/c\
           echo "Modified vite.config.ts to remove onnxruntime static copy"
@@ -197,7 +197,7 @@ jobs:
           # Remove onnxruntime-web from package.json
           jq 'del(.dependencies."onnxruntime-web")' package.json > package.json.tmp && mv package.json.tmp package.json
           echo "Removed onnxruntime-web dependency from package.json"
-          
+
           # Modify vite.config.ts to remove onnxruntime static copy
           # Remove the viteStaticCopy plugin and its import
           sed -i.bak '/import.*vite-plugin-static-copy/d' vite.config.ts
@@ -256,14 +256,13 @@ jobs:
         if: ${{ !matrix.include_yolo }}
         run: |
           SIGNED_APK_PATH="${{ env.SIGNED_APK_PATH }}"
-          
+
           DIRNAME=$(dirname "$SIGNED_APK_PATH")
           BASENAME=$(basename "$SIGNED_APK_PATH" .apk)
           NEW_PATH="${DIRNAME}/${BASENAME}-no-yolo.apk"
-          
+
           echo "Renaming APK from ${SIGNED_APK_PATH} to ${NEW_PATH}"
           mv "$SIGNED_APK_PATH" "$NEW_PATH"
-
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4

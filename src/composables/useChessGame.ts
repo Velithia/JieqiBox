@@ -1338,7 +1338,9 @@ export function useChessGame() {
         await engineState.sendUciNewGame()
         console.log('[DEBUG] SETUP_NEW_GAME: ucinewgame completed successfully')
       } else {
-        console.log('[DEBUG] SETUP_NEW_GAME: No UCI engine available or sendUciNewGame not found')
+        console.log(
+          '[DEBUG] SETUP_NEW_GAME: No UCI engine available or sendUciNewGame not found'
+        )
       }
     } catch (error) {
       console.error('[DEBUG] SETUP_NEW_GAME: Failed to send ucinewgame:', error)
