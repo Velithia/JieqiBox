@@ -495,45 +495,6 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
     }
   }
 
-  /* ---------- Android Engine Path Management ---------- */
-  // const getBundleIdentifier = async () => { // Removed unused function
-  //   if (!isAndroidPlatform.value) return ''
-
-  //   try {
-  //     const identifier = await invoke<string>('get_bundle_identifier')
-  //     bundleIdentifier.value = identifier
-  //     return identifier
-  //   } catch (error) {
-  //     console.error('Failed to get bundle identifier:', error)
-  //     return ''
-  //   }
-  // }
-
-  // const getAndroidEnginePath = async () => { // Removed unused function
-  //   if (!isAndroidPlatform.value) return ''
-
-  //   try {
-  //     const path = await invoke<string>('get_default_android_engine_path')
-  //     androidEnginePath.value = path
-  //     return path
-  //   } catch (error) {
-  //     console.error('Failed to get Android engine path:', error)
-  //     return ''
-  //   }
-  // }
-
-  // const scanAndroidEngines = async () => { // Removed unused function
-  //   if (!isAndroidPlatform.value) return []
-
-  //   try {
-  //     const engines = await invoke<string[]>('scan_android_engines')
-  //     return engines
-  //   } catch (error) {
-  //     console.error('Failed to scan Android engines:', error)
-  //     return []
-  //   }
-  // }
-
   /* ---------- Basic Send ---------- */
   const send = (cmd: string) => {
     // No longer check isEngineLoaded, as we need to send 'uci' before it's true
