@@ -1301,7 +1301,7 @@ export function useChessGame() {
     selectedPieceId.value = null
   }
 
-  const setupNewGame = () => {
+  const setupNewGame = async () => {
     initialFen.value = START_FEN // Update initial FEN for new game
     loadFen(START_FEN, false) // No animation at game start
     history.value = []
@@ -1329,6 +1329,21 @@ export function useChessGame() {
         detail: { reason: 'new-game' },
       })
     )
+
+    // Send ucinewgame command to UCI engine if available
+    try {
+      const engineState = (window as any).__ENGINE_STATE__
+      if (engineState && engineState.sendUciNewGame) {
+        console.log('[DEBUG] SETUP_NEW_GAME: Sending ucinewgame to UCI engine')
+        await engineState.sendUciNewGame()
+        console.log('[DEBUG] SETUP_NEW_GAME: ucinewgame completed successfully')
+      } else {
+        console.log('[DEBUG] SETUP_NEW_GAME: No UCI engine available or sendUciNewGame not found')
+      }
+    } catch (error) {
+      console.error('[DEBUG] SETUP_NEW_GAME: Failed to send ucinewgame:', error)
+      // Don't throw error here as it shouldn't prevent new game setup
+    }
   }
 
   const adjustUnrevealedCount = (char: string, delta: 1 | -1) => {
@@ -2497,7 +2512,7 @@ export function useChessGame() {
         replayToMove(currentMoveIndex.value)
       }
     } else {
-      setupNewGame()
+      await setupNewGame()
     }
 
     // Refresh layers
@@ -2797,7 +2812,10 @@ export function useChessGame() {
     return true
   }
 
-  setupNewGame()
+  // Initialize the game asynchronously
+  ;(async () => {
+    await setupNewGame()
+  })()
 
   // Determine game result based on current position
   const determineGameResult = (): string => {
