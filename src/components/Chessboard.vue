@@ -34,7 +34,6 @@
         class="pieces"
         @click="boardClick"
         @mousedown.right="handleRightMouseDown"
-        @mousemove="handleRightMouseMove"
         @mouseup.right="handleRightMouseUp"
         @contextmenu.prevent
       >
@@ -539,29 +538,6 @@
     drawingStart.value = { x: snapped.x, y: snapped.y }
     drawingStartRC.value = { row, col }
     isDrawing.value = true
-  }
-
-  const handleRightMouseMove = (e: MouseEvent) => {
-    if (!isDrawing.value || !drawingStart.value) return
-
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const xp = ((e.clientX - rect.left) / rect.width) * 100
-    const yp = ((e.clientY - rect.top) / rect.height) * 100
-    const { row, col } = snapPercentToRC(xp, yp)
-    const snapped = percentFromRC(row, col)
-
-    // Update the temporary arrow preview distance using snapped centers
-    const distance = Math.sqrt(
-      Math.pow(snapped.x - drawingStart.value.x, 2) +
-        Math.pow(snapped.y - drawingStart.value.y, 2)
-    )
-
-    // If dragged more than 10% of board size, it's an arrow
-    if (distance > 10) {
-      // Arrow mode - will be finalized on mouse up
-    } else {
-      // Circle mode - will be finalized on mouse up
-    }
   }
 
   const handleRightMouseUp = (e: MouseEvent) => {
