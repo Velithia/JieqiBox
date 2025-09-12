@@ -411,6 +411,7 @@ prev.prev - 上上步（支援無限巢狀）`,
     engineUnloadFailed: '卸載引擎失敗',
     failedToOpenFileSelector: '開啟檔案選擇器失敗',
     failedToProcessEngine: '處理引擎檔案失敗',
+    invalidFenFormat: '無效的FEN格式',
   },
 
   // 棋盤底部

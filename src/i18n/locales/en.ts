@@ -512,6 +512,7 @@ prev.prev - Previous-previous move (supports infinite nesting)`,
     engineUnloadFailed: 'Failed to unload engine',
     failedToOpenFileSelector: 'Failed to open file selector',
     failedToProcessEngine: 'Failed to process engine file',
+    invalidFenFormat: 'Invalid FEN format',
   },
 
   // Chessboard bottom

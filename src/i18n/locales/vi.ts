@@ -422,6 +422,7 @@ prev.prev - Nước đi trước-trước (hỗ trợ lồng nhau vô hạn)`,
     engineUnloadFailed: 'Gỡ bỏ engine thất bại',
     failedToOpenFileSelector: 'Không thể mở trình chọn tệp',
     failedToProcessEngine: 'Không thể xử lý tệp engine',
+    invalidFenFormat: 'Định dạng FEN không hợp lệ',
   },
 
   // Phần dưới bàn cờ

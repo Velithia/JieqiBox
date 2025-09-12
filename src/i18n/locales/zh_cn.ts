@@ -496,6 +496,7 @@ prev.prev - 上上步（支持无限嵌套）`,
     engineUnloadFailed: '卸载引擎失败',
     failedToOpenFileSelector: '打开文件选择器失败',
     failedToProcessEngine: '处理引擎文件失败',
+    invalidFenFormat: '无效的FEN格式',
   },
 
   // 棋盘底部

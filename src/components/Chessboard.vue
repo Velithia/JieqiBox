@@ -291,12 +291,14 @@
     onMounted,
     onUnmounted,
   } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import type { Piece } from '@/composables/useChessGame'
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
   import ClearHistoryConfirmDialog from './ClearHistoryConfirmDialog.vue'
   import EvaluationChart from './EvaluationChart.vue'
   import { MATE_SCORE_BASE } from '@/utils/constants'
   import { isAndroidPlatform } from '@/utils/platform'
+  import { validateJieqiFen } from '@/utils/fenValidator'
 
   // Seek handler for EvaluationChart
   const handleChartSeek = (idx: number) => {
@@ -305,6 +307,8 @@
       if (gsAny?.replayToMove) gsAny.replayToMove(idx)
     } catch {}
   }
+
+  const { t } = useI18n()
 
   /* ===== Layout ===== */
   const PAD_X = 11,
@@ -878,6 +882,14 @@
 
     // Clean the FEN string
     const trimmedFen = clipboardText.trim()
+
+    // Validate FEN before applying
+    if (trimmedFen && !validateJieqiFen(trimmedFen)) {
+      console.warn('Invalid FEN format pasted from clipboard:', trimmedFen)
+      // Optionally show an error message to the user
+      alert(t('errors.invalidFenFormat'))
+      return
+    }
 
     // Apply the FEN string to the game using the same method as FEN input dialog
     gs.confirmFenInput(trimmedFen)

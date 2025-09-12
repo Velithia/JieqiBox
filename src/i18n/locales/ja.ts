@@ -422,6 +422,7 @@ prev.prev - 前々の手（無限ネスト対応）`,
     failedToOpenFileSelector:
       'ファイル選択ダイアログを開くことができませんでした',
     failedToProcessEngine: 'エンジンファイルの処理に失敗しました',
+    invalidFenFormat: '無効なFEN形式',
   },
 
   // 盤下部
