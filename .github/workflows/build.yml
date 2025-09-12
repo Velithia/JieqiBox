@@ -103,8 +103,15 @@ jobs:
           jq 'del(.dependencies."onnxruntime-web")' package.json > package.json.tmp && mv package.json.tmp package.json
           echo "Removed onnxruntime-web dependency from package.json"
 
+          # Remove the real implementation file to avoid TypeScript errors
+          rm -f src/composables/image-recognition/useImageRecognition.real.ts
+          echo "Removed useImageRecognition.real.ts file"
+
           # Modify vite.config.ts to remove onnxruntime static copy
-          sed -i.bak '/viteStaticCopy/,/]),/c\
+          # First, remove the import line
+          sed -i.bak '/import.*vite-plugin-static-copy/d' vite.config.ts
+          # Second, remove the plugin usage block
+          sed -i.bak '/viteStaticCopy({/,/}),/d' vite.config.ts
           echo "Modified vite.config.ts to remove onnxruntime static copy"
 
       - name: install frontend dependencies
@@ -112,6 +119,8 @@ jobs:
 
       - name: build frontend
         run: npm run build
+        env:
+          VITE_YOLO_ENABLED: ${{ matrix.include_yolo }}
 
       - name: Update productName for no-yolo build
         if: ${{ !matrix.include_yolo }}
@@ -198,10 +207,15 @@ jobs:
           jq 'del(.dependencies."onnxruntime-web")' package.json > package.json.tmp && mv package.json.tmp package.json
           echo "Removed onnxruntime-web dependency from package.json"
 
+          # Remove the real implementation file to avoid TypeScript errors
+          rm -f src/composables/image-recognition/useImageRecognition.real.ts
+          echo "Removed useImageRecognition.real.ts file"
+
           # Modify vite.config.ts to remove onnxruntime static copy
-          # Remove the viteStaticCopy plugin and its import
+          # First, remove the import line
           sed -i.bak '/import.*vite-plugin-static-copy/d' vite.config.ts
-          sed -i.bak '/viteStaticCopy/,/]),/c\    // viteStaticCopy removed for no-yolo build' vite.config.ts
+          # Second, remove the plugin usage block
+          sed -i.bak '/viteStaticCopy({/,/}),/d' vite.config.ts
           echo "Modified vite.config.ts to remove onnxruntime static copy"
 
       - name: Install JS dependencies
@@ -209,6 +223,8 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+        env:
+          VITE_YOLO_ENABLED: ${{ matrix.include_yolo }}
 
       - name: Init Tauri Android project
         run: npm install -g @tauri-apps/cli

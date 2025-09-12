@@ -378,7 +378,7 @@
     useImageRecognition,
     type DetectionBox,
     LABELS,
-  } from '@/composables/useImageRecognition'
+  } from '@/composables/image-recognition'
 
   // Create a global instance of Mersenne Twister for this component
   const mt = new MersenneTwister()
