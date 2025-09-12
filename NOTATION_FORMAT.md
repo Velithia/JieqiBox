@@ -84,9 +84,9 @@ The application supports both old and new FEN formats, with the new format being
 
 ### New FEN Format (Default)
 
-`[Board] [Side to Move] [Dark Piece Pool] [Halfmove Clock] [Fullmove Number]`
+`[Board] [Side to Move] [Dark Piece Pool] [Captured Dark Piece Pool] [Halfmove Clock] [Fullmove Number]`
 
-Example: `xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX w A2B2N2R2C2P5a2b2n2r2c2p5 0 1`
+Example: `xxxxkxxPx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X7/9/XXXXKXXXX b R2r2N2n2B2b2A2a2C2c2P4p4 p1 0 1`
 
 ### Old FEN Format (Legacy)
 
