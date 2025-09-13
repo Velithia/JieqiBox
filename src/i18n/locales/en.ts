@@ -627,9 +627,9 @@ prev.prev - Previous-previous move (supports infinite nesting)`,
     showEngineAnalysis: 'Show Engine Analysis',
     engineAnalysisHint:
       'When enabled, you can view engine analysis results, but it does not affect game rules',
-    ponderNote: 'About Background Thinking:',
+    ponderNote: 'About Ponder:',
     ponderUnifiedHint:
-      'Background thinking uses global settings, which can be toggled in the sidebar in normal mode',
+      'Ponder uses global settings, which can be toggled in the sidebar in normal mode',
     rulesTitle: 'Game Rules',
     rule1: 'Random flip mode is automatically enforced',
     rule2: 'You can only see the dark pieces you capture from AI',

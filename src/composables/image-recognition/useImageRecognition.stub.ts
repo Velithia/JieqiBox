@@ -24,9 +24,13 @@ export const useImageRecognition = () => {
       _boxes: DetectionBox[],
       _imgElement: HTMLImageElement,
       _canvasElement: HTMLCanvasElement
-    ) => { /* Do nothing */ },
+    ) => {
+      /* Do nothing */
+    },
     updateBoardGrid: (_boxes: DetectionBox[]) =>
-      Array(10).fill(null).map(() => Array(9).fill(null)),
+      Array(10)
+        .fill(null)
+        .map(() => Array(9).fill(null)),
     initializeModel: async (): Promise<void> => {
       console.warn('Image recognition is disabled in this build.')
       return Promise.resolve()

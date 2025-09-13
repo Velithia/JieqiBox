@@ -12,7 +12,8 @@ if (yoloEnabled) {
   // This import will be tree-shaken out when VITE_YOLO_ENABLED is false
   // and the file won't exist when removed by CI
   try {
-    useImageRecognitionReal = require('./useImageRecognition.real').useImageRecognition
+    useImageRecognitionReal =
+      require('./useImageRecognition.real').useImageRecognition
   } catch {
     // Fallback to stub if the real implementation is not available
     useImageRecognitionReal = useImageRecognitionStub
