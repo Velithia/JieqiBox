@@ -107,6 +107,10 @@ jobs:
           rm -f src/composables/image-recognition/useImageRecognition.real.ts
           echo "Removed useImageRecognition.real.ts file"
 
+          # Replace index.ts with stub version
+          mv src/composables/image-recognition/index.ts.stub src/composables/image-recognition/index.ts
+          echo "Replaced index.ts with stub version"
+
           # Modify vite.config.ts to remove onnxruntime static copy
           # First, remove the import line
           sed -i.bak '/import.*vite-plugin-static-copy/d' vite.config.ts
@@ -119,8 +123,6 @@ jobs:
 
       - name: build frontend
         run: npm run build
-        env:
-          VITE_YOLO_ENABLED: ${{ matrix.include_yolo }}
 
       - name: Update productName for no-yolo build
         if: ${{ !matrix.include_yolo }}
@@ -211,6 +213,10 @@ jobs:
           rm -f src/composables/image-recognition/useImageRecognition.real.ts
           echo "Removed useImageRecognition.real.ts file"
 
+          # Replace index.ts with stub version
+          mv src/composables/image-recognition/index.ts.stub src/composables/image-recognition/index.ts
+          echo "Replaced index.ts with stub version"
+
           # Modify vite.config.ts to remove onnxruntime static copy
           # First, remove the import line
           sed -i.bak '/import.*vite-plugin-static-copy/d' vite.config.ts
@@ -223,8 +229,6 @@ jobs:
 
       - name: Build frontend
         run: npm run build
-        env:
-          VITE_YOLO_ENABLED: ${{ matrix.include_yolo }}
 
       - name: Init Tauri Android project
         run: npm install -g @tauri-apps/cli

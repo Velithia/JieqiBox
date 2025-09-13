@@ -1297,7 +1297,7 @@
     if (!pieceName) return '?'
 
     if (pieceName === 'red_unknown' || pieceName === 'black_unknown') {
-      return '暗'
+      return t('positionEditor.darkPiece')
     }
 
     const piece = knownPieces.value.find(p => p.name === pieceName)

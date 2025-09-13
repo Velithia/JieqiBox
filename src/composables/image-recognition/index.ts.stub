@@ -1,0 +1,11 @@
+// Stub version for no-yolo builds
+// This file is used when YOLO functionality is disabled
+
+// Always import the stub implementation
+import { useImageRecognition as useImageRecognitionStub } from './useImageRecognition.stub'
+
+// Export the stub implementation
+export const useImageRecognition = useImageRecognitionStub
+
+// Also, re-export the shared types so consumers can import them from one place.
+export * from './types'
