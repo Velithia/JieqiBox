@@ -2467,6 +2467,22 @@
       }
     }
 
+    // 1. Handle pondering mode adjustment
+    if (isPondering.value && !isInfinitePondering.value) {
+      scoreValue = -scoreValue
+    }
+
+    // 2. Normalize to Red's perspective based on current side to move
+    if (sideToMove.value === 'black') {
+      scoreValue = -scoreValue
+    }
+
+    // 3. Adjust display perspective based on board flip state
+    // If board is flipped, show from black perspective (invert the red-normalized score)
+    if (isBoardFlipped.value) {
+      scoreValue = -scoreValue
+    }
+
     const getScoreColorClass = () => {
       if (isMate) {
         return scoreValue > 0 ? 'score-mate-positive' : 'score-mate-negative'
@@ -2548,11 +2564,10 @@
         info.scoreValue &&
         (() => {
           if (info.scoreType === 'cp') {
-            return `<span class="${getScoreColorClass()}">${t('uci.score')}: ${info.scoreValue}</span>`
+            return `<span class="${getScoreColorClass()}">${t('uci.score')}: ${scoreValue}</span>`
           }
-          const m = parseInt(info.scoreValue, 10)
-          const sign = m > 0 ? '+' : '-'
-          const ply = Math.abs(m)
+          const sign = scoreValue > 0 ? '+' : '-'
+          const ply = Math.abs(scoreValue)
           return `<span class=\"${getScoreColorClass()}\">${t('uci.mate')}: ${sign}M${ply}</span>`
         })(),
       formatWdl(),
