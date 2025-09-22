@@ -1650,6 +1650,39 @@
     }
   }
 
+  // Auto-unload current engine when selection changes to avoid mismatch
+  watch(selectedEngineId, async (newId, oldId) => {
+    if (!oldId || newId === oldId) return
+
+    try {
+      if (isMatchMode.value) {
+        // Stop match if running, then unload JAI engine
+        if (jaiEngine?.isMatchRunning?.value) {
+          await jaiEngine.stopMatch()
+        }
+        if (jaiEngine?.isEngineLoaded?.value) {
+          await jaiEngine.unloadEngine()
+          console.log(
+            '[DEBUG] AnalysisSidebar: Auto-unloaded JAI engine due to selection change'
+          )
+        }
+      } else {
+        // Unload UCI engine if loaded
+        if (isEngineLoaded.value) {
+          await unloadEngine()
+          console.log(
+            '[DEBUG] AnalysisSidebar: Auto-unloaded UCI engine due to selection change'
+          )
+        }
+      }
+    } catch (error) {
+      console.error(
+        '[DEBUG] AnalysisSidebar: Failed to auto-unload engine on selection change:',
+        error
+      )
+    }
+  })
+
   // Function to unload the current engine
   const handleUnloadEngine = async () => {
     if (isMatchMode.value) {
