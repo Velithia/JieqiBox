@@ -1,6 +1,8 @@
 import { ref, watch } from 'vue'
 import { useConfigManager } from './useConfigManager'
 
+export type ChartViewMode = 'evaluation' | 'time' | 'depth'
+
 // Configuration manager
 const configManager = useConfigManager()
 
@@ -19,6 +21,7 @@ const getInitialSettings = () => {
       enableYAxisClamp: false,
       yAxisClampValue: 500,
       showSeparateLines: false,
+      viewMode: 'evaluation',
     }
   }
 
@@ -33,6 +36,7 @@ const getInitialSettings = () => {
       yAxisClampValue: settings.yAxisClampValue || 500, // Default to 500
       colorScheme: settings.colorScheme || 'default', // Default to 'default'
       showSeparateLines: !!settings.showSeparateLines, // Default to false
+      viewMode: settings.viewMode || 'evaluation',
     }
   } catch (e) {
     console.error('Failed to get evaluation chart settings:', e)
@@ -46,6 +50,7 @@ const getInitialSettings = () => {
       yAxisClampValue: 500,
       colorScheme: 'default',
       showSeparateLines: false,
+      viewMode: 'evaluation',
     }
   }
 }
@@ -60,6 +65,7 @@ const {
   yAxisClampValue: initialYAxisClampValue,
   colorScheme: initialColorScheme,
   showSeparateLines: initialShowSeparateLines,
+  viewMode: initialViewMode,
 } = getInitialSettings()
 
 const showMoveLabels = ref<boolean>(initialShowMoveLabels)
@@ -70,6 +76,7 @@ const enableYAxisClamp = ref<boolean>(initialEnableYAxisClamp)
 const yAxisClampValue = ref<number>(initialYAxisClampValue)
 const colorScheme = ref<string>(initialColorScheme || 'default')
 const showSeparateLines = ref<boolean>(initialShowSeparateLines)
+const viewMode = ref<ChartViewMode>((initialViewMode as ChartViewMode) || 'evaluation')
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -85,6 +92,7 @@ watch(
     yAxisClampValue,
     colorScheme,
     showSeparateLines,
+    viewMode,
   ],
   async ([
     newShowMoveLabels,
@@ -95,6 +103,7 @@ watch(
     newYAxisClampValue,
     newColorScheme,
     newShowSeparateLines,
+    newViewMode,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -108,6 +117,7 @@ watch(
       yAxisClampValue: newYAxisClampValue,
       colorScheme: newColorScheme,
       showSeparateLines: newShowSeparateLines,
+      viewMode: newViewMode,
     }
 
     try {
@@ -135,6 +145,7 @@ export function useEvaluationChartSettings() {
       yAxisClampValue.value = settings.yAxisClampValue || 500
       colorScheme.value = settings.colorScheme || 'default'
       showSeparateLines.value = !!settings.showSeparateLines
+      viewMode.value = (settings.viewMode as ChartViewMode) || 'evaluation'
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -157,6 +168,7 @@ export function useEvaluationChartSettings() {
     yAxisClampValue,
     colorScheme,
     showSeparateLines,
+    viewMode,
     loadSettings,
   }
 }

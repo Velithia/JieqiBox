@@ -73,7 +73,7 @@ export default {
       nodestime:
         '告诉引擎使用搜索的节点数而不是墙钟时间来计算经过的时间。对引擎测试很有用。',
       UCI_ShowWDL:
-        '如果启用，在引擎输出中显示近似的WDL统计信息。这些WDL数字模拟了在给定评估和游戏层数下引擎自对弈的预期游戏结果。',
+        '如果启用，在引擎输出中显示近似的WDL统计信息。这些WDL数字模拟了在给定评估和游戏深度下引擎自对弈的预期游戏结果。',
       EvalFile:
         'NNUE评估参数文件的名称。根据GUI的不同，文件名可能需要包含包含该文件的文件夹/目录的完整路径。',
     },
@@ -104,7 +104,7 @@ export default {
     title: '引擎分析参数设置',
     movetime: '步时 (毫秒)',
     maxThinkTime: '最大思考时间 (毫秒)',
-    maxDepth: '最大层数',
+    maxDepth: '最大深度',
     maxNodes: '最大节点数',
     analysisMode: '分析模式',
     advanced: '高级脚本',
@@ -115,7 +115,7 @@ export default {
     analysisModes: {
       movetime: '按步时分析',
       maxThinkTime: '按最大思考时间分析',
-      depth: '按层数分析',
+      depth: '按深度分析',
       nodes: '按节点数分析',
       advanced: '高级编程模式',
     },
@@ -278,7 +278,7 @@ prev.prev - 上上步（支持无限嵌套）`,
     analysisResults: '分析结果',
     bestMove: '最佳着法',
     score: '评分',
-    depth: '层数',
+    depth: '深度',
     nodes: '节点数',
     time: '时间',
     pv: '主要变例',
@@ -533,6 +533,10 @@ prev.prev - 上上步（支持无限嵌套）`,
     saveChartImage: '保存图片',
     chartImageSaved: '图片已保存到 {path}',
     saveChartImageFailed: '保存图片失败',
+    viewMode: '切换视图',
+    evaluation: '分数',
+    time: '时间',
+    depth: '深度',
   },
 
   // 语言选择

@@ -549,6 +549,10 @@ prev.prev - Previous-previous move (supports infinite nesting)`,
     saveChartImage: 'Save Chart Image',
     chartImageSaved: 'Chart image saved to {path}',
     saveChartImageFailed: 'Failed to save chart image',
+    viewMode: 'View Mode',
+    evaluation: 'Evaluation',
+    time: 'Time',
+    depth: 'Depth',
   },
 
   // Language selection

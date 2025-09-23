@@ -104,13 +104,14 @@
             hide-details
             density="compact"
             @click.stop
+            :disabled="viewMode !== 'evaluation'"
           />
         </div>
         <div class="context-menu-item" @click.stop>
           <v-text-field
             v-model.number="yAxisClampValue"
             :label="$t('evaluationChart.clampValue')"
-            :disabled="!enableYAxisClamp"
+            :disabled="!enableYAxisClamp || viewMode !== 'evaluation'"
             type="number"
             min="1"
             step="50"
@@ -129,6 +130,23 @@
             :items="[
               { title: $t('evaluationChart.redGreen'), value: 'default' },
               { title: $t('evaluationChart.blueOrange'), value: 'blueOrange' },
+            ]"
+            variant="underlined"
+            density="compact"
+            hide-details
+            class="color-scheme-select"
+          />
+        </div>
+        <!-- View Mode Selection -->
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" @click.stop>
+          <v-select
+            v-model="viewMode"
+            :label="$t('evaluationChart.viewMode')"
+            :items="[
+              { title: $t('evaluationChart.evaluation'), value: 'evaluation' },
+              { title: $t('evaluationChart.time'), value: 'time' },
+              { title: $t('evaluationChart.depth'), value: 'depth' },
             ]"
             variant="underlined"
             density="compact"
@@ -184,6 +202,7 @@
     yAxisClampValue,
     colorScheme,
     showSeparateLines,
+    viewMode,
   } = useEvaluationChartSettings()
 
   const tooltipVisible = ref(false)
@@ -394,6 +413,10 @@
   const transform = (s: number) => Math.asinh(s / scaleFactor)
   const inverseTransform = (v: number) => Math.sinh(v) * scaleFactor
 
+  const isLinearScale = computed(
+    () => useLinearYAxis.value || viewMode.value !== 'evaluation'
+  )
+
   /* ---------- Data Preprocessing ---------- */
   // Helper function to determine if current player is red based on FEN
   const isRedTurnFromFen = (fen: string): boolean => {
@@ -413,6 +436,7 @@
       moveText: string
       score: number | null
       time: number | null
+      depth: number | null
       isRedMove: boolean
     }> = []
     data.push({
@@ -421,6 +445,7 @@
       moveText: t('evaluationChart.opening'),
       score: null,
       time: null,
+      depth: null,
       isRedMove: false,
     })
     let moveCount = 0
@@ -432,23 +457,39 @@
         // Since the FEN shows whose turn it is AFTER this move, we need to invert
         const isRedMove = !isRedTurnFromFen(entry.fen)
         const moveText = `${moveNumber}${isRedMove ? '.' : '...'} ${entry.data}`
-        let converted = entry.engineScore
-        if (converted !== null && converted !== undefined && !isRedMove) {
-          converted = -converted
+
+        let value: number | null | undefined
+        switch (viewMode.value) {
+          case 'time':
+            value = entry.engineTime
+            break
+          case 'depth':
+            value = entry.engineDepth
+            break
+          case 'evaluation':
+          default:
+            value = entry.engineScore
+            if (value !== null && value !== undefined) {
+              // For evaluation, score is from red's perspective.
+              // If it was black's move, we need to flip the score.
+              if (!isRedMove) {
+                value = -value
+              }
+              // If viewing from black's perspective, flip it again.
+              if (blackPerspective.value) {
+                value = -value
+              }
+            }
+            break
         }
-        if (
-          converted !== null &&
-          converted !== undefined &&
-          blackPerspective.value
-        ) {
-          converted = -converted
-        }
+
         data.push({
           moveIndex: index + 1,
           moveNumber,
           moveText,
-          score: converted ?? null,
+          score: value ?? null,
           time: entry.engineTime ?? null,
+          depth: entry.engineDepth ?? null,
           isRedMove,
         })
       }
@@ -567,7 +608,17 @@
     const naturalMinScore = Math.min(...scores)
     const naturalMaxScore = Math.max(...scores)
 
-    if (enableYAxisClamp.value && yAxisClampValue.value > 0) {
+    if (viewMode.value === 'depth' || viewMode.value === 'time') {
+      const isTime = viewMode.value === 'time'
+      // Sensible padding for depth (e.g., 2 levels) or time (e.g., 100ms)
+      const range = naturalMaxScore - naturalMinScore
+      const paddingValue = isTime
+        ? Math.max(100, range * 0.1)
+        : Math.max(2, Math.ceil(range * 0.1))
+
+      axisMinScore = Math.max(0, naturalMinScore - paddingValue)
+      axisMaxScore = naturalMaxScore + paddingValue
+    } else if (enableYAxisClamp.value && yAxisClampValue.value > 0) {
       // When clamping is ON, the axis range is strictly the intersection of the natural range and the clamp value.
       // NO PADDING is applied to prevent the axis from exceeding the clamp value.
       const clampVal = yAxisClampValue.value
@@ -576,7 +627,7 @@
     } else {
       // When clamping is OFF, add padding for visual breathing room.
       const scoreRange = naturalMaxScore - naturalMinScore
-      const scorePad = useLinearYAxis.value
+      const scorePad = isLinearScale.value
         ? Math.max(50, scoreRange * 0.1)
         : Math.max(50, scoreRange * 0.1) // Padding for asinh can also be based on score range before transform
       axisMinScore = naturalMinScore - scorePad
@@ -586,7 +637,7 @@
     // Now, transform this definitive range to the canvas coordinate system.
     let minT: number
     let maxT: number
-    if (useLinearYAxis.value) {
+    if (isLinearScale.value) {
       minT = axisMinScore
       maxT = axisMaxScore
     } else {
@@ -608,7 +659,11 @@
 
   /* ---------- Drawing Helpers ---------- */
   const getClampedScore = (score: number): number => {
-    if (enableYAxisClamp.value && yAxisClampValue.value > 0) {
+    if (
+      viewMode.value === 'evaluation' &&
+      enableYAxisClamp.value &&
+      yAxisClampValue.value > 0
+    ) {
       const clampVal = yAxisClampValue.value
       return Math.max(-clampVal, Math.min(score, clampVal))
     }
@@ -667,13 +722,13 @@
     for (let i = 0; i <= rows; i++) {
       const tVal = minT + (i / rows) * rangeT
       const y = area.y + area.height - ((tVal - minT) / rangeT) * area.height
-      let dispScore: number = useLinearYAxis.value
+      let dispValue: number = isLinearScale.value
         ? tVal
         : inverseTransform(tVal)
-      if (blackPerspective.value) {
-        dispScore = -dispScore
+      if (viewMode.value === 'evaluation' && blackPerspective.value) {
+        dispValue = -dispValue
       }
-      ctx.fillText(formatScore(dispScore), area.x - 10, y)
+      ctx.fillText(formatYValue(dispValue), area.x - 10, y)
     }
   }
   const drawMoveAxis = (
@@ -714,6 +769,10 @@
   }
   const getScoreColor = (score: number): string => {
     let displayScore = score
+    // color is only for evaluation
+    if (viewMode.value !== 'evaluation') {
+      return '#666666'
+    }
     if (blackPerspective.value) {
       displayScore = -displayScore
     }
@@ -779,7 +838,7 @@
         if (p.score !== null && p.score !== undefined) {
           const x = getX(i, area.width, visibleMoves)
           const clampedScore = getClampedScore(p.score)
-          const t = useLinearYAxis.value
+          const t = isLinearScale.value
             ? clampedScore
             : transform(clampedScore)
           const y = area.y + area.height - ((t - minT) / rangeT) * area.height
@@ -814,7 +873,7 @@
       if (p.score !== null && p.score !== undefined) {
         const x = getX(i, area.width, visibleMoves)
         const clampedScore = getClampedScore(p.score)
-        const t = useLinearYAxis.value ? clampedScore : transform(clampedScore)
+        const t = isLinearScale.value ? clampedScore : transform(clampedScore)
         const y = area.y + area.height - ((t - minT) / rangeT) * area.height
 
         allPoints.push({ x, y, index: i, isRedMove: p.isRedMove })
@@ -896,7 +955,7 @@
       if (p.score !== null && p.score !== undefined) {
         const x = getX(i, area.width, visibleMoves)
         const clampedScore = getClampedScore(p.score)
-        const t = useLinearYAxis.value ? clampedScore : transform(clampedScore)
+        const t = isLinearScale.value ? clampedScore : transform(clampedScore)
         const y = area.y + area.height - ((t - minT) / rangeT) * area.height
         if (!firstPoint) {
           const gradient = ctx.createLinearGradient(lastX, lastY, x, y)
@@ -935,7 +994,7 @@
         const x = getX(i, area.width, visibleMoves)
         if (x < area.x || x > area.x + area.width) continue
         const clampedScore = getClampedScore(p.score)
-        const t = useLinearYAxis.value ? clampedScore : transform(clampedScore)
+        const t = isLinearScale.value ? clampedScore : transform(clampedScore)
         const y = area.y + area.height - ((t - minT) / rangeT) * area.height
 
         let color: string
@@ -1010,24 +1069,36 @@
 
   /* ---------- Utility Functions ---------- */
   import { MATE_SCORE_BASE } from '@/utils/constants'
-  const formatScore = (s: number) => {
-    if (Math.abs(s) >= MATE_SCORE_BASE - 999) {
-      const sign = s > 0 ? '+' : '-'
-      const ply = Math.max(
-        0,
-        MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(s))
-      )
-      return `${sign}M${ply}`
+  const formatYValue = (value: number) => {
+    switch (viewMode.value) {
+      case 'time':
+        return value < 1000
+          ? `${value}ms`
+          : `${(value / 1000).toFixed(1)}s`
+      case 'depth':
+        return value.toString()
+      case 'evaluation':
+      default:
+        if (Math.abs(value) >= MATE_SCORE_BASE - 999) {
+          const sign = value > 0 ? '+' : '-'
+          const ply = Math.max(
+            0,
+            MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(value))
+          )
+          return `${sign}M${ply}`
+        }
+        return Math.round(value).toString()
     }
-    return Math.round(s).toString()
   }
-  const getScoreClass = (s: number): string => {
-    let displayScore = s
-    if (blackPerspective.value) displayScore = -displayScore
-    if (displayScore > 100) return 'score-positive'
-    if (displayScore < -100) return 'score-negative'
-    if (displayScore > 50) return 'score-slight-positive'
-    if (displayScore < -50) return 'score-slight-negative'
+  const getScoreClass = (value: number): string => {
+    if (viewMode.value !== 'evaluation') return 'score-neutral'
+
+    let displayValue = value
+    if (blackPerspective.value) displayValue = -displayValue
+    if (displayValue > 100) return 'score-positive'
+    if (displayValue < -100) return 'score-negative'
+    if (displayValue > 50) return 'score-slight-positive'
+    if (displayValue < -50) return 'score-slight-negative'
     return 'score-neutral'
   }
   const formatTime = (ms: number) =>
@@ -1197,12 +1268,16 @@
     const threshold = areaWidth / visibleMoves / 2
     if (closestPoint && closestPoint.score !== null && distance < threshold) {
       tooltipVisible.value = true
-      let displayScore = closestPoint.score
-      if (blackPerspective.value) displayScore = -displayScore
+
+      let displayValue = closestPoint.score
+      if (viewMode.value === 'evaluation' && blackPerspective.value) {
+        displayValue = -displayValue
+      }
+
       tooltipData.value = {
         move: closestPoint.moveText,
-        score: formatScore(displayScore),
-        scoreClass: getScoreClass(displayScore),
+        score: formatYValue(displayValue),
+        scoreClass: getScoreClass(displayValue),
         time: closestPoint.time ? formatTime(closestPoint.time) : '',
       }
       tooltipStyle.value = {
@@ -1265,6 +1340,7 @@
       yAxisClampValue,
       colorScheme,
       showSeparateLines,
+      viewMode,
     ],
     () => nextTick(drawChart)
   )

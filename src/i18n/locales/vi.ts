@@ -459,6 +459,10 @@ prev.prev - Nước đi trước-trước (hỗ trợ lồng nhau vô hạn)`,
     saveChartImage: 'Lưu hình ảnh',
     chartImageSaved: 'Hình ảnh đã được lưu vào {path}',
     saveChartImageFailed: 'Lưu hình ảnh thất bại',
+    viewMode: 'Chế độ xem',
+    evaluation: 'Đánh giá',
+    time: 'Thời gian',
+    depth: 'Độ sâu',
   },
 
   // Lựa chọn ngôn ngữ

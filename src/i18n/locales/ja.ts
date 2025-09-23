@@ -459,6 +459,10 @@ prev.prev - 前々の手（無限ネスト対応）`,
     saveChartImage: '画像を保存',
     chartImageSaved: '画像が {path} に保存されました',
     saveChartImageFailed: '画像の保存に失敗しました',
+    viewMode: 'ビューモード',
+    evaluation: '評価',
+    time: '時間',
+    depth: '深度',
   },
 
   // 言語選択
