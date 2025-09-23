@@ -47,6 +47,7 @@ export type HistoryEntry = {
   engineNodes?: number // Engine analysis nodes for this move
   engineRequestedMovetime?: number // The movetime requested in the last go command
   annotation?: '!!' | '!' | '!?' | '?!' | '?' | '??' // Move quality annotation
+  timestamp?: number // Local timestamp when this entry was recorded (not exported to notation)
 }
 
 // Custom game notation format interface
@@ -1176,32 +1177,7 @@ export function useChessGame() {
           })
         }
 
-        // Get analysis time - prioritize JAI engine time if available
-        const jaiEngineTime = (window as any).__JAI_ENGINE_TIME__
-        if (engineState.lastAnalysisTime?.value) {
-          engineTime = engineState.lastAnalysisTime.value
-          console.log(
-            '[DEBUG] RECORD_AND_FINALIZE: Using stored analysis time:',
-            engineTime
-          )
-        } else if (engineState.analysisStartTime?.value) {
-          engineTime = Date.now() - engineState.analysisStartTime.value
-          console.log(
-            '[DEBUG] RECORD_AND_FINALIZE: Calculated time from current analysis:',
-            engineTime
-          )
-        } else if (jaiEngineTime !== undefined) {
-          engineTime = jaiEngineTime
-          console.log(
-            '[DEBUG] RECORD_AND_FINALIZE: Using JAI engine time:',
-            engineTime
-          )
-          // Clear the stored time after using it
-          ;(window as any).__JAI_ENGINE_TIME__ = undefined
-        } else {
-          engineTime = 0
-          console.log('[DEBUG] RECORD_AND_FINALIZE: No analysis time available')
-        }
+        // engineTime will be calculated later based on timestamp difference or fallback to original method
       } else {
         console.log(
           '[DEBUG] RECORD_AND_FINALIZE: No JAI engine score available and engine is not thinking, skipping engine data'
@@ -1224,6 +1200,66 @@ export function useChessGame() {
       }
     } catch (_) {}
 
+    // --- Timestamp handling and engineTime calculation ---
+    let timestamp: number | undefined
+    if (type === 'move') {
+      timestamp = Date.now()
+
+      // Try to calculate engineTime based on timestamp difference
+      let prevTimestamp: number | undefined
+      for (let i = newHistory.length - 1; i >= 0; i--) {
+        const e = newHistory[i]
+        if (e.type === 'move' && typeof (e as any).timestamp === 'number') {
+          prevTimestamp = (e as any).timestamp
+          break
+        }
+      }
+
+      if (prevTimestamp !== undefined) {
+        // Use timestamp difference for engineTime
+        const delta = Math.max(0, timestamp - prevTimestamp)
+        engineTime = delta
+        console.log(
+          '[DEBUG] RECORD_AND_FINALIZE: Using timestamp delta for engineTime:',
+          { prevTimestamp, timestamp, delta }
+        )
+      } else {
+        // Fallback to original engineTime calculation method when no previous timestamp
+        console.log(
+          '[DEBUG] RECORD_AND_FINALIZE: No previous timestamp found, using original engineTime calculation'
+        )
+
+        // Get engine analysis time using original method
+        const engineState = (window as any).__ENGINE_STATE__
+        const jaiEngineTime = (window as any).__JAI_ENGINE_TIME__
+
+        if (engineState?.lastAnalysisTime?.value) {
+          engineTime = engineState.lastAnalysisTime.value
+          console.log(
+            '[DEBUG] RECORD_AND_FINALIZE: Using stored analysis time:',
+            engineTime
+          )
+        } else if (engineState?.analysisStartTime?.value) {
+          engineTime = Date.now() - engineState.analysisStartTime.value
+          console.log(
+            '[DEBUG] RECORD_AND_FINALIZE: Calculated time from current analysis:',
+            engineTime
+          )
+        } else if (jaiEngineTime !== undefined) {
+          engineTime = jaiEngineTime
+          console.log(
+            '[DEBUG] RECORD_AND_FINALIZE: Using JAI engine time:',
+            engineTime
+          )
+          // Clear the stored time after using it
+          ;(window as any).__JAI_ENGINE_TIME__ = undefined
+        } else {
+          engineTime = 0
+          console.log('[DEBUG] RECORD_AND_FINALIZE: No analysis time available')
+        }
+      }
+    }
+
     const newEntry = {
       type,
       data,
@@ -1233,6 +1269,7 @@ export function useChessGame() {
       engineDepth,
       engineNodes,
       engineRequestedMovetime,
+      ...(timestamp !== undefined ? { timestamp } : {}),
     }
     console.log('[DEBUG] RECORD_AND_FINALIZE: New history entry:', newEntry)
 
@@ -1308,6 +1345,29 @@ export function useChessGame() {
     currentMoveIndex.value = 0
     openingComment.value = ''
     lastMovePositions.value = null // Clear highlights for new game
+
+    // Clear engine analysis time data from previous games
+    try {
+      const engineState = (window as any).__ENGINE_STATE__
+      if (engineState) {
+        if (engineState.lastAnalysisTime?.value !== undefined) {
+          engineState.lastAnalysisTime.value = undefined
+        }
+        if (engineState.analysisStartTime?.value !== undefined) {
+          engineState.analysisStartTime.value = undefined
+        }
+      }
+      // Clear JAI engine time
+      if ((window as any).__JAI_ENGINE_TIME__ !== undefined) {
+        ;(window as any).__JAI_ENGINE_TIME__ = undefined
+      }
+      console.log('[DEBUG] SETUP_NEW_GAME: Cleared engine analysis time data')
+    } catch (error) {
+      console.warn(
+        '[DEBUG] SETUP_NEW_GAME: Failed to clear engine time data:',
+        error
+      )
+    }
 
     // Initialize captured unrevealed piece counts
     capturedUnrevealedPieceCounts.value = {}
@@ -2420,6 +2480,23 @@ export function useChessGame() {
 
   // Generate custom game notation format
   const generateGameNotation = (): GameNotation => {
+    // Strip non-exportable fields from moves
+    const sanitizedMoves: HistoryEntry[] = history.value.map(e => {
+      const {
+        timestamp: _omitTimestamp, // exclude from export
+        engineDepth: _omitEngineDepth, // exclude from export
+        engineNodes: _omitEngineNodes, // exclude from export
+        engineRequestedMovetime: _omitEngineRequestedMovetime, // exclude from export
+        ...rest
+      } = e as HistoryEntry & {
+        timestamp?: number
+        engineDepth?: number
+        engineNodes?: number
+        engineRequestedMovetime?: number
+      }
+      return { ...rest }
+    })
+
     return {
       metadata: {
         event: '揭棋对局',
@@ -2433,7 +2510,7 @@ export function useChessGame() {
         currentFen: generateFen(),
         openingComment: openingComment.value || undefined,
       },
-      moves: [...history.value],
+      moves: sanitizedMoves,
     }
   }
 
