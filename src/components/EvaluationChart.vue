@@ -838,9 +838,7 @@
         if (p.score !== null && p.score !== undefined) {
           const x = getX(i, area.width, visibleMoves)
           const clampedScore = getClampedScore(p.score)
-          const t = isLinearScale.value
-            ? clampedScore
-            : transform(clampedScore)
+          const t = isLinearScale.value ? clampedScore : transform(clampedScore)
           const y = area.y + area.height - ((t - minT) / rangeT) * area.height
           first ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
           first = false
@@ -1072,9 +1070,7 @@
   const formatYValue = (value: number) => {
     switch (viewMode.value) {
       case 'time':
-        return value < 1000
-          ? `${value}ms`
-          : `${(value / 1000).toFixed(1)}s`
+        return value < 1000 ? `${value}ms` : `${(value / 1000).toFixed(1)}s`
       case 'depth':
         return value.toString()
       case 'evaluation':

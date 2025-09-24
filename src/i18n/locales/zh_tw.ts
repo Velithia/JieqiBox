@@ -37,6 +37,7 @@ export default {
     darkMode: '暗黑模式',
     lightMode: '亮色模式',
     viewPasteNotation: '查看/輸入棋譜',
+    reviewAnalysis: '複盤分析',
   },
 
   // UCI選項對話框

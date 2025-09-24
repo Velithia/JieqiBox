@@ -76,7 +76,9 @@ const enableYAxisClamp = ref<boolean>(initialEnableYAxisClamp)
 const yAxisClampValue = ref<number>(initialYAxisClampValue)
 const colorScheme = ref<string>(initialColorScheme || 'default')
 const showSeparateLines = ref<boolean>(initialShowSeparateLines)
-const viewMode = ref<ChartViewMode>((initialViewMode as ChartViewMode) || 'evaluation')
+const viewMode = ref<ChartViewMode>(
+  (initialViewMode as ChartViewMode) || 'evaluation'
+)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)

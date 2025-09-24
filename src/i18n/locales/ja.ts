@@ -37,6 +37,7 @@ export default {
     darkMode: 'ダークモード',
     lightMode: 'ライトモード',
     viewPasteNotation: '棋譜の表示/貼り付け',
+    reviewAnalysis: '検討分析',
   },
 
   // UCIオプションダイアログ
