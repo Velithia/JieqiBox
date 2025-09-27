@@ -15,6 +15,9 @@ use base64::Engine;
 #[cfg(target_os = "android")]
 use std::os::unix::fs::PermissionsExt;
 
+mod opening_book;
+use opening_book::{JieqiOpeningBook, MoveData, OpeningBookStats};
+
 // -------------------------------------------------------------
 // type definition for the engine process state
 type EngineProcess = Arc<Mutex<Option<CommandChild>>>;
@@ -194,6 +197,18 @@ fn get_autosave_file_path(app: &AppHandle) -> Result<String, String> {
     } else {
         // On desktop, use the same directory as the config file
         Ok("Autosave.json".to_string())
+    }
+}
+
+/// Get the path to the opening book database file, which varies by platform.
+fn get_opening_book_db_path(app: &AppHandle) -> Result<String, String> {
+    if cfg!(target_os = "android") {
+        // On Android, use the app's private internal data directory
+        let bundle_identifier = &app.config().identifier;
+        Ok(format!("/data/data/{}/files/jieqi_openings.jb", bundle_identifier))
+    } else {
+        // On desktop, use the same directory as the config file
+        Ok("jieqi_openings.jb".to_string())
     }
 }
 
@@ -664,6 +679,125 @@ async fn open_external_url(url: String, app: AppHandle) -> Result<(), String> {
     }
 }
 
+// Opening Book Commands
+
+/// Add an entry to the opening book
+#[tauri::command]
+async fn opening_book_add_entry(
+    fen: String,
+    uci_move: String,
+    priority: i32,
+    wins: i32,
+    draws: i32,
+    losses: i32,
+    allowed: bool,
+    comment: String,
+    app: AppHandle,
+) -> Result<bool, String> {
+    let db_path = get_opening_book_db_path(&app)?;
+    let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
+    book.add_entry(&fen, &uci_move, priority, wins, draws, losses, allowed, &comment)
+        .map_err(|e| e.to_string())
+}
+
+/// Delete an entry from the opening book
+#[tauri::command]
+async fn opening_book_delete_entry(
+    fen: String,
+    uci_move: String,
+    app: AppHandle,
+) -> Result<bool, String> {
+    let db_path = get_opening_book_db_path(&app)?;
+    let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
+    book.delete_entry(&fen, &uci_move)
+        .map_err(|e| e.to_string())
+}
+
+/// Query moves for a given FEN position
+#[tauri::command]
+async fn opening_book_query_moves(fen: String, app: AppHandle) -> Result<Vec<MoveData>, String> {
+    let db_path = get_opening_book_db_path(&app)?;
+    let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
+    book.query_moves(&fen).map_err(|e| e.to_string())
+}
+
+/// Get opening book statistics
+#[tauri::command]
+async fn opening_book_get_stats(app: AppHandle) -> Result<OpeningBookStats, String> {
+    let db_path = get_opening_book_db_path(&app)?;
+    let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
+    book.get_stats().map_err(|e| e.to_string())
+}
+
+/// Clear all entries from the opening book
+#[tauri::command]
+async fn opening_book_clear_all(app: AppHandle) -> Result<(), String> {
+    let db_path = get_opening_book_db_path(&app)?;
+    let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
+    book.clear_all().map_err(|e| e.to_string())
+}
+
+/// Export all opening book entries
+#[tauri::command]
+async fn opening_book_export_all(app: AppHandle) -> Result<String, String> {
+    let db_path = get_opening_book_db_path(&app)?;
+    let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
+    let entries = book.export_all().map_err(|e| e.to_string())?;
+    serde_json::to_string(&entries).map_err(|e| e.to_string())
+}
+
+/// Import opening book entries from JSON
+#[tauri::command]
+async fn opening_book_import_entries(
+    json_data: String,
+    app: AppHandle,
+) -> Result<(i32, Vec<String>), String> {
+    let db_path = get_opening_book_db_path(&app)?;
+    let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
+
+    let entries: Vec<opening_book::OpeningBookEntry> =
+        serde_json::from_str(&json_data).map_err(|e| e.to_string())?;
+
+    let mut imported = 0;
+    let mut errors = Vec::new();
+
+    for entry in entries {
+        for move_data in entry.moves {
+            match book.add_entry(
+                &entry.fen,
+                &move_data.uci_move,
+                move_data.priority,
+                move_data.wins,
+                move_data.draws,
+                move_data.losses,
+                move_data.allowed,
+                &move_data.comment,
+            ) {
+                Ok(_) => imported += 1,
+                Err(e) => errors.push(format!("Failed to import move {}: {}", move_data.uci_move, e)),
+            }
+        }
+    }
+
+    Ok((imported, errors))
+}
+
+/// Export opening book database file to a specified path
+#[tauri::command]
+async fn opening_book_export_db(destination_path: String, app: AppHandle) -> Result<(), String> {
+    let source_path = get_opening_book_db_path(&app)?;
+    fs::copy(source_path, destination_path).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Import opening book database file from a specified path
+#[tauri::command]
+async fn opening_book_import_db(source_path: String, app: AppHandle) -> Result<(), String> {
+    let dest_path = get_opening_book_db_path(&app)?;
+    fs::copy(source_path, dest_path).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 // The main entry point for the Tauri application.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -683,6 +817,16 @@ pub fn run() {
             clear_config,
             save_autosave,
             load_autosave,
+            // Opening book commands
+            opening_book_add_entry,
+            opening_book_delete_entry,
+            opening_book_query_moves,
+            opening_book_get_stats,
+            opening_book_clear_all,
+            opening_book_export_all,
+            opening_book_import_entries,
+            opening_book_export_db,
+            opening_book_import_db,
             // Android-specific commands
             #[cfg(target_os = "android")]
             get_bundle_identifier,

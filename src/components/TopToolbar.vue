@@ -54,6 +54,14 @@
         :disabled="isMatchRunning"
         :title="$t('toolbar.viewPasteNotation')"
       />
+      <v-btn
+        icon="mdi-book-open-variant"
+        size="small"
+        color="deep-purple"
+        variant="text"
+        @click="showOpeningBookDialog = true"
+        :title="$t('toolbar.openingBook')"
+      />
     </div>
 
     <div class="toolbar-center">
@@ -129,6 +137,7 @@
     />
 
     <ReviewAnalysisDialog v-model="showReviewDialog" />
+    <OpeningBookDialog v-model="showOpeningBookDialog" />
   </div>
 </template>
 
@@ -142,6 +151,7 @@
   import InterfaceSettingsDialog from './InterfaceSettingsDialog.vue'
   import NotationTextDialog from './NotationTextDialog.vue'
   import ReviewAnalysisDialog from './ReviewAnalysisDialog.vue'
+  import OpeningBookDialog from './OpeningBookDialog.vue'
   import { useInterfaceSettings } from '../composables/useInterfaceSettings'
 
   const { t } = useI18n()
@@ -161,6 +171,7 @@
   const showInterfaceSettingsDialog = ref(false)
   const showNotationTextDialog = ref(false)
   const showReviewDialog = ref(false)
+  const showOpeningBookDialog = ref(false)
 
   // State for variation restart logic
   const isWaitingToRestartForVariation = ref(false)

@@ -117,3 +117,4 @@ src-tauri/Cargo.lock
 
 # GUI config file
 src-tauri/config.ini
+src-tauri/jieqi_openings.jb

@@ -441,6 +441,18 @@
       </div>
     </DraggablePanel>
 
+    <!-- Opening Book Panel -->
+    <DraggablePanel v-if="showOpeningBookPanel" panel-id="opening-book">
+      <template #header>
+        <h3>{{ $t('openingBook.title') }}</h3>
+      </template>
+      <OpeningBookPanel
+        :show-panel="true"
+        @open-detail-dialog="showOpeningBookDetail = true"
+        @play-move="handleOpeningBookMove"
+      />
+    </DraggablePanel>
+
     <DraggablePanel panel-id="notation">
       <template #header>
         <div class="notation-header">
@@ -873,6 +885,7 @@
       v-model="showHumanVsAiDialog"
       @confirm="handleHumanVsAiModeConfirm"
     />
+    <OpeningBookDialog v-model="showOpeningBookDetail" />
   </div>
 </template>
 
@@ -900,6 +913,8 @@
   import EloCalculatorDialog from './EloCalculatorDialog.vue'
   import HumanVsAiModeDialog from './HumanVsAiModeDialog.vue'
   import CaptureHistoryPanel from './CaptureHistoryPanel.vue'
+  import OpeningBookPanel from './OpeningBookPanel.vue'
+  import OpeningBookDialog from './OpeningBookDialog.vue'
   import {
     useConfigManager,
     type ManagedEngine,
@@ -1001,6 +1016,12 @@
   const showHumanVsAiDialog = ref(false)
   const managedEngines = ref<ManagedEngine[]>([])
   const selectedEngineId = ref<string | null>(null)
+
+  /* ---------- Opening Book State ---------- */
+  const showOpeningBookPanel = computed(
+    () => gameState?.showBookMoves?.value !== false
+  )
+  const showOpeningBookDetail = ref(false)
 
   /* ---------- JAI Match Mode State ---------- */
   const isMatchMode = ref(false)
@@ -1325,7 +1346,7 @@
     const redTurn = sideToMove.value === 'red'
     return (redTurn && isRedAi.value) || (!redTurn && isBlackAi.value)
   }
-  function checkAndTriggerAi() {
+  async function checkAndTriggerAi() {
     // Add a guard to prevent starting analysis while the engine is in the process of stopping.
     if (isStopping.value) {
       console.log(
@@ -1363,6 +1384,37 @@
       // Record analysis-time context
       lastAnalysisFen.value = baseFenForEngine.value
       lastAnalysisPrefixMoves.value = [...engineMovesSinceLastReveal.value]
+
+      // Opening book first: if enabled and there is a book move, play it instead of calling engine
+      try {
+        const enableBook = gameState?.openingBook?.config?.enableInGame
+        const getBookMoveFn = gameState?.getOpeningBookMove
+        if (enableBook && typeof getBookMoveFn === 'function') {
+          const bookMove = await getBookMoveFn()
+          if (bookMove) {
+            console.log(
+              '[DEBUG] CHECK_AND_TRIGGER_AI: Using opening book move:',
+              bookMove
+            )
+            ;(window as any).__LAST_AI_MOVE__ = bookMove
+            ;(window as any).__AI_MOVE_FROM_BOOK__ = true
+            const ok = playMoveFromUci(bookMove)
+            if (ok) {
+              // When using opening book move, do not start engine analysis/pondering.
+              nextTick(() => {
+                checkAndTriggerAi()
+              })
+              return
+            }
+            // If not ok (illegal or none), fall back to engine below
+          }
+        }
+      } catch (e) {
+        console.error(
+          '[DEBUG] CHECK_AND_TRIGGER_AI: Opening book failed, falling back to engine.',
+          e
+        )
+      }
 
       startAnalysis(
         analysisSettings.value,
@@ -2817,6 +2869,12 @@
 
   // Handle ponder logic after a move is played
   function handlePonderAfterMove(uciMove: string, isAiMove: boolean) {
+    // Skip pondering entirely if last AI move comes from opening book
+    if ((window as any).__AI_MOVE_FROM_BOOK__) {
+      // Clear the flag for next moves
+      ;(window as any).__AI_MOVE_FROM_BOOK__ = false
+      return
+    }
     if (isInfinitePondering.value) {
       stopPonder({ playBestMoveOnStop: false })
       return
@@ -2877,6 +2935,14 @@
       ponderMove.value,
       analysisSettings.value
     )
+  }
+
+  /* ---------- Opening Book Functions ---------- */
+
+  const handleOpeningBookMove = (uciMove: string) => {
+    if (playMoveFromUci) {
+      playMoveFromUci(uciMove)
+    }
   }
 
   // Get Chinese notation for a specific move

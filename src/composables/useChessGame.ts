@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import MersenneTwister from 'mersenne-twister'
 import {
   START_FEN,
@@ -12,6 +12,8 @@ import { useInterfaceSettings } from './useInterfaceSettings'
 import { useGameSettings } from './useGameSettings'
 import { useHumanVsAiSettings } from './useHumanVsAiSettings'
 import { convertXQFToJieqiNotation } from '@/utils/xqf'
+import { useOpeningBook } from './useOpeningBook'
+import type { MoveData } from '@/types/openingBook'
 
 // Create a global instance of Mersenne Twister
 const mt = new MersenneTwister()
@@ -77,6 +79,11 @@ export function useChessGame() {
 
   // Get human vs AI settings
   const { isHumanVsAiMode, aiSide } = useHumanVsAiSettings()
+
+  // Initialize opening book
+  const openingBook = useOpeningBook()
+  const currentBookMoves = ref<MoveData[]>([])
+  const showBookMoves = ref(true)
 
   const pieces = ref<Piece[]>([])
   const selectedPieceId = ref<number | null>(null)
@@ -953,6 +960,10 @@ export function useChessGame() {
 
       // Trigger arrow clear event
       triggerArrowClear()
+
+      // After loading a FEN directly, refresh opening book moves for the new position
+      // Visibility is handled when assigning within queryOpeningBookMoves
+      queryOpeningBookMoves()
     } catch (e: any) {
       console.error('加载FEN失败！', e)
       alert(e.message || '输入的FEN格式有误！')
@@ -1033,13 +1044,17 @@ export function useChessGame() {
         value: false,
       }
 
+      // If this AI move comes from opening book, we should not record engine score
+      const isAiMoveFromBook = (window as any).__AI_MOVE_FROM_BOOK__ === true
+
       if (
         engineState &&
         (engineState.isThinking?.value ||
           isAiMove ||
           isManualAnalysis.value ||
           engineState.isPondering?.value ||
-          (window as any).__JAI_ENGINE__?.isMatchRunning?.value)
+          (window as any).__JAI_ENGINE__?.isMatchRunning?.value) &&
+        !isAiMoveFromBook
       ) {
         console.log(
           '[DEBUG] RECORD_AND_FINALIZE: Engine was thinking or this is an AI move, extracting data...'
@@ -1179,6 +1194,11 @@ export function useChessGame() {
 
         // engineTime will be calculated later based on timestamp difference or fallback to original method
       } else {
+        if (isAiMoveFromBook) {
+          console.log(
+            '[DEBUG] RECORD_AND_FINALIZE: Move is from opening book, skipping engine score extraction.'
+          )
+        }
         console.log(
           '[DEBUG] RECORD_AND_FINALIZE: No JAI engine score available and engine is not thinking, skipping engine data'
         )
@@ -1302,6 +1322,15 @@ export function useChessGame() {
       ;(window as any).__LAST_AI_MOVE__ = null
     }
 
+    // Clear the "AI move from book" flag if set
+    if ((window as any).__AI_MOVE_FROM_BOOK__) {
+      console.log(
+        '[DEBUG] RECORD_AND_FINALIZE: Clearing AI move from book flag for move:',
+        data
+      )
+      ;(window as any).__AI_MOVE_FROM_BOOK__ = false
+    }
+
     // Handle ponder logic for manual moves (human moves)
     if (type === 'move' && !isAiMove) {
       const ponderState = (window as any).__PONDER_STATE__
@@ -1336,6 +1365,11 @@ export function useChessGame() {
       // until the CSS transition completes. The reset is scheduled at move time.
     }
     selectedPieceId.value = null
+
+    // Refresh opening book after any finalized change to the position
+    try {
+      queryOpeningBookMoves()
+    } catch {}
   }
 
   const setupNewGame = async () => {
@@ -1405,6 +1439,16 @@ export function useChessGame() {
     } catch (error) {
       console.error('[DEBUG] SETUP_NEW_GAME: Failed to send ucinewgame:', error)
       // Don't throw error here as it shouldn't prevent new game setup
+    }
+
+    // Initialize opening book and query moves for starting position
+    try {
+      if (!openingBook.isInitialized.value) {
+        await openingBook.initialize()
+      }
+      await queryOpeningBookMoves()
+    } catch (error) {
+      console.error('Failed to initialize opening book:', error)
     }
   }
 
@@ -2316,6 +2360,9 @@ export function useChessGame() {
       }
     }
 
+    // Query opening book moves for the new position
+    queryOpeningBookMoves()
+
     return true // Executed successfully
   }
 
@@ -2444,6 +2491,8 @@ export function useChessGame() {
 
         // Trigger arrow clear event
         triggerArrowClear()
+        // Refresh opening book moves after applying FEN with moves
+        queryOpeningBookMoves()
       } else {
         // No move history, process as before
         loadFen(processedFen, false)
@@ -2465,6 +2514,8 @@ export function useChessGame() {
 
         // Trigger arrow clear event
         triggerArrowClear()
+        // Refresh opening book moves after applying FEN without moves
+        queryOpeningBookMoves()
       }
 
       // Force stop engine analysis and AI to ensure input FEN when engine doesn't continue thinking
@@ -2716,6 +2767,8 @@ export function useChessGame() {
 
     // Trigger arrow clear event
     triggerArrowClear()
+    // Refresh opening book moves when navigating history
+    queryOpeningBookMoves()
   }
 
   // Register arrow clear callback
@@ -2795,6 +2848,94 @@ export function useChessGame() {
     })
 
     return legalMoves
+  }
+
+  // Opening book functions
+  const queryOpeningBookMoves = async (): Promise<void> => {
+    if (!openingBook.isInitialized.value) {
+      currentBookMoves.value = []
+      return
+    }
+
+    try {
+      const currentFen = generateFen()
+      const bookMoves = await openingBook.queryMoves(currentFen)
+      currentBookMoves.value = showBookMoves.value ? bookMoves : []
+    } catch (error) {
+      console.error('Error querying opening book:', error)
+      currentBookMoves.value = []
+    }
+  }
+
+  // Auto-refresh opening book moves when UI toggles visibility or when initial state loads
+  // Ensure the list updates even if showBookMoves is toggled after querying
+  watch(
+    () => showBookMoves.value,
+    () => {
+      // Re-run query so panel reflects the current toggle state immediately
+      queryOpeningBookMoves()
+    }
+  )
+
+  const getOpeningBookMove = async (): Promise<string | null> => {
+    if (!openingBook.isInitialized.value) {
+      return null
+    }
+
+    try {
+      const currentFen = generateFen()
+      return await openingBook.getBestMove(currentFen)
+    } catch (error) {
+      console.error('Error getting opening book move:', error)
+      return null
+    }
+  }
+
+  const addPositionToOpeningBook = async (
+    uciMove: string,
+    priority: number = 100,
+    wins: number = 0,
+    draws: number = 0,
+    losses: number = 0,
+    allowed: boolean = true,
+    comment: string = ''
+  ): Promise<boolean> => {
+    if (!openingBook.isInitialized.value) {
+      return false
+    }
+
+    try {
+      const currentFen = generateFen()
+      return await openingBook.addEntry(
+        currentFen,
+        uciMove,
+        priority,
+        wins,
+        draws,
+        losses,
+        allowed,
+        comment
+      )
+    } catch (error) {
+      console.error('Error adding position to opening book:', error)
+      return false
+    }
+  }
+
+  const deletePositionFromOpeningBook = async (
+    uciMove: string
+  ): Promise<boolean> => {
+    if (!openingBook.isInitialized.value) {
+      return false
+    }
+
+    try {
+      const currentFen = generateFen()
+      return await openingBook.deleteEntry(currentFen, uciMove)
+    } catch (error) {
+      console.error('Error deleting position from opening book:', error)
+      return false
+    }
   }
 
   // Calculate move positions from UCI move data
@@ -2880,6 +3021,9 @@ export function useChessGame() {
 
     // Trigger arrow clear event
     triggerArrowClear()
+
+    // Refresh opening book moves for the new position after undo
+    queryOpeningBookMoves()
 
     // Force stop engine analysis and AI to ensure undo move when engine doesn't continue thinking
     window.dispatchEvent(
@@ -2977,5 +3121,14 @@ export function useChessGame() {
     updateMoveAnnotation,
     determineGameResult,
     loadGameNotation,
+    // Opening book functions
+    openingBook,
+    currentBookMoves,
+    showBookMoves,
+    queryOpeningBookMoves,
+    getOpeningBookMove,
+    addPositionToOpeningBook,
+    deletePositionFromOpeningBook,
+    calculateMovePositions,
   }
 }

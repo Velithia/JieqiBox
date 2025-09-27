@@ -40,7 +40,12 @@ export default defineConfig(async () => ({
       : undefined,
     watch: {
       // 3. tell vite to ignore watching `src-tauri` and autosave files
-      ignored: ['**/src-tauri/**', '**/Autosave.json', '**/config.ini'],
+      ignored: [
+        '**/src-tauri/**',
+        '**/Autosave.json',
+        '**/config.ini',
+        '**/jieqi_openings.jb',
+      ],
     },
   },
 }))
