@@ -209,8 +209,7 @@ impl JieqiOpeningBook {
     }
 }
 
-// FEN processing functions - following the original C++ implementation exactly
-
+// FEN processing functions
 fn parse_pool_string(pool_str: &str) -> (HashMap<char, i32>, HashMap<char, i32>) {
     let mut red_pool = HashMap::new();
     let mut black_pool = HashMap::new();
@@ -282,7 +281,6 @@ fn normalize_fen(fen: &str) -> String {
     let board = parts[0];
     let side_to_move = parts[1];
     let dark_pool_str = parts[2];
-    let captured_pool_str = parts[3];
     
     // Check which side has dark pieces
     let red_has_dark_pieces = board.contains('X');
@@ -290,16 +288,6 @@ fn normalize_fen(fen: &str) -> String {
     
     let (mut red_dark, mut black_dark) = if dark_pool_str != "-" {
         let (temp_red, temp_black) = parse_pool_string(dark_pool_str);
-        (
-            if red_has_dark_pieces { temp_red } else { HashMap::new() },
-            if black_has_dark_pieces { temp_black } else { HashMap::new() }
-        )
-    } else {
-        (HashMap::new(), HashMap::new())
-    };
-    
-    let (mut red_captured, mut black_captured) = if captured_pool_str != "-" {
-        let (temp_red, temp_black) = parse_pool_string(captured_pool_str);
         (
             if red_has_dark_pieces { temp_red } else { HashMap::new() },
             if black_has_dark_pieces { temp_black } else { HashMap::new() }
@@ -316,24 +304,10 @@ fn normalize_fen(fen: &str) -> String {
         }
     }
     
-    let gcd_red_captured = calculate_gcd(&red_captured);
-    if gcd_red_captured > 1 {
-        for value in red_captured.values_mut() {
-            *value /= gcd_red_captured;
-        }
-    }
-    
     let gcd_black_dark = calculate_gcd(&black_dark);
     if gcd_black_dark > 1 {
         for value in black_dark.values_mut() {
             *value /= gcd_black_dark;
-        }
-    }
-    
-    let gcd_black_captured = calculate_gcd(&black_captured);
-    if gcd_black_captured > 1 {
-        for value in black_captured.values_mut() {
-            *value /= gcd_black_captured;
         }
     }
     
@@ -344,17 +318,11 @@ fn normalize_fen(fen: &str) -> String {
     let mut final_dark_pool = format_pool(&red_dark, red_order);
     final_dark_pool.push_str(&format_pool(&black_dark, black_order));
     
-    let mut final_captured_pool = format_pool(&red_captured, red_order);
-    final_captured_pool.push_str(&format_pool(&black_captured, black_order));
-    
     if final_dark_pool.is_empty() {
         final_dark_pool = "-".to_string();
     }
-    if final_captured_pool.is_empty() {
-        final_captured_pool = "-".to_string();
-    }
     
-    format!("{} {} {} {}", board, side_to_move, final_dark_pool, final_captured_pool)
+    format!("{} {} {} -", board, side_to_move, final_dark_pool)
 }
 
 fn flip_board(fen_string: &str) -> String {
@@ -366,7 +334,6 @@ fn flip_board(fen_string: &str) -> String {
     let board = parts[0];
     let side = parts[1];
     let dark_pool = parts[2];
-    let captured_pool = parts[3];
     
     let rows: Vec<&str> = board.split('/').collect();
     let mut flipped_rows = Vec::new();
@@ -377,7 +344,7 @@ fn flip_board(fen_string: &str) -> String {
     }
     
     let flipped_board = flipped_rows.join("/");
-    format!("{} {} {} {}", flipped_board, side, dark_pool, captured_pool)
+    format!("{} {} {} -", flipped_board, side, dark_pool)
 }
 
 fn swap_colors_fen(normalized_fen: &str) -> String {
@@ -389,7 +356,6 @@ fn swap_colors_fen(normalized_fen: &str) -> String {
     let board = parts[0];
     let side_to_move = parts[1];
     let dark_pool_str = parts[2];
-    let captured_pool_str = parts[3];
     
     // 1. Swap piece cases and flip board vertically
     let swapped_case_board: String = board.chars().map(|c| {
@@ -410,26 +376,17 @@ fn swap_colors_fen(normalized_fen: &str) -> String {
     // 2. Swap side to move
     let swapped_side = if side_to_move == "w" { "b" } else { "w" };
     
-    // 3. Swap pools
+    // 3. Swap dark pool only
     let (red_dark_orig, black_dark_orig) = parse_pool_string(dark_pool_str);
-    let (red_cap_orig, black_cap_orig) = parse_pool_string(captured_pool_str);
     
     let mut new_red_dark = HashMap::new();
-    let mut new_red_cap = HashMap::new();
     for (&piece, &count) in &black_dark_orig {
         new_red_dark.insert(piece.to_uppercase().next().unwrap_or(piece), count);
     }
-    for (&piece, &count) in &black_cap_orig {
-        new_red_cap.insert(piece.to_uppercase().next().unwrap_or(piece), count);
-    }
     
     let mut new_black_dark = HashMap::new();
-    let mut new_black_cap = HashMap::new();
     for (&piece, &count) in &red_dark_orig {
         new_black_dark.insert(piece.to_lowercase().next().unwrap_or(piece), count);
-    }
-    for (&piece, &count) in &red_cap_orig {
-        new_black_cap.insert(piece.to_lowercase().next().unwrap_or(piece), count);
     }
     
     let red_order = "RNBACP";
@@ -438,17 +395,12 @@ fn swap_colors_fen(normalized_fen: &str) -> String {
     let mut swapped_dark_pool = format_pool(&new_red_dark, red_order);
     swapped_dark_pool.push_str(&format_pool(&new_black_dark, black_order));
     
-    let mut swapped_captured_pool = format_pool(&new_red_cap, red_order);
-    swapped_captured_pool.push_str(&format_pool(&new_black_cap, black_order));
-    
     if swapped_dark_pool.is_empty() {
         swapped_dark_pool = "-".to_string();
     }
-    if swapped_captured_pool.is_empty() {
-        swapped_captured_pool = "-".to_string();
-    }
     
-    format!("{} {} {} {}", swapped_board, swapped_side, swapped_dark_pool, swapped_captured_pool)
+    // Always use "-" for captured pool to ignore it in key calculation
+    format!("{} {} {} -", swapped_board, swapped_side, swapped_dark_pool)
 }
 
 
