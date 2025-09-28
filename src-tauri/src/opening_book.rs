@@ -285,6 +285,8 @@ fn normalize_fen(fen: &str) -> String {
     // Check which side has dark pieces
     let red_has_dark_pieces = board.contains('X');
     let black_has_dark_pieces = board.contains('x');
+    let red_dark_count_on_board = board.chars().filter(|&c| c == 'X').count();
+    let black_dark_count_on_board = board.chars().filter(|&c| c == 'x').count();
     
     let (mut red_dark, mut black_dark) = if dark_pool_str != "-" {
         let (temp_red, temp_black) = parse_pool_string(dark_pool_str);
@@ -296,15 +298,15 @@ fn normalize_fen(fen: &str) -> String {
         (HashMap::new(), HashMap::new())
     };
     
-    // Normalize by GCD
-    let gcd_red_dark = calculate_gcd(&red_dark);
+    // Normalize by GCD when and only when that side has exactly one dark piece
+    let gcd_red_dark = if red_dark_count_on_board == 1 { calculate_gcd(&red_dark) } else { 1 };
     if gcd_red_dark > 1 {
         for value in red_dark.values_mut() {
             *value /= gcd_red_dark;
         }
     }
     
-    let gcd_black_dark = calculate_gcd(&black_dark);
+    let gcd_black_dark = if black_dark_count_on_board == 1 { calculate_gcd(&black_dark) } else { 1 };
     if gcd_black_dark > 1 {
         for value in black_dark.values_mut() {
             *value /= gcd_black_dark;
