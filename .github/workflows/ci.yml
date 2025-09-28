@@ -37,6 +37,9 @@ jobs:
       - name: Check TypeScript
         run: npm run build
 
+      - name: Install Clippy
+        run: rustup component add clippy
+
       - name: Check Rust
         run: |
           cd src-tauri
