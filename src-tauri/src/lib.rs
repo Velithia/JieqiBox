@@ -16,7 +16,7 @@ use base64::Engine;
 use std::os::unix::fs::PermissionsExt;
 
 mod opening_book;
-use opening_book::{JieqiOpeningBook, MoveData, OpeningBookStats};
+use opening_book::{JieqiOpeningBook, MoveData, OpeningBookStats, AddEntryRequest};
 
 // -------------------------------------------------------------
 // type definition for the engine process state
@@ -684,19 +684,12 @@ async fn open_external_url(url: String, app: AppHandle) -> Result<(), String> {
 /// Add an entry to the opening book
 #[tauri::command]
 async fn opening_book_add_entry(
-    fen: String,
-    uci_move: String,
-    priority: i32,
-    wins: i32,
-    draws: i32,
-    losses: i32,
-    allowed: bool,
-    comment: String,
+    request: AddEntryRequest,
     app: AppHandle,
 ) -> Result<bool, String> {
     let db_path = get_opening_book_db_path(&app)?;
     let book = JieqiOpeningBook::new(db_path).map_err(|e| e.to_string())?;
-    book.add_entry(&fen, &uci_move, priority, wins, draws, losses, allowed, &comment)
+    book.add_entry(&request)
         .map_err(|e| e.to_string())
 }
 
@@ -763,16 +756,17 @@ async fn opening_book_import_entries(
 
     for entry in entries {
         for move_data in entry.moves {
-            match book.add_entry(
-                &entry.fen,
-                &move_data.uci_move,
-                move_data.priority,
-                move_data.wins,
-                move_data.draws,
-                move_data.losses,
-                move_data.allowed,
-                &move_data.comment,
-            ) {
+            let request = AddEntryRequest {
+                fen: entry.fen.clone(),
+                uci_move: move_data.uci_move.clone(),
+                priority: move_data.priority,
+                wins: move_data.wins,
+                draws: move_data.draws,
+                losses: move_data.losses,
+                allowed: move_data.allowed,
+                comment: move_data.comment.clone(),
+            };
+            match book.add_entry(&request) {
                 Ok(_) => imported += 1,
                 Err(e) => errors.push(format!("Failed to import move {}: {}", move_data.uci_move, e)),
             }

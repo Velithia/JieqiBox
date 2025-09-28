@@ -16,6 +16,18 @@ pub struct MoveData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddEntryRequest {
+    pub fen: String,
+    pub uci_move: String,
+    pub priority: i32,
+    pub wins: i32,
+    pub draws: i32,
+    pub losses: i32,
+    pub allowed: bool,
+    pub comment: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpeningBookEntry {
     pub key: String,
     pub fen: String,
@@ -62,19 +74,9 @@ impl JieqiOpeningBook {
         Ok(())
     }
 
-    pub fn add_entry(
-        &self,
-        fen: &str,
-        uci_move: &str,
-        priority: i32,
-        wins: i32,
-        draws: i32,
-        losses: i32,
-        allowed: bool,
-        comment: &str,
-    ) -> Result<bool> {
-        let (key_blob, transform_idx) = compute_key_and_transform(fen);
-        let transformed_uci = transform_uci_move(uci_move, transform_idx);
+    pub fn add_entry(&self, request: &AddEntryRequest) -> Result<bool> {
+        let (key_blob, transform_idx) = compute_key_and_transform(&request.fen);
+        let transformed_uci = transform_uci_move(&request.uci_move, transform_idx);
         let move_int = uci_to_int(&transformed_uci) as i64;
 
         self.conn.execute(
@@ -92,12 +94,12 @@ impl JieqiOpeningBook {
             rusqlite::params![
                 &key_blob,
                 move_int,
-                priority,
-                wins,
-                draws,
-                losses,
-                if allowed { 1 } else { 0 },
-                comment,
+                request.priority,
+                request.wins,
+                request.draws,
+                request.losses,
+                if request.allowed { 1 } else { 0 },
+                &request.comment,
             ],
         )?;
 
