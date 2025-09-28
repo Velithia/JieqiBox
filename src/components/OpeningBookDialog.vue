@@ -158,19 +158,19 @@
               <v-card>
                 <v-card-text>
                   <v-switch
-                    v-model="gameState.openingBook.config.enableInGame"
+                    v-model="openingBookEnableInGame"
                     :label="$t('openingBook.enableInGame')"
                     color="primary"
                   />
 
                   <v-switch
-                    v-model="gameState.showBookMoves.value"
+                    v-model="showBookMoves"
                     :label="$t('openingBook.showMoves')"
                     color="primary"
                   />
 
                   <v-switch
-                    v-model="gameState.openingBook.config.preferHighPriority"
+                    v-model="openingBookPreferHighPriority"
                     :label="$t('openingBook.preferHighPriority')"
                     color="primary"
                   />
@@ -404,6 +404,11 @@
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
 
   const { t } = useI18n()
+  const { 
+    showBookMoves, 
+    openingBookEnableInGame, 
+    openingBookPreferHighPriority 
+  } = useInterfaceSettings()
 
   // Props
   interface Props {

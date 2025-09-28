@@ -80,10 +80,12 @@ export function useChessGame() {
   // Get human vs AI settings
   const { isHumanVsAiMode, aiSide } = useHumanVsAiSettings()
 
+  // Get opening book settings
+  const { showBookMoves } = useInterfaceSettings()
+
   // Initialize opening book
   const openingBook = useOpeningBook()
   const currentBookMoves = ref<MoveData[]>([])
-  const showBookMoves = ref(true)
 
   const pieces = ref<Piece[]>([])
   const selectedPieceId = ref<number | null>(null)

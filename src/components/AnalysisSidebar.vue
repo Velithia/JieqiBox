@@ -948,6 +948,7 @@
     engineLogLineLimit,
     showChineseNotation,
     showLuckIndex,
+    showBookMoves,
   } = useInterfaceSettings()
 
   // Get persistent game settings
@@ -1019,7 +1020,7 @@
 
   /* ---------- Opening Book State ---------- */
   const showOpeningBookPanel = computed(
-    () => gameState?.showBookMoves?.value !== false
+    () => showBookMoves.value !== false
   )
   const showOpeningBookDetail = ref(false)
 

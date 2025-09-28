@@ -24,6 +24,9 @@ const getInitialSettings = () => {
       showChineseNotation: true,
       showLuckIndex: false,
       showArrows: true,
+      showBookMoves: true,
+      openingBookEnableInGame: true,
+      openingBookPreferHighPriority: true,
     }
   }
 
@@ -42,6 +45,9 @@ const getInitialSettings = () => {
       showChineseNotation: settings.showChineseNotation !== false, // Default to true
       showLuckIndex: !!settings.showLuckIndex, // Default to false
       showArrows: settings.showArrows !== false, // Default to true
+      showBookMoves: settings.showBookMoves !== false, // Default to true
+      openingBookEnableInGame: settings.openingBookEnableInGame !== false, // Default to true
+      openingBookPreferHighPriority: settings.openingBookPreferHighPriority !== false, // Default to true
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -59,6 +65,9 @@ const getInitialSettings = () => {
       showChineseNotation: true,
       showLuckIndex: false,
       showArrows: true,
+      showBookMoves: true,
+      openingBookEnableInGame: true,
+      openingBookPreferHighPriority: true,
     }
   }
 }
@@ -77,6 +86,9 @@ const {
   showChineseNotation: initialShowChineseNotation,
   showLuckIndex: initialShowLuckIndex,
   showArrows: initialShowArrows,
+  showBookMoves: initialShowBookMoves,
+  openingBookEnableInGame: initialOpeningBookEnableInGame,
+  openingBookPreferHighPriority: initialOpeningBookPreferHighPriority,
 } = getInitialSettings()
 
 const showCoordinates = ref<boolean>(initialShowCoordinates)
@@ -91,6 +103,9 @@ const engineLogLineLimit = ref<number>(initialEngineLogLineLimit)
 const showChineseNotation = ref<boolean>(initialShowChineseNotation)
 const showLuckIndex = ref<boolean>(initialShowLuckIndex)
 const showArrows = ref<boolean>(initialShowArrows)
+const showBookMoves = ref<boolean>(initialShowBookMoves)
+const openingBookEnableInGame = ref<boolean>(initialOpeningBookEnableInGame)
+const openingBookPreferHighPriority = ref<boolean>(initialOpeningBookPreferHighPriority)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -110,6 +125,9 @@ watch(
     showChineseNotation,
     showLuckIndex,
     showArrows,
+    showBookMoves,
+    openingBookEnableInGame,
+    openingBookPreferHighPriority,
   ],
   async ([
     newShowCoordinates,
@@ -124,6 +142,9 @@ watch(
     newShowChineseNotation,
     newShowLuckIndex,
     newShowArrows,
+    newShowBookMoves,
+    newOpeningBookEnableInGame,
+    newOpeningBookPreferHighPriority,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -141,6 +162,9 @@ watch(
       showChineseNotation: newShowChineseNotation,
       showLuckIndex: newShowLuckIndex,
       showArrows: newShowArrows,
+      showBookMoves: newShowBookMoves,
+      openingBookEnableInGame: newOpeningBookEnableInGame,
+      openingBookPreferHighPriority: newOpeningBookPreferHighPriority,
     }
 
     try {
@@ -172,6 +196,9 @@ export function useInterfaceSettings() {
       showChineseNotation.value = !!settings.showChineseNotation
       showLuckIndex.value = settings.showLuckIndex !== false
       showArrows.value = settings.showArrows !== false // Default to true
+      showBookMoves.value = settings.showBookMoves !== false // Default to true
+      openingBookEnableInGame.value = settings.openingBookEnableInGame !== false // Default to true
+      openingBookPreferHighPriority.value = settings.openingBookPreferHighPriority !== false // Default to true
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -198,6 +225,9 @@ export function useInterfaceSettings() {
     showChineseNotation,
     showLuckIndex,
     showArrows,
+    showBookMoves,
+    openingBookEnableInGame,
+    openingBookPreferHighPriority,
     loadSettings,
   }
 }

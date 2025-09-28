@@ -26,6 +26,9 @@ interface ConfigData {
     showChineseNotation: boolean
     showLuckIndex: boolean
     showArrows: boolean
+    showBookMoves: boolean
+    openingBookEnableInGame: boolean
+    openingBookPreferHighPriority: boolean
   }
   windowSettings: {
     width: number
@@ -94,6 +97,9 @@ const defaultConfig: ConfigData = {
     showChineseNotation: true,
     showLuckIndex: false,
     showArrows: true,
+    showBookMoves: true,
+    openingBookEnableInGame: true,
+    openingBookPreferHighPriority: true,
   },
   windowSettings: {
     width: 800,

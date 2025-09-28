@@ -112,7 +112,7 @@
           <v-spacer />
 
           <v-switch
-            v-model="gameState.showBookMoves.value"
+            v-model="showBookMoves"
             hide-details
             density="compact"
             :label="$t('openingBook.show')"
@@ -161,7 +161,7 @@
   })
 
   // Display preferences
-  const { showChineseNotation } = useInterfaceSettings()
+  const { showChineseNotation, showBookMoves } = useInterfaceSettings()
 
   const getDisplayMoveText = (move: MoveData): string => {
     try {

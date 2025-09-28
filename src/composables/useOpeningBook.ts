@@ -1,5 +1,5 @@
 // Opening book composable for managing opening book functionality
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import type {
   MoveData,
@@ -8,20 +8,38 @@ import type {
   OpeningBookImportResult,
   JieqiOpeningBookConfig,
 } from '@/types/openingBook'
+import { useInterfaceSettings } from './useInterfaceSettings'
 
 export function useOpeningBook() {
   const isInitialized = ref(true) // SQLite database is always available
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Configuration
+  // Get persistent settings
+  const { 
+    showBookMoves, 
+    openingBookEnableInGame, 
+    openingBookPreferHighPriority 
+  } = useInterfaceSettings()
+
+  // Configuration - now uses persistent settings
   const config = reactive<JieqiOpeningBookConfig>({
     dbPath: 'jieqi_openings.jb',
     autoLoad: true,
-    enableInGame: true,
-    showBookMoves: true,
-    preferHighPriority: true,
+    enableInGame: openingBookEnableInGame.value,
+    showBookMoves: showBookMoves.value,
+    preferHighPriority: openingBookPreferHighPriority.value,
   })
+
+  // Sync config with persistent settings
+  watch(
+    [openingBookEnableInGame, showBookMoves, openingBookPreferHighPriority],
+    ([newEnableInGame, newShowBookMoves, newPreferHighPriority]) => {
+      config.enableInGame = newEnableInGame
+      config.showBookMoves = newShowBookMoves
+      config.preferHighPriority = newPreferHighPriority
+    }
+  )
 
   // Statistics
   const stats = ref<OpeningBookStats>({
@@ -121,6 +139,11 @@ export function useOpeningBook() {
 
   // Get the best move for a position (used for auto-play when enableInGame is true)
   const getBestMove = async (fen: string): Promise<string | null> => {
+    // Check if opening book is enabled in game
+    if (!config.enableInGame) {
+      return null
+    }
+
     const moves = await queryMoves(fen)
     if (moves.length === 0) return null
 
