@@ -404,10 +404,10 @@
   import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
 
   const { t } = useI18n()
-  const { 
-    showBookMoves, 
-    openingBookEnableInGame, 
-    openingBookPreferHighPriority 
+  const {
+    showBookMoves,
+    openingBookEnableInGame,
+    openingBookPreferHighPriority,
   } = useInterfaceSettings()
 
   // Props

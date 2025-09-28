@@ -16,10 +16,10 @@ export function useOpeningBook() {
   const error = ref<string | null>(null)
 
   // Get persistent settings
-  const { 
-    showBookMoves, 
-    openingBookEnableInGame, 
-    openingBookPreferHighPriority 
+  const {
+    showBookMoves,
+    openingBookEnableInGame,
+    openingBookPreferHighPriority,
   } = useInterfaceSettings()
 
   // Configuration - now uses persistent settings

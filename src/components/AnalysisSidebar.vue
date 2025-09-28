@@ -1019,9 +1019,7 @@
   const selectedEngineId = ref<string | null>(null)
 
   /* ---------- Opening Book State ---------- */
-  const showOpeningBookPanel = computed(
-    () => showBookMoves.value !== false
-  )
+  const showOpeningBookPanel = computed(() => showBookMoves.value !== false)
   const showOpeningBookDetail = ref(false)
 
   /* ---------- JAI Match Mode State ---------- */

@@ -47,7 +47,8 @@ const getInitialSettings = () => {
       showArrows: settings.showArrows !== false, // Default to true
       showBookMoves: settings.showBookMoves !== false, // Default to true
       openingBookEnableInGame: settings.openingBookEnableInGame !== false, // Default to true
-      openingBookPreferHighPriority: settings.openingBookPreferHighPriority !== false, // Default to true
+      openingBookPreferHighPriority:
+        settings.openingBookPreferHighPriority !== false, // Default to true
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -105,7 +106,9 @@ const showLuckIndex = ref<boolean>(initialShowLuckIndex)
 const showArrows = ref<boolean>(initialShowArrows)
 const showBookMoves = ref<boolean>(initialShowBookMoves)
 const openingBookEnableInGame = ref<boolean>(initialOpeningBookEnableInGame)
-const openingBookPreferHighPriority = ref<boolean>(initialOpeningBookPreferHighPriority)
+const openingBookPreferHighPriority = ref<boolean>(
+  initialOpeningBookPreferHighPriority
+)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -198,7 +201,8 @@ export function useInterfaceSettings() {
       showArrows.value = settings.showArrows !== false // Default to true
       showBookMoves.value = settings.showBookMoves !== false // Default to true
       openingBookEnableInGame.value = settings.openingBookEnableInGame !== false // Default to true
-      openingBookPreferHighPriority.value = settings.openingBookPreferHighPriority !== false // Default to true
+      openingBookPreferHighPriority.value =
+        settings.openingBookPreferHighPriority !== false // Default to true
 
       isConfigLoaded.value = true
     } catch (error) {
