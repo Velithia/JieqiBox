@@ -105,6 +105,15 @@
         :title="$t('toolbar.variation')"
       />
       <v-btn
+        icon="mdi-ray-start-arrow"
+        size="small"
+        color="green"
+        variant="text"
+        @click="handleAnalyzeDrawings"
+        :disabled="!isAnalyzeDrawingsAvailable"
+        :title="$t('toolbar.analyzeDrawings')"
+      />
+      <v-btn
         icon="mdi-folder-open"
         size="small"
         color="blue-grey"
@@ -197,6 +206,9 @@
 
   // Variation analysis state
   const excludedMoves = ref<string[]>([])
+  // Drawings analysis state
+  const isWaitingToRestartForDrawings = ref(false)
+  const drawingsRestartData = ref<{ fen: string; moves: string[] } | null>(null)
 
   // Check if engine is currently analyzing (including pondering)
   const isAnalyzing = computed(() => engineState.isThinking?.value)
@@ -218,6 +230,9 @@
       engineState.pvMoves?.value?.length > 0 &&
       engineState.pvMoves.value[0]
   )
+
+  // Enable drawings analysis only during analysis
+  const isAnalyzeDrawingsAvailable = computed(() => isAnalyzing.value)
 
   // Toggle dark mode function
   const toggleDarkMode = () => {
@@ -294,6 +309,40 @@
     engineState.stopAnalysis({ playBestMoveOnStop: false })
   }
 
+  // Handle analyze drawings button click
+  const handleAnalyzeDrawings = () => {
+    if (!isAnalyzing.value) return
+
+    // 1) Get user-drawn arrow moves (UCI)
+    const arrowMoves: string[] = gameState.getUserArrowMovesUci
+      ? gameState.getUserArrowMovesUci()
+      : []
+
+    // 2) Get all legal moves for current position
+    const allLegalMoves: string[] = gameState.getAllLegalMovesForCurrentPosition
+      ? gameState.getAllLegalMovesForCurrentPosition()
+      : []
+
+    // 3) Intersect arrow moves with legal moves
+    const arrowSet = new Set(arrowMoves)
+    const filteredMoves = allLegalMoves.filter(m => arrowSet.has(m))
+
+    if (filteredMoves.length === 0) {
+      alert(t('toolbar.noDrawingMoves'))
+      return
+    }
+
+    // 4) Prepare restart with restricted searchmoves
+    drawingsRestartData.value = {
+      fen: gameState.generateFen(),
+      moves: filteredMoves,
+    }
+    isWaitingToRestartForDrawings.value = true
+
+    // 5) Stop current analysis first
+    engineState.stopAnalysis({ playBestMoveOnStop: false })
+  }
+
   // Watch for engine to stop and handle variation restart or state reset
   watch(engineState.isThinking, (thinking, wasThinking) => {
     // Case 1: We were waiting for a variation restart, and the engine has now stopped.
@@ -326,6 +375,25 @@
       isWaitingToRestartForVariation.value = false
       variationRestartData.value = null
     }
+    // Drawings analysis restart
+    else if (
+      wasThinking &&
+      !thinking &&
+      isWaitingToRestartForDrawings.value &&
+      drawingsRestartData.value
+    ) {
+      const { fen, moves } = drawingsRestartData.value
+      const infiniteSettings = {
+        movetime: 0,
+        maxThinkTime: 0,
+        maxDepth: 0,
+        maxNodes: 0,
+        analysisMode: 'infinite',
+      }
+      engineState.startAnalysis(infiniteSettings, [], fen, moves)
+      isWaitingToRestartForDrawings.value = false
+      drawingsRestartData.value = null
+    }
     // Case 2: Analysis has stopped for any other reason (e.g., manual stop, new game, etc.)
     // We check `!isWaitingToRestartForVariation` to avoid resetting during a variation sequence.
     else if (
@@ -353,6 +421,9 @@
       )
       engineState.clearSearchMoves()
     }
+    // Also reset drawings state
+    isWaitingToRestartForDrawings.value = false
+    drawingsRestartData.value = null
   }
 
   // Listen for position changes to reset variation state

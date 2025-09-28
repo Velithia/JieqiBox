@@ -634,6 +634,47 @@
     userArrows.value = []
   }
 
+  // Flip user drawings when board is flipped
+  const flipUserDrawings = () => {
+    // Flip circles
+    userCircles.value = userCircles.value.map(circle => {
+      const flippedRow = 9 - circle.row
+      const flippedCol = 8 - circle.col
+      const { x, y } = percentToSvgCoords(flippedRow, flippedCol)
+      return {
+        ...circle,
+        row: flippedRow,
+        col: flippedCol,
+        x,
+        y,
+      }
+    })
+
+    // Flip arrows
+    userArrows.value = userArrows.value.map(arrow => {
+      const flippedFromRow = 9 - arrow.fromRow
+      const flippedFromCol = 8 - arrow.fromCol
+      const flippedToRow = 9 - arrow.toRow
+      const flippedToCol = 8 - arrow.toCol
+      const { x: x1, y: y1 } = percentToSvgCoords(
+        flippedFromRow,
+        flippedFromCol
+      )
+      const { x: x2, y: y2 } = percentToSvgCoords(flippedToRow, flippedToCol)
+      return {
+        ...arrow,
+        fromRow: flippedFromRow,
+        fromCol: flippedFromCol,
+        toRow: flippedToRow,
+        toCol: flippedToCol,
+        x1,
+        y1,
+        x2,
+        y2,
+      }
+    })
+  }
+
   // Clear drawings on New Game only
   const handleForceStopAi = (e: CustomEvent) => {
     try {
@@ -652,6 +693,23 @@
       handleForceStopAi as EventListener
     )
   })
+
+  // Register user arrow provider to game-state
+  try {
+    const provider = () =>
+      userArrows.value.map(a => ({
+        fromRow: a.fromRow,
+        fromCol: a.fromCol,
+        toRow: a.toRow,
+        toCol: a.toCol,
+      }))
+    gs?.registerUserArrowProvider?.(provider)
+  } catch {}
+
+  // Register user drawings flip function to game-state
+  try {
+    gs?.registerUserDrawingsFlipFunction?.(flipUserDrawings)
+  } catch {}
 
   // Execute clear history and move after user confirmation
   const onConfirmClearHistory = () => {

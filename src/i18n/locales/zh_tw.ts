@@ -34,6 +34,8 @@ export default {
     gameTitle: '揭棋對局',
     interfaceSettings: '介面設定',
     variation: '禁止當前著法',
+    analyzeDrawings: '分析繪製著法',
+    noDrawingMoves: '沒有合法的繪製著法',
     noMoreVariations: '已無更多可變的走法',
     darkMode: '暗黑模式',
     lightMode: '亮色模式',

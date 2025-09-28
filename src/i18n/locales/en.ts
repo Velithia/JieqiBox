@@ -34,6 +34,8 @@ export default {
     gameTitle: 'Jieqi Game',
     interfaceSettings: 'Interface Settings',
     variation: 'Forbid Current Move',
+    analyzeDrawings: 'Analyze Drawings',
+    noDrawingMoves: 'No legal drawing moves',
     noMoreVariations: 'No more variations available',
     darkMode: 'Dark Mode',
     lightMode: 'Light Mode',

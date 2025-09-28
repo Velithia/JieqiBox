@@ -2765,7 +2765,12 @@ export function useChessGame() {
     // Update zIndex for all pieces based on new positions
     updateAllPieceZIndexes()
 
-    // Trigger arrow clear event
+    // Flip user drawings instead of clearing them
+    if (userDrawingsFlipFunction.value) {
+      userDrawingsFlipFunction.value()
+    }
+
+    // Trigger arrow clear event (for engine arrows only)
     triggerArrowClear()
     // Refresh opening book moves when navigating history
     queryOpeningBookMoves()
@@ -2779,6 +2784,50 @@ export function useChessGame() {
   // Trigger arrow clear
   const triggerArrowClear = () => {
     arrowClearCallbacks.value.forEach(callback => callback())
+  }
+
+  // ===== User-drawn arrows provider and helpers =====
+  type UserArrow = {
+    fromRow: number
+    fromCol: number
+    toRow: number
+    toCol: number
+  }
+  const userArrowProvider = ref<null | (() => UserArrow[])>(null)
+  const userDrawingsFlipFunction = ref<null | (() => void)>(null)
+
+  const registerUserArrowProvider = (provider: () => UserArrow[]) => {
+    userArrowProvider.value = provider
+  }
+
+  const registerUserDrawingsFlipFunction = (flipFunction: () => void) => {
+    userDrawingsFlipFunction.value = flipFunction
+  }
+
+  // Convert row/col to UCI coordinate, considering current flip state
+  const rcToUci = (r: number, c: number) => {
+    if (isBoardFlipped.value) {
+      const flippedRow = 9 - r
+      const flippedCol = 8 - c
+      return `${String.fromCharCode(97 + flippedCol)}${9 - flippedRow}`
+    } else {
+      return `${String.fromCharCode(97 + c)}${9 - r}`
+    }
+  }
+
+  // Get current user-drawn arrow moves in UCI format (from->to)
+  const getUserArrowMovesUci = (): string[] => {
+    const provider = userArrowProvider.value
+    if (!provider) return []
+    try {
+      const arrows = provider()
+      if (!Array.isArray(arrows)) return []
+      return arrows.map(
+        a => rcToUci(a.fromRow, a.fromCol) + rcToUci(a.toRow, a.toCol)
+      )
+    } catch {
+      return []
+    }
   }
 
   // Calculate all valid moves for a given piece
@@ -3108,6 +3157,9 @@ export function useChessGame() {
     isBoardFlipped,
     detectAndSetBoardFlip,
     registerArrowClearCallback,
+    registerUserArrowProvider,
+    registerUserDrawingsFlipFunction,
+    getUserArrowMovesUci,
     triggerArrowClear,
     isCurrentPositionInCheck,
     isInCheck,

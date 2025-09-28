@@ -34,6 +34,8 @@ export default {
     interfaceSettings: 'インターフェース設定',
     gameTitle: '揭棋ゲーム',
     variation: '現在の手を禁止',
+    analyzeDrawings: '描画解析',
+    noDrawingMoves: '有効な描画がありません',
     noMoreVariations: 'これ以上の変化はありません',
     darkMode: 'ダークモード',
     lightMode: 'ライトモード',

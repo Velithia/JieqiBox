@@ -34,6 +34,8 @@ export default {
     interfaceSettings: '界面设置',
     gameTitle: '揭棋对局',
     variation: '禁止当前着法',
+    analyzeDrawings: '分析绘制着法',
+    noDrawingMoves: '没有合法的绘制着法',
     noMoreVariations: '已无更多可变的走法',
     darkMode: '暗黑模式',
     lightMode: '亮色模式',

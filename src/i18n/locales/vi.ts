@@ -34,6 +34,8 @@ export default {
     gameTitle: 'Ván Cờ úp',
     interfaceSettings: 'Cài đặt giao diện',
     variation: 'Cấm nước đi hiện tại',
+    analyzeDrawings: 'Phân tích nước cờ đã vẽ',
+    noDrawingMoves: 'Không có nước cờ hợp lệ được vẽ',
     noMoreVariations: 'Không còn biến thể nào khả dụng',
     darkMode: 'Chế độ tối',
     lightMode: 'Chế độ sáng',
