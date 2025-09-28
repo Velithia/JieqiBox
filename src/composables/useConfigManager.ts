@@ -374,7 +374,14 @@ export function useConfigManager() {
     options: Record<string, any>
   ) => {
     const key = `UciOptions_${engineId}`
-    configData.value[key] = { ...(configData.value[key] || {}), ...options }
+    // Replace saved options entirely so removed keys do not persist
+    if (options && Object.keys(options).length === 0) {
+      if (configData.value[key]) {
+        delete configData.value[key]
+      }
+    } else {
+      configData.value[key] = { ...options }
+    }
     await saveConfig()
   }
 
