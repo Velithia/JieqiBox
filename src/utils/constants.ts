@@ -5,7 +5,7 @@
  * Format: board layout current side hidden pieces halfmove fullmove (New FEN format)
  */
 export const START_FEN =
-  'xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX w A2B2N2R2C2P5a2b2n2r2c2p5 0 1'
+  'xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX w A2B2N2R2C2P5a2b2n2r2c2p5 - 0 1'
 
 /**
  * Piece type mapping table
