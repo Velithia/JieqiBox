@@ -89,7 +89,7 @@ export function useOpeningBook() {
           losses,
           allowed,
           comment,
-        }
+        },
       })
       if (success) {
         await updateStats()
