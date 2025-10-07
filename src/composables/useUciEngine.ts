@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { useI18n } from 'vue-i18n'
 import { useConfigManager, type ManagedEngine } from './useConfigManager' // Import new types
+import { useInterfaceSettings } from './useInterfaceSettings'
 import { uciToChineseMoves } from '@/utils/chineseNotation'
 import {
   evaluateAdvancedScript,
@@ -16,6 +17,8 @@ export interface EngineLine {
 
 export function useUciEngine(generateFen: () => string, gameState: any) {
   const { t } = useI18n()
+  const { useNewFenFormat } = useInterfaceSettings()
+  const { convertFenFormat } = gameState
   const engineOutput = ref<EngineLine[]>([])
   const isEngineLoaded = ref(false)
   const isEngineLoading = ref(false) // Add a new state for engine loading
@@ -276,7 +279,11 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
           if (showChineseNotation && mv) {
             try {
               // Use the current FEN to convert the best move to Chinese notation
-              const rootFen = generateFen()
+              let rootFen = generateFen()
+              // Convert FEN to new format if necessary (Chinese notation parser requires new format)
+              if (!useNewFenFormat.value) {
+                rootFen = convertFenFormat(rootFen, 'new')
+              }
               const chineseMoves = uciToChineseMoves(rootFen, mv)
               const chineseMove = chineseMoves[0] || mv
               analysis.value = t('uci.bestMove', { move: chineseMove })

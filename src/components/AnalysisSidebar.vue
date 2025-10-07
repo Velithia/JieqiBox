@@ -949,6 +949,7 @@
     showChineseNotation,
     showLuckIndex,
     showBookMoves,
+    useNewFenFormat,
   } = useInterfaceSettings()
 
   // Get persistent game settings
@@ -2605,9 +2606,14 @@
           // Use the recorded analysis-time root FEN and prefix moves so PV stays stable across navigation
           // Use the analysis-start UI FEN and convert the PV. When pondering with a known expected move,
           // prepend that move to the PV so conversion happens from the correct position.
-          const rootFen = isMatchMode.value
+          let rootFen = isMatchMode.value
             ? gameState.generateFen()
             : lastAnalysisFen.value || gameState.generateFen()
+
+          // Convert FEN to new format if necessary (Chinese notation parser requires new format)
+          if (!useNewFenFormat.value && gameState.convertFenFormat) {
+            rootFen = gameState.convertFenFormat(rootFen, 'new')
+          }
 
           let pvToConvert: string = info.pv
           if (
