@@ -1216,12 +1216,8 @@
     const h = history.value.slice(0, currentMoveIndex.value)
     for (let i = h.length - 1; i >= 0; i--) {
       const entry = h[i]
-      // Position edits reset the engine state (but not regular piece count adjustments)
-      if (
-        entry.type === 'adjust' &&
-        typeof entry.data === 'string' &&
-        entry.data.startsWith('position_edit:')
-      ) {
+      // All adjust operations reset the engine state
+      if (entry.type === 'adjust') {
         return i
       }
       const prevFen = i === 0 ? initialFen.value : h[i - 1].fen
