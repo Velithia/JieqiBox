@@ -80,14 +80,16 @@ export function useOpeningBook() {
   ): Promise<boolean> => {
     try {
       const success = await invoke<boolean>('opening_book_add_entry', {
-        fen,
-        uciMove,
-        priority,
-        wins,
-        draws,
-        losses,
-        allowed,
-        comment,
+        request: {
+          fen,
+          uci_move: uciMove,
+          priority,
+          wins,
+          draws,
+          losses,
+          allowed,
+          comment,
+        }
       })
       if (success) {
         await updateStats()
