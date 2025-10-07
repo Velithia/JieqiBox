@@ -2557,7 +2557,8 @@
     }
 
     // 2. Normalize to Red's perspective based on current side to move
-    if (sideToMove.value === 'black') {
+    // Check last analysis FEN for side to move indicator
+    if (lastAnalysisFen.value.includes(' b ')) {
       scoreValue = -scoreValue
     }
 
