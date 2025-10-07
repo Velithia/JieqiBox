@@ -2604,7 +2604,7 @@
           // prepend that move to the PV so conversion happens from the correct position.
           let rootFen = isMatchMode.value
             ? gameState.generateFen()
-            : lastAnalysisFen.value || gameState.generateFen()
+            : engineState.analysisUiFen.value || gameState.generateFen()
 
           // Convert FEN to new format if necessary (Chinese notation parser requires new format)
           if (!useNewFenFormat.value && gameState.convertFenFormat) {
