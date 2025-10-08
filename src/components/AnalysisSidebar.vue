@@ -2555,7 +2555,7 @@
 
     // 2. Normalize to Red's perspective based on current side to move
     // Check last analysis FEN for side to move indicator
-    if (lastAnalysisFen.value.includes(' b ')) {
+    if (engineState.analysisUiFen.value.includes(' b ')) {
       scoreValue = -scoreValue
     }
 
