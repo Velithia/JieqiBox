@@ -276,11 +276,11 @@ function fourthChar(
     return side === 'w' ? redFileNumChar(toF) : blackFileNumChar(toF)
   }
   const t = pieceLetter.toLowerCase()
-  if (t === 'r' || t === 'c' || t === 'p') {
+  if (t === 'r' || t === 'c' || t === 'p' || t === 'k') {
     const steps = Math.abs(toR - fromR)
     return side === 'w' ? redStepChar(steps) : blackDigitChar(steps)
   }
-  // N, B, A, K use destination file number for 进/退
+  // N, B, A use destination file number for 进/退
   return side === 'w' ? redFileNumChar(toF) : blackFileNumChar(toF)
 }
 
