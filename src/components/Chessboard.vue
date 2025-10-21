@@ -805,7 +805,8 @@
     }
 
     // 1. If in tournament mode and JAI engine has analysis info, display arrows from JAI analysis
-    if (isMatchMode && jaiAnalysisInfo) {
+    // Only show arrows when match is actually running
+    if (isMatchMode && isMatchRunning.value && jaiAnalysisInfo) {
       const jaiPvMoves = parseJaiAnalysisInfoForPV(jaiAnalysisInfo)
       if (jaiPvMoves.length > 0) {
         const arrows: Arrow[] = []
@@ -888,6 +889,7 @@
     // Track JAI engine analysis info for tournament mode
     void jaiEngine?.analysisInfo?.value // track JAI analysis info
     void (window as any).__MATCH_MODE__ // track match mode state
+    void isMatchRunning.value // track match running state
     updateArrow()
   })
 
