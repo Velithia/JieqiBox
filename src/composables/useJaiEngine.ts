@@ -161,6 +161,10 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
             console.log('[DEBUG] JAI: Reset move index to 0 for new game')
           }
 
+          // Clear engine output to prevent old score data from being recorded to move history
+          engineOutput.value = []
+          analysisInfo.value = ''
+
           gameState.loadFen(fenString, false) // No animation when loading from JAI engine
         }
       }
