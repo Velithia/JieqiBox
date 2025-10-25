@@ -937,22 +937,28 @@
       es.stopAnalysis()
     }
 
-    // Get FEN string from clipboard
-    const clipboardText = await navigator.clipboard.readText()
+    try {
+      // Get FEN string from clipboard using backend command
+      const { invoke } = await import('@tauri-apps/api/core')
+      const clipboardText = await invoke('paste_from_clipboard')
 
-    // Clean the FEN string
-    const trimmedFen = clipboardText.trim()
+      // Clean the FEN string
+      const trimmedFen = clipboardText.trim()
 
-    // Validate FEN before applying
-    if (trimmedFen && !validateJieqiFen(trimmedFen)) {
-      console.warn('Invalid FEN format pasted from clipboard:', trimmedFen)
-      // Optionally show an error message to the user
-      alert(t('errors.invalidFenFormat'))
-      return
+      // Validate FEN before applying
+      if (trimmedFen && !validateJieqiFen(trimmedFen)) {
+        console.warn('Invalid FEN format pasted from clipboard:', trimmedFen)
+        // Optionally show an error message to the user
+        alert(t('errors.invalidFenFormat'))
+        return
+      }
+
+      // Apply the FEN string to the game using the same method as FEN input dialog
+      gs.confirmFenInput(trimmedFen)
+    } catch (e) {
+      console.error('粘贴FEN失败', e)
+      alert('无法从剪贴板读取内容，请检查应用权限。')
     }
-
-    // Apply the FEN string to the game using the same method as FEN input dialog
-    gs.confirmFenInput(trimmedFen)
   }
 
   /* ===== Arrow Colors ===== */

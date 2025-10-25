@@ -667,7 +667,7 @@
     }
 
     try {
-      // 数据清洗与范围限制
+      // Data cleaning and range limitation
       const toInt = (v: unknown, def = 0) => {
         const n = parseInt(String(v as any), 10)
         return Number.isFinite(n) ? n : def

@@ -14,6 +14,7 @@ use std::fs;
 use base64::Engine;
 #[cfg(target_os = "android")]
 use std::os::unix::fs::PermissionsExt;
+use clipboard::{ClipboardContext, ClipboardProvider};
 
 mod opening_book;
 use opening_book::{JieqiOpeningBook, MoveData, OpeningBookStats, AddEntryRequest};
@@ -792,6 +793,64 @@ async fn opening_book_import_db(source_path: String, app: AppHandle) -> Result<(
     Ok(())
 }
 
+/// Save game notation with a file dialog (for desktop platforms)
+/// On Android, this delegates to the existing save_game_notation function
+#[tauri::command]
+async fn save_game_notation_with_dialog(content: String, default_filename: String, app: AppHandle) -> Result<String, String> {
+    #[cfg(target_os = "android")]
+    {
+        // On Android, use the existing save_game_notation logic
+        return save_game_notation(content, default_filename, app).await;
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        use tauri_plugin_dialog::{DialogExt, FilePath};
+        
+        // Show save file dialog
+        let file_path = app.dialog()
+            .file()
+            .set_file_name(&default_filename)
+            .add_filter("JSON files", &["json"])
+            .add_filter("All files", &["*"])
+            .blocking_save_file();
+
+        match file_path {
+            Some(FilePath::Path(path)) => {
+                // Write content to the selected file
+                fs::write(&path, content)
+                    .map_err(|e| format!("Failed to write file: {}", e))?;
+                
+                Ok(path.to_string_lossy().to_string())
+            },
+            Some(FilePath::Url(_)) => {
+                Err("URL paths are not supported".to_string())
+            },
+            None => {
+                Err("Save dialog was cancelled".to_string())
+            }
+        }
+    }
+}
+
+/// Copy text to clipboard
+#[tauri::command]
+async fn copy_to_clipboard(text: String, _app: AppHandle) -> Result<(), String> {
+    let mut ctx: ClipboardContext = ClipboardProvider::new()
+        .map_err(|e| format!("Failed to access clipboard: {}", e))?;
+    ctx.set_contents(text)
+        .map_err(|e| format!("Failed to copy to clipboard: {}", e))
+}
+
+/// Paste text from clipboard
+#[tauri::command]
+async fn paste_from_clipboard(_app: AppHandle) -> Result<String, String> {
+    let mut ctx: ClipboardContext = ClipboardProvider::new()
+        .map_err(|e| format!("Failed to access clipboard: {}", e))?;
+    ctx.get_contents()
+        .map_err(|e| format!("Failed to paste from clipboard: {}", e))
+}
+
 // The main entry point for the Tauri application.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -811,6 +870,9 @@ pub fn run() {
             clear_config,
             save_autosave,
             load_autosave,
+            save_game_notation_with_dialog,
+            copy_to_clipboard,
+            paste_from_clipboard,
             // Opening book commands
             opening_book_add_entry,
             opening_book_delete_entry,

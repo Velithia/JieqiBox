@@ -2406,14 +2406,15 @@ export function useChessGame() {
     try {
       // Use the same FEN generation logic as the engine to ensure consistency
       const fen = generateFen()
-      await navigator.clipboard.writeText(fen)
+      const { invoke } = await import('@tauri-apps/api/core')
+      await invoke('copy_to_clipboard', { text: fen })
       copySuccessVisible.value = true
       setTimeout(() => {
         copySuccessVisible.value = false
       }, 2000)
     } catch (e) {
       console.error('复制FEN失败', e)
-      alert('无法复制FEN，你的浏览器可能不支持。')
+      alert('无法复制FEN，请检查应用权限。')
     }
   }
 
@@ -2589,17 +2590,15 @@ export function useChessGame() {
           `棋谱已保存到Android外部存储（${savedPath}），用户可通过文件管理器访问`
         )
       } else {
-        // Use browser download for desktop platforms
-        const blob = new Blob([content], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `揭棋对局_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
+        // Use backend command with file dialog for desktop platforms
+        const filename = `揭棋对局_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
+        const { invoke } = await import('@tauri-apps/api/core')
+        const savedPath = await invoke('save_game_notation_with_dialog', {
+          content,
+          defaultFilename: filename,
+        })
+        console.log('Game notation saved to:', savedPath)
+        alert(`棋谱已保存到: ${savedPath}`)
       }
     } catch (error) {
       console.error('保存棋谱失败:', error)
