@@ -1105,9 +1105,7 @@ export function useChessGame() {
               if (
                 line.kind === 'recv' &&
                 line.text.includes('score') &&
-                line.text.startsWith('info depth') &&
-                !line.text.includes('lowerbound') &&
-                !line.text.includes('upperbound')
+                line.text.startsWith('info depth')
               ) {
                 lastValidScoreLine = line.text
                 console.log(
@@ -1126,9 +1124,7 @@ export function useChessGame() {
             const line = engineOutput[i]
             if (
               line.kind === 'recv' &&
-              line.text.includes('score') &&
-              !line.text.includes('lowerbound') &&
-              !line.text.includes('upperbound')
+              line.text.includes('score')
             ) {
               lastValidScoreLine = line.text
               break

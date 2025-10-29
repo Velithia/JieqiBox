@@ -104,9 +104,7 @@
         const text = line?.text || ''
         if (
           line?.kind === 'recv' &&
-          text.includes('score') &&
-          !text.includes('lowerbound') &&
-          !text.includes('upperbound')
+          text.includes('score')
         ) {
           lastLine = text
           console.log('[EXTRACT DEBUG] Found score line at index:', i, text)

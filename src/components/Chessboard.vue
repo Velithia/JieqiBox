@@ -1020,7 +1020,6 @@
   /* ===== Evaluation Bar (cp -> percent) ===== */
   const extractCpFromInfoLine = (line: string): number | null => {
     if (!line) return null
-    if (line.includes('lowerbound') || line.includes('upperbound')) return null
     const m = line.match(/score\s+(cp|mate)\s+(-?\d+)/)
     if (!m) return null
     const type = m[1]
