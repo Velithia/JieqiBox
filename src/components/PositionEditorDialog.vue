@@ -813,7 +813,7 @@
     reclassifyAllDarkPieces()
 
     if (gameState.toggleBoardFlip) {
-      gameState.toggleBoardFlip(false)
+      gameState.toggleBoardFlip()
     }
   }
 
@@ -1428,7 +1428,7 @@
 
     // Auto-flip board if needed
     if (needsAutoFlip && gameState.toggleBoardFlip) {
-      gameState.toggleBoardFlip(true)
+      gameState.toggleBoardFlip()
     }
 
     // Update unrevealed piece counts

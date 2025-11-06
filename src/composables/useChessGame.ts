@@ -2741,15 +2741,13 @@ export function useChessGame() {
 
     // If the board was flipped before detection, flip it back
     if (isBoardFlippedBeforeDetection) {
-      toggleBoardFlip(false)
+      toggleBoardFlip()
     }
   }
 
   // Toggle the board flip state
-  const toggleBoardFlip = (isAutoFlip = false) => {
-    if (!isAutoFlip) {
-      isBoardFlipped.value = !isBoardFlipped.value
-    }
+  const toggleBoardFlip = () => {
+    isBoardFlipped.value = !isBoardFlipped.value
 
     // Flip the positions of all pieces - both vertically and horizontally
     pieces.value = pieces.value.map(piece => ({

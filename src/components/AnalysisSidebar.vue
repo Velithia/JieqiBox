@@ -171,7 +171,7 @@
         {{ $t('analysis.undoMove') }}
       </v-btn>
       <v-btn
-        @click="toggleBoardFlip(false)"
+        @click="toggleBoardFlip()"
         color="cyan"
         class="grouped-btn"
         size="small"
