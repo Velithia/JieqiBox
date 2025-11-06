@@ -23,14 +23,7 @@
         <p class="text-caption mt-2">{{ $t('openingBook.initializing') }}</p>
       </div>
 
-      <div v-else-if="currentMoves.length === 0" class="text-center py-4">
-        <v-icon color="grey" size="32">mdi-book-search</v-icon>
-        <p class="text-caption mt-2 text-grey">
-          {{ $t('openingBook.noMoves') }}
-        </p>
-      </div>
-
-      <div v-else>
+      <div v-if="currentMoves.length > 0">
         <div class="mb-2 d-flex align-center">
           <span class="text-caption text-grey">
             {{ $t('openingBook.foundMoves', { count: currentMoves.length }) }}
@@ -94,35 +87,131 @@
             }}</v-icon>
           </v-btn>
         </div>
+      </div>
 
-        <v-divider class="my-2" />
+      <div v-else class="text-center py-4">
+        <v-icon color="grey" size="32">mdi-book-search</v-icon>
+        <p class="text-caption mt-2 text-grey">
+          {{ $t('openingBook.noMoves') }}
+        </p>
+      </div>
 
-        <div class="d-flex gap-1">
-          <v-btn
-            size="small"
-            variant="tonal"
-            color="secondary"
-            @click="getBookMove"
-            :disabled="allowedMoves.length === 0"
-            :title="$t('openingBook.getBookMove')"
-          >
-            <v-icon size="16">mdi-auto-fix</v-icon>
-          </v-btn>
+      <v-divider class="my-2" />
 
-          <v-spacer />
+      <div class="d-flex gap-1">
+        <v-btn
+          size="small"
+          variant="tonal"
+          color="secondary"
+          @click="getBookMove"
+          :disabled="allowedMoves.length === 0"
+          :title="$t('openingBook.getBookMove')"
+        >
+          <v-icon size="16">mdi-auto-fix</v-icon>
+        </v-btn>
 
-          <v-switch
-            v-model="showBookMoves"
-            hide-details
-            density="compact"
-            :label="$t('openingBook.show')"
-            color="primary"
-            class="show-switch"
-          />
-        </div>
+        <v-btn
+          size="small"
+          variant="tonal"
+          color="primary"
+          @click="addMarkedMoves"
+          :title="$t('openingBook.addMarkedMoves')"
+        >
+          <v-icon size="16">mdi-plus-box-multiple</v-icon>
+        </v-btn>
+
+        <v-spacer />
+
+        <v-switch
+          v-model="showBookMoves"
+          hide-details
+          density="compact"
+          :label="$t('openingBook.show')"
+          color="primary"
+          class="show-switch"
+        />
       </div>
     </v-card-text>
   </v-card>
+
+  <!-- Add Marked Moves Dialog -->
+  <v-dialog v-model="showAddMarkedMovesDialog" max-width="500px">
+    <v-card>
+      <v-card-title>
+        <v-icon class="mr-2">mdi-plus-box-multiple</v-icon>
+        {{ $t('openingBook.addMarkedMovesTitle') }}
+      </v-card-title>
+      <v-card-text>
+        <div v-if="markedMoves.length === 0" class="text-center py-4">
+          <v-icon color="grey" size="32">mdi-emoticon-sad-outline</v-icon>
+          <p class="text-caption mt-2 text-grey">
+            {{ $t('openingBook.noMarkedMoves') }}
+          </p>
+        </div>
+
+        <div v-else>
+          <p class="text-body-2 mb-4">
+            {{ $t('openingBook.markedMovesCount', { count: markedMoves.length }) }}
+          </p>
+
+          <v-form ref="batchFormRef" v-model="batchFormValid">
+            <v-text-field
+              v-model="batchFormState.priority"
+              :label="$t('openingBook.priority')"
+              type="number"
+              min="1"
+              max="200"
+              step="1"
+              inputmode="numeric"
+              :rules="priorityRules"
+            />
+
+            <v-switch
+              v-model="batchFormState.allowed"
+              :label="$t('openingBook.allowed')"
+              color="primary"
+            />
+
+            <v-textarea
+              v-model="batchFormState.comment"
+              :label="$t('openingBook.comment')"
+              rows="2"
+              auto-grow
+            />
+          </v-form>
+
+          <v-divider class="my-4" />
+
+          <div class="text-subtitle-2 mb-2">{{ $t('openingBook.batchSettings') }}:</div>
+          <div class="marked-moves-list">
+            <v-chip
+              v-for="move in markedMoves"
+              :key="move"
+              variant="outlined"
+              size="small"
+              class="mr-1 mb-1"
+            >
+              {{ getDisplayMoveTextFromUci(move) }}
+            </v-chip>
+          </div>
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn text @click="showAddMarkedMovesDialog = false">
+          {{ $t('common.cancel') }}
+        </v-btn>
+        <v-btn
+          color="primary"
+          @click="confirmAddMarkedMoves"
+          :disabled="!batchFormValid || markedMoves.length === 0"
+          :loading="addingMarkedMoves"
+        >
+          {{ $t('common.add') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -150,6 +239,16 @@
   // Local state
   const showMore = ref(false)
   const maxDisplayMoves = 5
+  const showAddMarkedMovesDialog = ref(false)
+  const addingMarkedMoves = ref(false)
+  const markedMoves = ref<string[]>([])
+  const batchFormValid = ref(false)
+  const batchFormRef = ref()
+  const batchFormState = ref({
+    priority: 100,
+    allowed: true,
+    comment: '',
+  })
 
   // Computed properties
   const currentMoves = computed(() => {
@@ -175,6 +274,18 @@
     }
   }
 
+  const getDisplayMoveTextFromUci = (uciMove: string): string => {
+    try {
+      if (!showChineseNotation.value) return uciMove
+      const fen = gameState?.generateFen ? gameState.generateFen() : ''
+      if (!fen) return uciMove
+      const converted = uciToChineseMoves(fen, [uciMove])
+      return converted && converted.length > 0 ? converted[0] : uciMove
+    } catch {
+      return uciMove
+    }
+  }
+
   const displayMoves = computed(() => {
     const moves = currentMoves.value
     if (showMore.value || moves.length <= maxDisplayMoves) {
@@ -182,6 +293,14 @@
     }
     return moves.slice(0, maxDisplayMoves)
   })
+
+  // Validation rules
+  const priorityRules = [
+    (v: string) => {
+      const num = parseInt(v, 10)
+      return (num >= 1 && num <= 200) || '优先级必须在 1-200 之间'
+    },
+  ]
 
   // Methods
   const getPriorityColor = (priority: number) => {
@@ -218,6 +337,65 @@
 
   const openDetailDialog = () => {
     emit('open-detail-dialog')
+  }
+
+  const addMarkedMoves = () => {
+    // Get user-drawn arrow moves (UCI format)
+    const arrowMoves: string[] = gameState.getUserArrowMovesUci
+      ? gameState.getUserArrowMovesUci()
+      : []
+
+    // Get all legal moves for current position
+    const allLegalMoves: string[] = gameState.getAllLegalMovesForCurrentPosition
+      ? gameState.getAllLegalMovesForCurrentPosition()
+      : []
+
+    // Intersect arrow moves with legal moves
+    const arrowSet = new Set(arrowMoves)
+    markedMoves.value = allLegalMoves.filter(m => arrowSet.has(m))
+
+    // Reset form state
+    batchFormState.value = {
+      priority: 100,
+      allowed: true,
+      comment: '',
+    }
+
+    showAddMarkedMovesDialog.value = true
+  }
+
+  const confirmAddMarkedMoves = async () => {
+    if (!batchFormValid.value || markedMoves.value.length === 0) return
+
+    try {
+      addingMarkedMoves.value = true
+
+      const { priority, allowed, comment } = batchFormState.value
+
+      // Add each marked move to the opening book
+      for (const uciMove of markedMoves.value) {
+        await gameState.addPositionToOpeningBook(
+          uciMove,
+          priority,
+          0, // wins
+          0, // draws
+          0, // losses
+          allowed,
+          comment
+        )
+      }
+
+      // Refresh the opening book moves
+      if (gameState.queryOpeningBookMoves) {
+        await gameState.queryOpeningBookMoves()
+      }
+
+      showAddMarkedMovesDialog.value = false
+    } catch (error) {
+      console.error('Error adding marked moves to opening book:', error)
+    } finally {
+      addingMarkedMoves.value = false
+    }
   }
 
   // Watch for book moves changes to auto-refresh
@@ -279,5 +457,13 @@
   :deep(.v-switch__thumb) {
     width: 12px;
     height: 12px;
+  }
+
+  .marked-moves-list {
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 4px;
+    padding: 8px;
   }
 </style>
