@@ -1,8 +1,8 @@
 [package]
 name = "jieqibox"
-version = "0.6.1"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.6.2"
+description = "A Modern Jieqi GUI"
+authors = ["Velithia"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
