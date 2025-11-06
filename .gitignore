@@ -111,6 +111,7 @@ temp/
 # Tauri specific
 src-tauri/target/
 src-tauri/Cargo.lock
+/target
 
 # Generated files
 *.generated.*
