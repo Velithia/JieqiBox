@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { useI18n } from 'vue-i18n'
 import { useConfigManager, type ManagedEngine } from './useConfigManager'
+import { useInterfaceSettings } from './useInterfaceSettings'
 
 export interface JaiEngineLine {
   text: string
@@ -22,6 +23,7 @@ export interface JaiOption {
 
 export function useJaiEngine(_generateFen: () => string, gameState: any) {
   const { t } = useI18n()
+  const { validationTimeout } = useInterfaceSettings()
   const engineOutput = ref<JaiEngineLine[]>([])
   const isEngineLoaded = ref(false)
   const isEngineLoading = ref(false)
@@ -364,17 +366,16 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
 
     // Prepare for validation
     jaiOkReceived.value = false
-    const validationTimeout = 5000 // 5 seconds
 
     // A promise that resolves when 'jaiok' is received
     const jaiOkPromise = new Promise<void>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(
           new Error(
-            `Validation timeout: No 'jaiok' received within ${validationTimeout}ms.`
+            `Validation timeout: No 'jaiok' received within ${validationTimeout.value}ms.`
           )
         )
-      }, validationTimeout)
+      }, validationTimeout.value)
 
       // Listen specifically for the jaiok signal
       listen<string>('engine-output', event => {

@@ -151,7 +151,9 @@
 
         <div v-else>
           <p class="text-body-2 mb-4">
-            {{ $t('openingBook.markedMovesCount', { count: markedMoves.length }) }}
+            {{
+              $t('openingBook.markedMovesCount', { count: markedMoves.length })
+            }}
           </p>
 
           <v-form ref="batchFormRef" v-model="batchFormValid">
@@ -182,7 +184,9 @@
 
           <v-divider class="my-4" />
 
-          <div class="text-subtitle-2 mb-2">{{ $t('openingBook.batchSettings') }}:</div>
+          <div class="text-subtitle-2 mb-2">
+            {{ $t('openingBook.batchSettings') }}:
+          </div>
           <div class="marked-moves-list">
             <v-chip
               v-for="move in markedMoves"

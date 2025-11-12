@@ -102,10 +102,7 @@
       for (let i = out.length - 1; i >= lowerBound; i--) {
         const line = out[i]
         const text = line?.text || ''
-        if (
-          line?.kind === 'recv' &&
-          text.includes('score')
-        ) {
+        if (line?.kind === 'recv' && text.includes('score')) {
           lastLine = text
           console.log('[EXTRACT DEBUG] Found score line at index:', i, text)
           break

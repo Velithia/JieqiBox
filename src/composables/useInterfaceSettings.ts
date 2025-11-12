@@ -27,6 +27,7 @@ const getInitialSettings = () => {
       showBookMoves: true,
       openingBookEnableInGame: true,
       openingBookPreferHighPriority: true,
+      validationTimeout: 5000,
     }
   }
 
@@ -49,6 +50,7 @@ const getInitialSettings = () => {
       openingBookEnableInGame: settings.openingBookEnableInGame !== false, // Default to true
       openingBookPreferHighPriority:
         settings.openingBookPreferHighPriority !== false, // Default to true
+      validationTimeout: settings.validationTimeout || 5000, // Default to 5000
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -69,6 +71,7 @@ const getInitialSettings = () => {
       showBookMoves: true,
       openingBookEnableInGame: true,
       openingBookPreferHighPriority: true,
+      validationTimeout: 5000,
     }
   }
 }
@@ -90,6 +93,7 @@ const {
   showBookMoves: initialShowBookMoves,
   openingBookEnableInGame: initialOpeningBookEnableInGame,
   openingBookPreferHighPriority: initialOpeningBookPreferHighPriority,
+  validationTimeout: initialValidationTimeout,
 } = getInitialSettings()
 
 const showCoordinates = ref<boolean>(initialShowCoordinates)
@@ -109,6 +113,7 @@ const openingBookEnableInGame = ref<boolean>(initialOpeningBookEnableInGame)
 const openingBookPreferHighPriority = ref<boolean>(
   initialOpeningBookPreferHighPriority
 )
+const validationTimeout = ref<number>(initialValidationTimeout)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -131,6 +136,7 @@ watch(
     showBookMoves,
     openingBookEnableInGame,
     openingBookPreferHighPriority,
+    validationTimeout,
   ],
   async ([
     newShowCoordinates,
@@ -148,6 +154,7 @@ watch(
     newShowBookMoves,
     newOpeningBookEnableInGame,
     newOpeningBookPreferHighPriority,
+    newValidationTimeout,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -168,6 +175,7 @@ watch(
       showBookMoves: newShowBookMoves,
       openingBookEnableInGame: newOpeningBookEnableInGame,
       openingBookPreferHighPriority: newOpeningBookPreferHighPriority,
+      validationTimeout: newValidationTimeout,
     }
 
     try {
@@ -203,6 +211,7 @@ export function useInterfaceSettings() {
       openingBookEnableInGame.value = settings.openingBookEnableInGame !== false // Default to true
       openingBookPreferHighPriority.value =
         settings.openingBookPreferHighPriority !== false // Default to true
+      validationTimeout.value = settings.validationTimeout || 5000 // Default to 5000
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -232,6 +241,7 @@ export function useInterfaceSettings() {
     showBookMoves,
     openingBookEnableInGame,
     openingBookPreferHighPriority,
+    validationTimeout,
     loadSettings,
   }
 }

@@ -17,7 +17,7 @@ export interface EngineLine {
 
 export function useUciEngine(generateFen: () => string, gameState: any) {
   const { t } = useI18n()
-  const { useNewFenFormat } = useInterfaceSettings()
+  const { useNewFenFormat, validationTimeout } = useInterfaceSettings()
   const { convertFenFormat } = gameState
   const engineOutput = ref<EngineLine[]>([])
   const isEngineLoaded = ref(false)
@@ -373,17 +373,16 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
 
     // Prepare for validation
     uciOkReceived.value = false
-    const validationTimeout = 5000 // 5 seconds
 
     // A promise that resolves when 'uciok' is received
     const uciOkPromise = new Promise<void>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(
           new Error(
-            `Validation timeout: No 'uciok' received within ${validationTimeout}ms.`
+            `Validation timeout: No 'uciok' received within ${validationTimeout.value}ms.`
           )
         )
-      }, validationTimeout)
+      }, validationTimeout.value)
 
       // Listen specifically for the uciok signal
       listen<string>('engine-output', event => {

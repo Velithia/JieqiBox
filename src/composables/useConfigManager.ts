@@ -23,6 +23,7 @@ interface ConfigData {
     autosave: boolean
     useNewFenFormat: boolean
     engineLogLineLimit: number
+    validationTimeout: number
     showChineseNotation: boolean
     showLuckIndex: boolean
     showArrows: boolean
@@ -94,6 +95,7 @@ const defaultConfig: ConfigData = {
     autosave: true,
     useNewFenFormat: true,
     engineLogLineLimit: 256,
+    validationTimeout: 5000,
     showChineseNotation: true,
     showLuckIndex: false,
     showArrows: true,

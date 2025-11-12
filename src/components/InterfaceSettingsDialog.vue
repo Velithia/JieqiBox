@@ -54,6 +54,17 @@
           variant="outlined"
           density="compact"
         ></v-text-field>
+        <v-text-field
+          v-model.number="validationTimeout"
+          :label="$t('interfaceSettings.validationTimeout')"
+          type="number"
+          min="1000"
+          max="30000"
+          step="1000"
+          color="primary"
+          variant="outlined"
+          density="compact"
+        ></v-text-field>
         <v-switch
           v-model="showChineseNotation"
           :label="$t('interfaceSettings.showChineseNotation')"
@@ -96,6 +107,7 @@
     autosave,
     useNewFenFormat,
     engineLogLineLimit,
+    validationTimeout,
     showChineseNotation,
     showLuckIndex,
     showArrows,

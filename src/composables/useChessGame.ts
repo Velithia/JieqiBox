@@ -1122,10 +1122,7 @@ export function useChessGame() {
           // Normal UCI mode: find the last valid score line
           for (let i = engineOutput.length - 1; i >= 0; i--) {
             const line = engineOutput[i]
-            if (
-              line.kind === 'recv' &&
-              line.text.includes('score')
-            ) {
+            if (line.kind === 'recv' && line.text.includes('score')) {
               lastValidScoreLine = line.text
               break
             }
