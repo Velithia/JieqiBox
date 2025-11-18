@@ -1,6 +1,6 @@
 [package]
 name = "jieqibox"
-version = "0.6.3"
+version = "0.6.4"
 description = "A Modern Jieqi GUI"
 authors = ["Velithia"]
 edition = "2021"
