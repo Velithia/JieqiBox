@@ -202,6 +202,7 @@ prev.prev - Previous-previous move (supports infinite nesting)`,
       unknownError: 'Unknown error',
     },
     showBoundingBoxes: 'Show bounding boxes',
+    preserveDarkPools: 'Preserve dark piece pools',
     validationStatus: {
       normal: 'Normal',
       error: 'Error: Dark piece count mismatch',

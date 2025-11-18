@@ -65,22 +65,32 @@
             </v-col>
           </v-row>
 
-          <!-- Current Side Indicator -->
+          <!-- Current side indicator + preserve toggle -->
           <v-row class="mb-2 side-to-move">
             <v-col cols="12">
-              <v-chip
-                :color="editingSideToMove === 'red' ? 'red' : 'black'"
-                text-color="white"
-                size="small"
-                class="side-indicator"
-              >
-                {{ $t('positionEditor.currentSide') }}:
-                {{
-                  editingSideToMove === 'red'
-                    ? $t('positionEditor.redToMove')
-                    : $t('positionEditor.blackToMove')
-                }}
-              </v-chip>
+              <div class="d-flex flex-wrap align-center justify-space-between gap-2">
+                <v-chip
+                  :color="editingSideToMove === 'red' ? 'red' : 'black'"
+                  text-color="white"
+                  size="small"
+                  class="side-indicator"
+                >
+                  {{ $t('positionEditor.currentSide') }}:
+                  {{
+                    editingSideToMove === 'red'
+                      ? $t('positionEditor.redToMove')
+                      : $t('positionEditor.blackToMove')
+                  }}
+                </v-chip>
+                <v-switch
+                  v-model="preserveDarkPools"
+                  :label="$t('positionEditor.preserveDarkPools')"
+                  color="primary"
+                  density="compact"
+                  hide-details
+                  class="preserve-switch"
+                ></v-switch>
+              </div>
             </v-col>
           </v-row>
 
@@ -426,6 +436,7 @@
   const editingPieces = ref<Piece[]>([])
   const editingSideToMove = ref<'red' | 'black'>('red')
   const selectedPiece = ref<Piece | null>(null)
+  const preserveDarkPools = ref(false)
 
   // Image recognition state
   const showImageRecognition = ref(false)
@@ -587,6 +598,7 @@
       reclassifyAllDarkPieces()
       editingSideToMove.value = gameState.sideToMove.value
       selectedPiece.value = null
+      preserveDarkPools.value = false
     }
   })
 
@@ -1431,9 +1443,19 @@
       gameState.toggleBoardFlip()
     }
 
-    // Update unrevealed piece counts
-    if (gameState.unrevealedPieceCounts) {
+    // Update unrevealed piece counts unless user opts to preserve
+    if (!preserveDarkPools.value && gameState.unrevealedPieceCounts) {
       gameState.unrevealedPieceCounts.value = newUnrevealedCounts
+    }
+
+    // Reset captured dark piece pool unless user opts to preserve
+    if (!preserveDarkPools.value && gameState.capturedUnrevealedPieceCounts) {
+      const resetCapturedCounts: { [key: string]: number } = {}
+      'RNBAKCP rnbakcp'
+        .split('')
+        .filter(c => c !== ' ')
+        .forEach(c => (resetCapturedCounts[c] = 0))
+      gameState.capturedUnrevealedPieceCounts.value = resetCapturedCounts
     }
 
     // Record the edit operation in history

@@ -201,6 +201,7 @@ prev.prev - 前々の手（無限ネスト対応）`,
       unknownError: '不明なエラー',
     },
     showBoundingBoxes: 'バウンディングボックスを表示',
+    preserveDarkPools: '暗子プールと取得暗子プールを保持',
     validationStatus: {
       normal: '正常',
       error: 'エラー: 暗子の数が一致しません',

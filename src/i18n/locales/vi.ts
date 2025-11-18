@@ -202,6 +202,7 @@ prev.prev - Nước đi trước-trước (hỗ trợ lồng nhau vô hạn)`,
       unknownError: 'Lỗi không xác định',
     },
     showBoundingBoxes: 'Hiển thị khung giới hạn',
+    preserveDarkPools: 'Giữ nguyên bể quân úp và đã ăn',
     validationStatus: {
       normal: 'Bình thường',
       error: 'Lỗi: Số lượng quân úp không khớp',

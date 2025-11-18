@@ -196,6 +196,7 @@ prev.prev - 上上步（支援無限巢狀）`,
       unknownError: '未知錯誤',
     },
     showBoundingBoxes: '顯示邊界框',
+    preserveDarkPools: '保留暗子池與吃暗子池',
     validationStatus: {
       normal: '正常',
       error: '錯誤: 暗子數量不匹配',
