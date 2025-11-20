@@ -70,6 +70,17 @@ interface ConfigData {
     aiSide: 'red' | 'black'
     showEngineAnalysis: boolean
   }
+  panelLayout?: Record<
+    string,
+    {
+      isDocked: boolean
+      x: number
+      y: number
+      width: number
+      height: number
+      order: number
+    }
+  >
   uciOptions: Record<string, Record<string, string | number | boolean>>
   jaiOptions: Record<string, Record<string, string | number | boolean>>
   locale: string
@@ -145,6 +156,9 @@ const defaultConfig: ConfigData = {
 
 // Current configuration data
 const configData = ref<ConfigData>({ ...defaultConfig })
+
+// Flag to track if config has been loaded
+const isConfigLoaded = ref(false)
 
 // Platform detection utility
 const isAndroidPlatform = computed(() => checkAndroidPlatform())
@@ -222,9 +236,18 @@ export function useConfigManager() {
             ...defaultConfig.gameSettings,
             ...parsedConfig.gameSettings,
           },
+          // Parse panel layout from string if it exists (Ini might flatten it or treat it as string)
+          panelLayout: parsedConfig.panelLayout
+            ? typeof parsedConfig.panelLayout === 'string'
+              ? JSON.parse(parsedConfig.panelLayout)
+              : parsedConfig.panelLayout
+            : {},
           uciOptions: parsedConfig.uciOptions || {},
           jaiOptions: parsedConfig.jaiOptions || {},
         }
+
+        // Mark config as loaded
+        isConfigLoaded.value = true
       }
     } catch (error) {
       console.error('Failed to load configuration:', error)
@@ -236,7 +259,15 @@ export function useConfigManager() {
   // Save configuration to file
   const saveConfig = async (): Promise<void> => {
     try {
-      const configIni = Ini.stringify(configData.value)
+      // Deep clone config to avoid mutating state during serialization prep
+      const configToSave = JSON.parse(JSON.stringify(configData.value))
+
+      // Serialize complex objects that Ini might not handle well
+      if (configToSave.panelLayout) {
+        configToSave.panelLayout = JSON.stringify(configToSave.panelLayout)
+      }
+
+      const configIni = Ini.stringify(configToSave)
       await invoke('save_config', { content: configIni })
     } catch (error) {
       console.error('Failed to save configuration:', error)
@@ -465,6 +496,16 @@ export function useConfigManager() {
     await saveConfig()
   }
 
+  // Panel Layout Management
+  const getPanelLayout = () => configData.value.panelLayout || {}
+
+  const updatePanelLayout = async (
+    layout: ConfigData['panelLayout']
+  ): Promise<void> => {
+    configData.value.panelLayout = layout
+    await saveConfig()
+  }
+
   // Reset all configuration to defaults
   const resetToDefaults = async (): Promise<void> => {
     configData.value = { ...defaultConfig }
@@ -484,6 +525,7 @@ export function useConfigManager() {
   return {
     // State
     configData,
+    isConfigLoaded,
     isAndroidPlatform,
 
     // Methods
@@ -503,6 +545,8 @@ export function useConfigManager() {
     updateMatchSettings,
     getHumanVsAiSettings,
     updateHumanVsAiSettings,
+    getPanelLayout,
+    updatePanelLayout,
     getEngines,
     saveEngines,
     getLastSelectedEngineId,

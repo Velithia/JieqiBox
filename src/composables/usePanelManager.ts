@@ -1,4 +1,5 @@
 import { reactive, toRefs, watch } from 'vue'
+import { useConfigManager } from '@/composables/useConfigManager'
 
 interface PanelState {
   id: string
@@ -7,9 +8,8 @@ interface PanelState {
   y: number
   width: number
   height: number
+  order: number
 }
-
-const PANELS_STORAGE_KEY = 'jieqibox-panels-layout'
 
 const defaultPanelStates: Record<string, Omit<PanelState, 'id'>> = {
   'dark-piece-pool': {
@@ -18,13 +18,7 @@ const defaultPanelStates: Record<string, Omit<PanelState, 'id'>> = {
     y: 0,
     width: 300,
     height: 250,
-  },
-  'capture-history': {
-    isDocked: true,
-    x: 0,
-    y: 0,
-    width: 300,
-    height: 200,
+    order: 0,
   },
   'engine-analysis': {
     isDocked: true,
@@ -32,12 +26,49 @@ const defaultPanelStates: Record<string, Omit<PanelState, 'id'>> = {
     y: 0,
     width: 400,
     height: 200,
+    order: 1,
   },
-  'luck-index': { isDocked: true, x: 0, y: 0, width: 400, height: 120 },
-  notation: { isDocked: true, x: 0, y: 0, width: 400, height: 200 },
-  'move-comments': { isDocked: true, x: 0, y: 0, width: 400, height: 250 },
-  'engine-log': { isDocked: true, x: 0, y: 0, width: 400, height: 200 },
-  'opening-book': { isDocked: true, x: 0, y: 0, width: 400, height: 260 },
+  'opening-book': {
+    isDocked: true,
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 260,
+    order: 2,
+  },
+  'luck-index': {
+    isDocked: true,
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 120,
+    order: 3,
+  },
+  notation: { isDocked: true, x: 0, y: 0, width: 400, height: 200, order: 4 },
+  'move-comments': {
+    isDocked: true,
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 250,
+    order: 5,
+  },
+  'engine-log': {
+    isDocked: true,
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 200,
+    order: 6,
+  },
+  'capture-history': {
+    isDocked: true,
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 200,
+    order: 7,
+  },
 }
 
 const store = reactive<{
@@ -46,51 +77,65 @@ const store = reactive<{
   panels: {},
 })
 
-function saveStateToLocalStorage() {
-  try {
-    localStorage.setItem(PANELS_STORAGE_KEY, JSON.stringify(store.panels))
-  } catch (e) {
-    console.error('Failed to save panel states to local storage', e)
-  }
-}
-
-function loadStateFromLocalStorage(): Record<string, PanelState> {
-  try {
-    const savedState = localStorage.getItem(PANELS_STORAGE_KEY)
-    if (savedState) {
-      const parsed = JSON.parse(savedState)
-      // Basic validation to ensure loaded data is not malformed
-      if (typeof parsed === 'object' && parsed !== null) {
-        return parsed
-      }
-    }
-  } catch (e) {
-    console.error('Failed to load panel states from local storage', e)
-  }
-  return {}
-}
-
 export function usePanelManager() {
+  const { getPanelLayout, updatePanelLayout, isConfigLoaded } =
+    useConfigManager()
+
   const initialize = () => {
-    const loadedPanels = loadStateFromLocalStorage()
-    const initialPanels: Record<string, PanelState> = {}
+    const loadPanelsFromConfig = () => {
+      const loadedPanels = getPanelLayout()
+      const initialPanels: Record<string, PanelState> = {}
 
-    Object.keys(defaultPanelStates).forEach(panelId => {
-      const defaultState = defaultPanelStates[panelId]
-      const loadedState = loadedPanels[panelId]
+      Object.keys(defaultPanelStates).forEach(panelId => {
+        const defaultState = defaultPanelStates[panelId]
+        const loadedState = loadedPanels ? loadedPanels[panelId] : undefined
 
-      initialPanels[panelId] = {
-        ...(loadedState || defaultState),
-        id: panelId,
-      }
-    })
+        initialPanels[panelId] = {
+          ...(loadedState || defaultState),
+          id: panelId,
+          // Ensure order is set even if loaded state is missing it (migration)
+          order:
+            loadedState?.order !== undefined
+              ? loadedState.order
+              : defaultState.order,
+        }
+      })
 
-    store.panels = initialPanels
+      store.panels = initialPanels
+    }
+
+    // If config is already loaded, initialize immediately
+    if (isConfigLoaded.value) {
+      loadPanelsFromConfig()
+    } else {
+      // Otherwise, wait for config to load
+      watch(
+        isConfigLoaded,
+        loaded => {
+          if (loaded) {
+            loadPanelsFromConfig()
+          }
+        },
+        { immediate: true }
+      )
+    }
 
     watch(
       () => store.panels,
       () => {
-        saveStateToLocalStorage()
+        // Convert reactive panel state to plain object for storage
+        const layoutToSave: Record<string, any> = {}
+        Object.values(store.panels).forEach(panel => {
+          layoutToSave[panel.id] = {
+            isDocked: panel.isDocked,
+            x: panel.x,
+            y: panel.y,
+            width: panel.width,
+            height: panel.height,
+            order: panel.order,
+          }
+        })
+        updatePanelLayout(layoutToSave)
       },
       { deep: true }
     )
@@ -114,6 +159,33 @@ export function usePanelManager() {
     if (store.panels[panelId]) {
       store.panels[panelId].isDocked = true
     }
+  }
+
+  const movePanelToOrder = (panelId: string, targetIndex: number) => {
+    if (!store.panels[panelId]) return
+
+    const panelsArray = Object.values(store.panels).sort(
+      (a, b) => a.order - b.order
+    )
+    const currentIndex = panelsArray.findIndex(p => p.id === panelId)
+
+    if (currentIndex === -1) return
+
+    // Remove from current position
+    panelsArray.splice(currentIndex, 1)
+
+    // Clamp target index
+    const clampedIndex = Math.max(0, Math.min(targetIndex, panelsArray.length))
+
+    // Insert at new position
+    panelsArray.splice(clampedIndex, 0, store.panels[panelId])
+
+    // Reassign orders sequentially (0, 1, 2, ...)
+    panelsArray.forEach((p, index) => {
+      if (store.panels[p.id]) {
+        store.panels[p.id].order = index
+      }
+    })
   }
 
   const undockPanel = (
@@ -145,6 +217,7 @@ export function usePanelManager() {
     getPanelState,
     updatePanelState,
     dockPanel,
+    movePanelToOrder,
     undockPanel,
     restoreDefaultLayout,
   }

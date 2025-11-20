@@ -187,7 +187,7 @@
     initialFen?: string
   }
   const props = withDefaults(defineProps<Props>(), {
-    initialFen: START_FEN
+    initialFen: START_FEN,
   })
   const emit = defineEmits<{
     (e: 'seek', moveIndex: number): void
@@ -466,7 +466,7 @@
         // Determine whose move this was based on the FEN after the move
         // Since the FEN shows whose turn it is AFTER this move, we need to invert
         const isRedMove = !isRedTurnFromFen(entry.fen)
-        
+
         let notation = entry.data
         if (showChineseNotation.value) {
           try {

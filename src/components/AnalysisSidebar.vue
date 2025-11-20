@@ -840,7 +840,7 @@
     </DraggablePanel>
 
     <!-- UCI Terminal Button -->
-    <div class="uci-terminal-section">
+    <div class="uci-terminal-section" style="order: 9998">
       <v-btn
         @click="showUciTerminalDialog = true"
         :disabled="!isEngineLoaded"
@@ -854,7 +854,7 @@
       </v-btn>
     </div>
 
-    <div class="about-section">
+    <div class="about-section" style="order: 9999">
       <v-btn
         @click="openAboutDialog"
         color="info"
