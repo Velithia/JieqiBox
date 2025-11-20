@@ -1,3 +1,5 @@
+import i18n from '../i18n'
+
 /**
  * Jieqi UCI to Chinese notation converter
  */
@@ -16,6 +18,26 @@ const FILES = 'abcdefghi'
 const RED_FILE_NUM = ['九', '八', '七', '六', '五', '四', '三', '二', '一'] // index 0..8
 const RED_STEPS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'] // use 1..9
 const FW_DIGITS = ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'] // full-width, use 1..9
+
+const TRADITIONAL_MAP: Record<string, string> = {
+  马: '馬',
+  车: '車',
+  帅: '帥',
+  将: '將',
+  进: '進',
+  后: '後',
+}
+
+function toTraditional(text: string): string {
+  // Check if current locale is traditional Chinese
+  // @ts-ignore
+  const locale = i18n.global.locale.value
+  if (locale !== 'zh_tw') return text
+  return text
+    .split('')
+    .map(char => TRADITIONAL_MAP[char] || char)
+    .join('')
+}
 
 // ----- Chinese names -----
 function cnName(letter: string): string {
@@ -413,7 +435,7 @@ function composeChineseNotation(
   if (extraCap) extras.push(`吃${cnName(extraCap)}`)
   if (extras.length) core += extras.join('')
 
-  return core
+  return toTraditional(core)
 }
 
 /**
