@@ -276,6 +276,7 @@
       v-if="showPositionChart"
       :history="history"
       :current-move-index="currentMoveIndex"
+      :initial-fen="unref(gs?.initialFen)"
       @seek="handleChartSeek"
     />
   </div>
@@ -290,6 +291,7 @@
     watchEffect,
     onMounted,
     onUnmounted,
+    unref,
   } from 'vue'
   import { useI18n } from 'vue-i18n'
   import type { Piece } from '@/composables/useChessGame'
