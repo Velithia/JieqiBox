@@ -301,7 +301,7 @@
                 <!-- Known Piece Selection -->
                 <div class="piece-category">
                   <h6 class="mb-1 desktop-only">
-                    {{ $t('positionEditor.brightPieces') }}
+                    {{ $t('positionEditor.revealedPieces') }}
                   </h6>
                   <div class="piece-grid">
                     <div
