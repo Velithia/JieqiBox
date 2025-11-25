@@ -100,6 +100,7 @@ export function useChessGame() {
   const unrevealedPieceCounts = ref<{ [key: string]: number }>({})
   const capturedUnrevealedPieceCounts = ref<{ [key: string]: number }>({})
   const isBoardFlipped = ref(false) // board flip state
+  const isHistoryNavigating = ref(false) // flag to indicate if we are navigating history
 
   // Get current unrevealed counts for display purposes (God view)
   const getCurrentUnrevealedCounts = () => {
@@ -2362,11 +2363,15 @@ export function useChessGame() {
   }
 
   const replayToMove = (index: number) => {
+    // Set history navigation flag to prevent user drawings from being flipped
+    isHistoryNavigating.value = true
+
     currentMoveIndex.value = index
     if (index === 0) {
       // Load the initial FEN (either default or user-input) to preserve history
       loadFen(initialFen.value, false) // No animation during history navigation
       lastMovePositions.value = null // Clear highlight at the start of the game
+      isHistoryNavigating.value = false
       return
     }
     const targetFen = history.value[index - 1].fen
@@ -2393,6 +2398,9 @@ export function useChessGame() {
         detail: { reason: 'replay-move' },
       })
     )
+
+    // Reset history navigation flag after all operations are complete
+    isHistoryNavigating.value = false
   }
 
   const copyFenToClipboard = async () => {
@@ -2757,8 +2765,8 @@ export function useChessGame() {
     // Update zIndex for all pieces based on new positions
     updateAllPieceZIndexes()
 
-    // Flip user drawings instead of clearing them
-    if (userDrawingsFlipFunction.value) {
+    // Flip user drawings instead of clearing them (skip during history navigation)
+    if (userDrawingsFlipFunction.value && !isHistoryNavigating.value) {
       userDrawingsFlipFunction.value()
     }
 
