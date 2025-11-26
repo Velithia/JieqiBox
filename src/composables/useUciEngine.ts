@@ -425,7 +425,9 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
       await uciOkPromise
 
       // Stop loading sound when engine is ready
-      console.log('[ENGINE_LOAD] Engine validation successful, stopping loading sound...')
+      console.log(
+        '[ENGINE_LOAD] Engine validation successful, stopping loading sound...'
+      )
       stopSoundLoop()
       console.log('[ENGINE_LOAD] stopSoundLoop called')
 

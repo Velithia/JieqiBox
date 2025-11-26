@@ -154,7 +154,7 @@ const playSound = (soundType: SoundType): void => {
     const audio = new Audio(soundFile)
     audio.volume = soundVolume.value
     audio.currentTime = 0 // Reset to start
-    
+
     // Clean up the audio element after it finishes playing to prevent memory leaks
     const handleEnded = () => {
       // Remove event listener and allow garbage collection
@@ -496,4 +496,3 @@ export function useSoundEffects() {
     preloadSounds,
   }
 }
-

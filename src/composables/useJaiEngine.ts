@@ -361,7 +361,9 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
     jaiOptions.value = [] // Clear JAI options array
 
     // Start playing loading sound in loop
-    console.log('[JAI_ENGINE_LOAD] Starting engine load, calling playSoundLoop...')
+    console.log(
+      '[JAI_ENGINE_LOAD] Starting engine load, calling playSoundLoop...'
+    )
     playSoundLoop('loading')
     console.log('[JAI_ENGINE_LOAD] playSoundLoop called')
 
@@ -418,7 +420,9 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
       await jaiOkPromise
 
       // Stop loading sound when engine is ready
-      console.log('[JAI_ENGINE_LOAD] Engine validation successful, stopping loading sound...')
+      console.log(
+        '[JAI_ENGINE_LOAD] Engine validation successful, stopping loading sound...'
+      )
       stopSoundLoop()
       console.log('[JAI_ENGINE_LOAD] stopSoundLoop called')
 
@@ -437,7 +441,9 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
       }, 100)
     } catch (e: any) {
       // Stop loading sound on error
-      console.log('[JAI_ENGINE_LOAD] Engine load failed, stopping loading sound...')
+      console.log(
+        '[JAI_ENGINE_LOAD] Engine load failed, stopping loading sound...'
+      )
       stopSoundLoop()
       console.log('[JAI_ENGINE_LOAD] stopSoundLoop called after error')
 

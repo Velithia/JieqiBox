@@ -68,7 +68,9 @@
           <!-- Current side indicator + preserve toggle -->
           <v-row class="mb-2 side-to-move">
             <v-col cols="12">
-              <div class="d-flex flex-wrap align-center justify-space-between gap-2">
+              <div
+                class="d-flex flex-wrap align-center justify-space-between gap-2"
+              >
                 <v-chip
                   :color="editingSideToMove === 'red' ? 'red' : 'black'"
                   text-color="white"

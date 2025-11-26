@@ -1387,7 +1387,8 @@ export function useChessGame() {
         p => p.isKnown && p.name === `${opponentSide}_king`
       )
       const isCheck =
-        opponentKing && isInCheck(opponentKing.row, opponentKing.col, opponentSide)
+        opponentKing &&
+        isInCheck(opponentKing.row, opponentKing.col, opponentSide)
 
       // Check if it's checkmate (opponent has no legal moves)
       const opponentLegalMoves = getAllLegalMovesForCurrentPosition()
@@ -1397,14 +1398,14 @@ export function useChessGame() {
       // Also check the global flag for AI moves
       const shouldSkipSound =
         skipSound || (window as any).__AI_MOVE_SKIP_SOUND__ === true
-      
+
       // Only reset the flags if we're not skipping sound (for AI moves, flags are reset in playMoveFromUci)
       if (!shouldSkipSound) {
         // Reset the flags after reading them
         lastMoveWasCapture.value = false
         lastMoveWasFlip.value = false
       }
-      
+
       if (!shouldSkipSound) {
         // Priority: checkmate > check > flip > capture > normal move
         if (isCheckmate) {
@@ -2362,39 +2363,40 @@ export function useChessGame() {
     // Only skip flip logic if there's explicit flip information (which engine never provides)
     const isMatchMode = (window as any).__MATCH_MODE__ || false
     const skipFlipLogic = hasExplicitFlip || isMatchMode
-    
+
     // For AI moves, play sounds in a unified way: lift sound first, then place sound
     // Set a flag to skip sound in recordAndFinalize (we'll play it here instead)
     ;(window as any).__AI_MOVE_SKIP_SOUND__ = true
-    
+
     // Play lift sound for AI moves
     playSound('liftOrRelease')
-    
+
     movePiece(piece, toRow, toCol, skipFlipLogic)
-    
+
     // After move is complete, play the appropriate place sound
     // Use nextTick to ensure the move is fully processed
     setTimeout(() => {
       // Check move type flags that were set in movePiece
       const isCapture = lastMoveWasCapture.value
       const isFlip = lastMoveWasFlip.value
-      
+
       // Reset the flags
       lastMoveWasCapture.value = false
       lastMoveWasFlip.value = false
-      
+
       // Check if the opponent is in check after this move
       const opponentSide = sideToMove.value // sideToMove was already flipped in recordAndFinalize
       const opponentKing = pieces.value.find(
         p => p.isKnown && p.name === `${opponentSide}_king`
       )
       const isCheck =
-        opponentKing && isInCheck(opponentKing.row, opponentKing.col, opponentSide)
-      
+        opponentKing &&
+        isInCheck(opponentKing.row, opponentKing.col, opponentSide)
+
       // Check if it's checkmate (opponent has no legal moves)
       const opponentLegalMoves = getAllLegalMovesForCurrentPosition()
       const isCheckmate = isCheck && opponentLegalMoves.length === 0
-      
+
       // Play appropriate sound based on move type
       // Priority: checkmate > check > flip > capture > normal move
       if (isCheckmate) {
@@ -2408,7 +2410,7 @@ export function useChessGame() {
       } else {
         playSound('liftOrRelease')
       }
-      
+
       // Clear the flag
       ;(window as any).__AI_MOVE_SKIP_SOUND__ = false
     }, 0)
