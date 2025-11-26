@@ -487,6 +487,8 @@ prev.prev - 上上步（支援無限巢狀）`,
     showChineseNotation: '顯示中文記譜法',
     showLuckIndex: '顯示幸運指數',
     showArrows: '顯示箭頭',
+    enableSoundEffects: '啟用音效',
+    soundVolume: '音效音量',
   },
 
   // UCI訊息

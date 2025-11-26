@@ -80,6 +80,27 @@
           :label="$t('interfaceSettings.showArrows')"
           color="primary"
         ></v-switch>
+        <v-divider class="my-2"></v-divider>
+        <v-switch
+          v-model="enableSoundEffects"
+          :label="$t('interfaceSettings.enableSoundEffects')"
+          color="primary"
+        ></v-switch>
+        <v-slider
+          v-model="soundVolume"
+          :label="$t('interfaceSettings.soundVolume')"
+          :disabled="!enableSoundEffects"
+          :min="0"
+          :max="100"
+          :step="5"
+          thumb-label
+          color="primary"
+          class="mt-2"
+        >
+          <template v-slot:append>
+            <span class="text-caption">{{ soundVolume }}%</span>
+          </template>
+        </v-slider>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -111,6 +132,8 @@
     showChineseNotation,
     showLuckIndex,
     showArrows,
+    enableSoundEffects,
+    soundVolume,
   } = useInterfaceSettings()
 
   const closeDialog = () => {

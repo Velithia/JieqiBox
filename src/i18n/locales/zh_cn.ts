@@ -571,6 +571,8 @@ prev.prev - 上上步（支持无限嵌套）`,
     showChineseNotation: '显示中文记谱法',
     showLuckIndex: '显示运气指数',
     showArrows: '显示箭头',
+    enableSoundEffects: '启用音效',
+    soundVolume: '音效音量',
   },
 
   // UCI消息

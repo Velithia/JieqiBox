@@ -13,6 +13,7 @@ import { useGameSettings } from './useGameSettings'
 import { useHumanVsAiSettings } from './useHumanVsAiSettings'
 import { convertXQFToJieqiNotation } from '@/utils/xqf'
 import { useOpeningBook } from './useOpeningBook'
+import { useSoundEffects } from './useSoundEffects'
 import type { MoveData } from '@/types/openingBook'
 
 // Create a global instance of Mersenne Twister
@@ -83,6 +84,9 @@ export function useChessGame() {
   // Get opening book settings
   const { showBookMoves } = useInterfaceSettings()
 
+  // Initialize sound effects
+  const { playSound } = useSoundEffects()
+
   // Initialize opening book
   const openingBook = useOpeningBook()
   const currentBookMoves = ref<MoveData[]>([])
@@ -122,6 +126,10 @@ export function useChessGame() {
   const isAnimating = ref(true) // Control piece movement animation switch
   // Keep this in sync with .piece.animated { transition: all 0.2s ease; }
   const MOVE_ANIMATION_DURATION_MS = 200
+
+  // Track move type for sound effects (set in movePiece, read in recordAndFinalize)
+  const lastMoveWasCapture = ref(false)
+  const lastMoveWasFlip = ref(false)
 
   // Game end dialog state
   const isGameEndDialogVisible = ref(false)
@@ -989,10 +997,14 @@ export function useChessGame() {
         // Human has no legal moves, AI wins
         gameEndResult.value = 'ai_wins'
         console.log('[DEBUG] GAME_END: AI wins')
+        // Play loss sound (checkmate sound already played in recordAndFinalize)
+        setTimeout(() => playSound('loss'), 300)
       } else {
         // AI has no legal moves, human wins
         gameEndResult.value = 'human_wins'
         console.log('[DEBUG] GAME_END: Human wins')
+        // Play win sound (checkmate sound already played in recordAndFinalize)
+        setTimeout(() => playSound('win'), 300)
       }
 
       // Show the game end dialog
@@ -1000,7 +1012,11 @@ export function useChessGame() {
     }
   }
 
-  const recordAndFinalize = (type: 'move' | 'adjust', data: string) => {
+  const recordAndFinalize = (
+    type: 'move' | 'adjust',
+    data: string,
+    skipSound: boolean = false
+  ) => {
     // Record move history: slice to current index position, then add new move record
     const newHistory = history.value.slice(0, currentMoveIndex.value)
 
@@ -1359,6 +1375,50 @@ export function useChessGame() {
 
       // Do not immediately reset z-index here; allow moving piece to stay on top
       // until the CSS transition completes. The reset is scheduled at move time.
+
+      // Play appropriate sound effect based on move type
+      // Use the flags set in movePiece which has the actual context
+      const isCapture = lastMoveWasCapture.value
+      const isFlip = lastMoveWasFlip.value
+
+      // Check if the opponent is in check after this move
+      const opponentSide = sideToMove.value // sideToMove was already flipped at the start
+      const opponentKing = pieces.value.find(
+        p => p.isKnown && p.name === `${opponentSide}_king`
+      )
+      const isCheck =
+        opponentKing && isInCheck(opponentKing.row, opponentKing.col, opponentSide)
+
+      // Check if it's checkmate (opponent has no legal moves)
+      const opponentLegalMoves = getAllLegalMovesForCurrentPosition()
+      const isCheckmate = isCheck && opponentLegalMoves.length === 0
+
+      // Play sound only if not skipped (for AI moves, sound is handled in playMoveFromUci)
+      // Also check the global flag for AI moves
+      const shouldSkipSound =
+        skipSound || (window as any).__AI_MOVE_SKIP_SOUND__ === true
+      
+      // Only reset the flags if we're not skipping sound (for AI moves, flags are reset in playMoveFromUci)
+      if (!shouldSkipSound) {
+        // Reset the flags after reading them
+        lastMoveWasCapture.value = false
+        lastMoveWasFlip.value = false
+      }
+      
+      if (!shouldSkipSound) {
+        // Priority: checkmate > check > flip > capture > normal move
+        if (isCheckmate) {
+          playSound('checkmate')
+        } else if (isCheck) {
+          playSound('check')
+        } else if (isFlip) {
+          playSound('flip')
+        } else if (isCapture) {
+          playSound('capture')
+        } else {
+          playSound('liftOrRelease')
+        }
+      }
     }
     selectedPieceId.value = null
 
@@ -1598,6 +1658,8 @@ export function useChessGame() {
         p => p.id === selectedPieceId.value
       )!
       if (clickedPiece && clickedPiece.id === selectedPieceId.value) {
+        // Deselect the piece (put it down)
+        playSound('liftOrRelease')
         selectedPieceId.value = null
         return
       }
@@ -1605,6 +1667,8 @@ export function useChessGame() {
         clickedPiece &&
         getPieceSide(clickedPiece) === getPieceSide(selectedPiece)
       ) {
+        // Select a different friendly piece
+        playSound('liftOrRelease')
         selectedPieceId.value = clickedPiece.id
         return
       }
@@ -1619,6 +1683,8 @@ export function useChessGame() {
       movePiece(selectedPiece, row, col)
     } else if (clickedPiece) {
       if (getPieceSide(clickedPiece) === sideToMove.value) {
+        // Select/lift a piece
+        playSound('liftOrRelease')
         selectedPieceId.value = clickedPiece.id
       }
     }
@@ -2040,6 +2106,8 @@ export function useChessGame() {
     const uciMove = toUci(piece.row, piece.col) + toUci(targetRow, targetCol)
 
     if (!isMoveValid(piece, targetRow, targetCol)) {
+      // Play invalid sound for illegal moves
+      playSound('invalid')
       return
     }
 
@@ -2055,6 +2123,10 @@ export function useChessGame() {
     const wasDarkPiece = !piece.isKnown
     const originalRow = piece.row
     const originalCol = piece.col
+
+    // Set move type flags for sound effects
+    lastMoveWasCapture.value = !!targetPiece
+    lastMoveWasFlip.value = wasDarkPiece
 
     const highlightMove = {
       from: { row: originalRow, col: originalCol },
@@ -2290,7 +2362,56 @@ export function useChessGame() {
     // Only skip flip logic if there's explicit flip information (which engine never provides)
     const isMatchMode = (window as any).__MATCH_MODE__ || false
     const skipFlipLogic = hasExplicitFlip || isMatchMode
+    
+    // For AI moves, play sounds in a unified way: lift sound first, then place sound
+    // Set a flag to skip sound in recordAndFinalize (we'll play it here instead)
+    ;(window as any).__AI_MOVE_SKIP_SOUND__ = true
+    
+    // Play lift sound for AI moves
+    playSound('liftOrRelease')
+    
     movePiece(piece, toRow, toCol, skipFlipLogic)
+    
+    // After move is complete, play the appropriate place sound
+    // Use nextTick to ensure the move is fully processed
+    setTimeout(() => {
+      // Check move type flags that were set in movePiece
+      const isCapture = lastMoveWasCapture.value
+      const isFlip = lastMoveWasFlip.value
+      
+      // Reset the flags
+      lastMoveWasCapture.value = false
+      lastMoveWasFlip.value = false
+      
+      // Check if the opponent is in check after this move
+      const opponentSide = sideToMove.value // sideToMove was already flipped in recordAndFinalize
+      const opponentKing = pieces.value.find(
+        p => p.isKnown && p.name === `${opponentSide}_king`
+      )
+      const isCheck =
+        opponentKing && isInCheck(opponentKing.row, opponentKing.col, opponentSide)
+      
+      // Check if it's checkmate (opponent has no legal moves)
+      const opponentLegalMoves = getAllLegalMovesForCurrentPosition()
+      const isCheckmate = isCheck && opponentLegalMoves.length === 0
+      
+      // Play appropriate sound based on move type
+      // Priority: checkmate > check > flip > capture > normal move
+      if (isCheckmate) {
+        playSound('checkmate')
+      } else if (isCheck) {
+        playSound('check')
+      } else if (isFlip) {
+        playSound('flip')
+      } else if (isCapture) {
+        playSound('capture')
+      } else {
+        playSound('liftOrRelease')
+      }
+      
+      // Clear the flag
+      ;(window as any).__AI_MOVE_SKIP_SOUND__ = false
+    }, 0)
 
     // Handle flip information if present (characters after the 4th position)
     if (hasExplicitFlip) {
@@ -2753,6 +2874,9 @@ export function useChessGame() {
   // Toggle the board flip state
   const toggleBoardFlip = () => {
     isBoardFlipped.value = !isBoardFlipped.value
+
+    // Play flip sound
+    playSound('flip')
 
     // Flip the positions of all pieces - both vertically and horizontally
     pieces.value = pieces.value.map(piece => ({

@@ -587,6 +587,8 @@ prev.prev - Previous-previous move (supports infinite nesting)`,
     showChineseNotation: 'Show Chinese Notation',
     showLuckIndex: 'Show Luck Index',
     showArrows: 'Show Arrows',
+    enableSoundEffects: 'Enable Sound Effects',
+    soundVolume: 'Sound Volume',
   },
 
   // UCI messages

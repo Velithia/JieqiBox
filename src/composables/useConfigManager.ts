@@ -30,6 +30,8 @@ interface ConfigData {
     showBookMoves: boolean
     openingBookEnableInGame: boolean
     openingBookPreferHighPriority: boolean
+    enableSoundEffects: boolean
+    soundVolume: number
   }
   windowSettings: {
     width: number
@@ -102,6 +104,8 @@ const defaultConfig: ConfigData = {
     showBookMoves: true,
     openingBookEnableInGame: true,
     openingBookPreferHighPriority: true,
+    enableSoundEffects: true,
+    soundVolume: 70,
   },
   windowSettings: {
     width: 800,

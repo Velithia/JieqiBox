@@ -498,6 +498,8 @@ prev.prev - 前々の手（無限ネスト対応）`,
     showChineseNotation: '中国式記譜法を表示',
     showLuckIndex: '運び指数を表示',
     showArrows: '矢印を表示',
+    enableSoundEffects: '効果音を有効にする',
+    soundVolume: '効果音の音量',
   },
 
   // UCIメッセージ

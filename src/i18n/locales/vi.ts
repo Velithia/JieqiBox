@@ -584,6 +584,8 @@ prev.prev - Nước đi trước-trước (hỗ trợ lồng nhau vô hạn)`,
     showChineseNotation: 'Hiển thị ký hiệu Trung Quốc',
     showLuckIndex: 'Hiển thị chỉ số may mắn',
     showArrows: 'Hiển thị mũi tên',
+    enableSoundEffects: 'Bật hiệu ứng âm thanh',
+    soundVolume: 'Âm lượng hiệu ứng',
   },
 
   // Tin nhắn UCI
