@@ -4,6 +4,7 @@ import { listen } from '@tauri-apps/api/event'
 import { useI18n } from 'vue-i18n'
 import { useConfigManager, type ManagedEngine } from './useConfigManager'
 import { useInterfaceSettings } from './useInterfaceSettings'
+import { useSoundEffects } from './useSoundEffects'
 
 export interface JaiEngineLine {
   text: string
@@ -24,6 +25,7 @@ export interface JaiOption {
 export function useJaiEngine(_generateFen: () => string, gameState: any) {
   const { t } = useI18n()
   const { validationTimeout } = useInterfaceSettings()
+  const { playSoundLoop, stopSoundLoop } = useSoundEffects()
   const engineOutput = ref<JaiEngineLine[]>([])
   const isEngineLoaded = ref(false)
   const isEngineLoading = ref(false)
@@ -358,6 +360,13 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
     jaiOptionsText.value = '' // Clear JAI options text to prevent duplication
     jaiOptions.value = [] // Clear JAI options array
 
+    // Start playing loading sound in loop
+    console.log(
+      '[JAI_ENGINE_LOAD] Starting engine load, calling playSoundLoop...'
+    )
+    playSoundLoop('loading')
+    console.log('[JAI_ENGINE_LOAD] playSoundLoop called')
+
     // Teardown previous engine if any
     if (isMatchRunning.value) stopMatch()
     await invoke('kill_engine').catch(e =>
@@ -410,6 +419,13 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
       // Wait for validation to complete or time out
       await jaiOkPromise
 
+      // Stop loading sound when engine is ready
+      console.log(
+        '[JAI_ENGINE_LOAD] Engine validation successful, stopping loading sound...'
+      )
+      stopSoundLoop()
+      console.log('[JAI_ENGINE_LOAD] stopSoundLoop called')
+
       // If we reach here, engine is valid
       currentEngine.value = engine
       matchEngineInfo.value = t('jai.engineReady')
@@ -424,6 +440,13 @@ export function useJaiEngine(_generateFen: () => string, gameState: any) {
         isEngineLoaded.value = true
       }, 100)
     } catch (e: any) {
+      // Stop loading sound on error
+      console.log(
+        '[JAI_ENGINE_LOAD] Engine load failed, stopping loading sound...'
+      )
+      stopSoundLoop()
+      console.log('[JAI_ENGINE_LOAD] stopSoundLoop called after error')
+
       console.error(
         `Failed to load or validate JAI engine ${engine.name}:`,
         e.message || e

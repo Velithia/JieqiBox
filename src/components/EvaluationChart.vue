@@ -172,6 +172,10 @@
   import type { HistoryEntry } from '@/composables/useChessGame'
   import { useEvaluationChartSettings } from '@/composables/useEvaluationChartSettings'
   import { isMobilePlatform } from '@/utils/platform'
+  import { uciToChineseMoves } from '@/utils/chineseNotation'
+  import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
+  import { useHumanVsAiSettings } from '@/composables/useHumanVsAiSettings'
+  import { START_FEN } from '@/utils/constants'
 
   const { t } = useI18n()
   const theme = useTheme()
@@ -180,8 +184,11 @@
   interface Props {
     history: HistoryEntry[]
     currentMoveIndex: number
+    initialFen?: string
   }
-  const props = defineProps<Props>()
+  const props = withDefaults(defineProps<Props>(), {
+    initialFen: START_FEN,
+  })
   const emit = defineEmits<{
     (e: 'seek', moveIndex: number): void
   }>()
@@ -204,6 +211,9 @@
     showSeparateLines,
     viewMode,
   } = useEvaluationChartSettings()
+
+  const { showChineseNotation } = useInterfaceSettings()
+  const { isHumanVsAiMode } = useHumanVsAiSettings()
 
   const tooltipVisible = ref(false)
   const tooltipStyle = ref({ left: '0px', top: '0px' })
@@ -456,7 +466,25 @@
         // Determine whose move this was based on the FEN after the move
         // Since the FEN shows whose turn it is AFTER this move, we need to invert
         const isRedMove = !isRedTurnFromFen(entry.fen)
-        const moveText = `${moveNumber}${isRedMove ? '.' : '...'} ${entry.data}`
+
+        let notation = entry.data
+        if (showChineseNotation.value) {
+          try {
+            const fenBeforeMove =
+              index === 0 ? props.initialFen : props.history[index - 1].fen
+            const uciMove = isHumanVsAiMode.value
+              ? entry.data.slice(0, 4)
+              : entry.data
+            const chineseMoves = uciToChineseMoves(fenBeforeMove, uciMove)
+            if (chineseMoves[0]) {
+              notation = chineseMoves[0]
+            }
+          } catch (e) {
+            // Fallback to UCI if conversion fails
+          }
+        }
+
+        const moveText = `${moveNumber}${isRedMove ? '.' : '...'} ${notation}`
 
         let value: number | null | undefined
         switch (viewMode.value) {

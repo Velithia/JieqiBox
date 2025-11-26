@@ -703,4 +703,50 @@ prev.prev - 前々の手（無限ネスト対応）`,
     noMarkedMoves: '描画された合法手は見つかりませんでした',
     batchSettings: '一括設定',
   },
+
+  // リンク機能
+  linker: {
+    title: 'リンク',
+    start: 'リンク開始',
+    stop: 'リンク停止',
+    confirm: '確認して開始',
+    settings: '設定',
+    settingsTitle: 'リンク設定',
+    uploadScreenshot: 'スクリーンショットをアップロード',
+    recognizedFen: '認識された局面',
+    forceMyTurn: '自分の手番にする',
+    mode: {
+      auto: '自動着手',
+      watch: '観戦のみ',
+    },
+    status: {
+      idle: '未接続',
+      selecting: '盤面選択中...',
+      scanning: 'スキャン中...',
+      connected: '接続済み',
+      error: 'エラー',
+    },
+    instructions: {
+      idle: '「リンク開始」をクリックして外部将棋ソフトに接続します。画像認識による局面同期と自動着手をサポートします。',
+      selecting:
+        '将棋盤が含まれるスクリーンショットをアップロードしてください。システムが自動的に局面を認識します。',
+    },
+    error: {
+      modelInitFailed: '画像認識モデルの初期化に失敗しました',
+      noBoardDetected: '将棋盤が検出されませんでした',
+      recognitionFailed: '認識に失敗しました',
+    },
+    settingsForm: {
+      mouseClickDelay: 'マウスクリック遅延',
+      mouseClickDelayHint: 'マウスの押下と離す間の遅延（ミリ秒）',
+      mouseMoveDelay: 'マウス移動遅延',
+      mouseMoveDelayHint: '2回のクリック間の遅延（ミリ秒）',
+      scanInterval: 'スキャン間隔',
+      scanIntervalHint: 'スキャン間の間隔（ミリ秒）',
+      animationConfirm: 'アニメーション確認待ち',
+      animationConfirmHint:
+        '可能な手を検出した後、駒のアニメーションが完了するのを待ってから確認',
+      reset: 'デフォルトにリセット',
+    },
+  },
 }

@@ -204,8 +204,6 @@ function stringToBytes(text: string, maxLength: number): number[] {
   return bytes
 }
 
-// 已移除按字符到 GBK 字节的映射，写入时直接使用低 8 位
-
 /**
  * Parse XQF file header (1024 bytes)
  */

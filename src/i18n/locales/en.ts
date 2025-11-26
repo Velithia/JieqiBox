@@ -709,4 +709,63 @@ prev.prev - Previous-previous move (supports infinite nesting)`,
     noMarkedMoves: 'No drawing legal moves found',
     batchSettings: 'Batch Settings',
   },
+
+  // Linker feature
+  linker: {
+    title: 'Board Link',
+    start: 'Start Link',
+    stop: 'Stop',
+    connect: 'Connect',
+    pause: 'Pause',
+    resume: 'Resume',
+    confirm: 'Confirm & Start',
+    settings: 'Settings',
+    settingsTitle: 'Linker Settings',
+    selectWindow: 'Select Target Window',
+    noWindowsFound: 'No windows found',
+    boardPreview: 'Board Preview',
+    capture: 'Capture',
+    recognizedFen: 'Recognized Position',
+    forceMyTurn: 'Force My Turn',
+    mode: {
+      auto: 'Auto Move',
+      watch: 'Watch Only',
+    },
+    status: {
+      idle: 'Not Connected',
+      selecting: 'Selecting Window...',
+      scanning: 'Scanning...',
+      connected: 'Connected',
+      paused: 'Paused',
+      error: 'Error',
+    },
+    instructions: {
+      idle: 'Click "Start Link" to connect to an external chess software. The program will automatically capture the target window, recognize the board position, and sync the game state. In auto-move mode, it will play moves on the external software.',
+      selecting:
+        'Please select the chess software window from the list below, then click "Connect".',
+      connected:
+        "Linking... Monitoring board changes. When opponent moves are detected, they will be applied locally, and in auto mode, the engine's best move will be sent to the external software.",
+      paused: 'Linking is paused. Click "Resume" to continue monitoring.',
+    },
+    error: {
+      modelInitFailed: 'Failed to initialize image recognition model',
+      noBoardDetected: 'No chess board detected',
+      recognitionFailed: 'Recognition failed',
+      listWindowsFailed: 'Failed to get window list',
+      windowNotFound: 'Specified window not found',
+      noWindowSelected: 'Please select a window first',
+    },
+    settingsForm: {
+      mouseClickDelay: 'Mouse Click Delay',
+      mouseClickDelayHint: 'Delay between mouse press and release (ms)',
+      mouseMoveDelay: 'Mouse Move Delay',
+      mouseMoveDelayHint: 'Delay between two clicks (ms)',
+      scanInterval: 'Scan Interval',
+      scanIntervalHint: 'Interval between scans (ms)',
+      animationConfirm: 'Wait for Animation',
+      animationConfirmHint:
+        'After detecting a possible move, wait for piece animation to complete before confirming',
+      reset: 'Reset to Default',
+    },
+  },
 }

@@ -28,6 +28,8 @@ const getInitialSettings = () => {
       openingBookEnableInGame: true,
       openingBookPreferHighPriority: true,
       validationTimeout: 5000,
+      enableSoundEffects: true,
+      soundVolume: 70,
     }
   }
 
@@ -51,6 +53,8 @@ const getInitialSettings = () => {
       openingBookPreferHighPriority:
         settings.openingBookPreferHighPriority !== false, // Default to true
       validationTimeout: settings.validationTimeout || 5000, // Default to 5000
+      enableSoundEffects: settings.enableSoundEffects !== false, // Default to true
+      soundVolume: settings.soundVolume ?? 70, // Default to 70%
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -72,6 +76,8 @@ const getInitialSettings = () => {
       openingBookEnableInGame: true,
       openingBookPreferHighPriority: true,
       validationTimeout: 5000,
+      enableSoundEffects: true,
+      soundVolume: 70,
     }
   }
 }
@@ -94,6 +100,8 @@ const {
   openingBookEnableInGame: initialOpeningBookEnableInGame,
   openingBookPreferHighPriority: initialOpeningBookPreferHighPriority,
   validationTimeout: initialValidationTimeout,
+  enableSoundEffects: initialEnableSoundEffects,
+  soundVolume: initialSoundVolume,
 } = getInitialSettings()
 
 const showCoordinates = ref<boolean>(initialShowCoordinates)
@@ -114,6 +122,8 @@ const openingBookPreferHighPriority = ref<boolean>(
   initialOpeningBookPreferHighPriority
 )
 const validationTimeout = ref<number>(initialValidationTimeout)
+const enableSoundEffects = ref<boolean>(initialEnableSoundEffects)
+const soundVolume = ref<number>(initialSoundVolume)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -137,6 +147,8 @@ watch(
     openingBookEnableInGame,
     openingBookPreferHighPriority,
     validationTimeout,
+    enableSoundEffects,
+    soundVolume,
   ],
   async ([
     newShowCoordinates,
@@ -155,6 +167,8 @@ watch(
     newOpeningBookEnableInGame,
     newOpeningBookPreferHighPriority,
     newValidationTimeout,
+    newEnableSoundEffects,
+    newSoundVolume,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -176,6 +190,8 @@ watch(
       openingBookEnableInGame: newOpeningBookEnableInGame,
       openingBookPreferHighPriority: newOpeningBookPreferHighPriority,
       validationTimeout: newValidationTimeout,
+      enableSoundEffects: newEnableSoundEffects,
+      soundVolume: newSoundVolume,
     }
 
     try {
@@ -212,6 +228,8 @@ export function useInterfaceSettings() {
       openingBookPreferHighPriority.value =
         settings.openingBookPreferHighPriority !== false // Default to true
       validationTimeout.value = settings.validationTimeout || 5000 // Default to 5000
+      enableSoundEffects.value = settings.enableSoundEffects !== false // Default to true
+      soundVolume.value = settings.soundVolume ?? 70 // Default to 70%
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -242,6 +260,8 @@ export function useInterfaceSettings() {
     openingBookEnableInGame,
     openingBookPreferHighPriority,
     validationTimeout,
+    enableSoundEffects,
+    soundVolume,
     loadSettings,
   }
 }

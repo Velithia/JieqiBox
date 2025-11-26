@@ -19,6 +19,12 @@ use clipboard::{ClipboardContext, ClipboardProvider};
 mod opening_book;
 use opening_book::{JieqiOpeningBook, MoveData, OpeningBookStats, AddEntryRequest};
 
+mod linker;
+use linker::{
+    list_windows, capture_window, rust_log, init_capturer, get_latest_capture_raw,
+    simulate_click, simulate_move, get_window_info
+};
+
 // -------------------------------------------------------------
 // type definition for the engine process state
 type EngineProcess = Arc<Mutex<Option<CommandChild>>>;
@@ -883,6 +889,15 @@ pub fn run() {
             opening_book_import_entries,
             opening_book_export_db,
             opening_book_import_db,
+            // Linker commands (screen capture and mouse automation)
+            list_windows,
+            capture_window,
+            rust_log,
+            init_capturer,
+            get_latest_capture_raw,
+            simulate_click,
+            simulate_move,
+            get_window_info,
             // Android-specific commands
             #[cfg(target_os = "android")]
             get_bundle_identifier,

@@ -705,4 +705,50 @@ prev.prev - Nước đi trước-trước (hỗ trợ lồng nhau vô hạn)`,
     noMarkedMoves: 'Không tìm thấy nước đi hợp lệ nào được vẽ',
     batchSettings: 'Cài đặt hàng loạt',
   },
+
+  // Tính năng liên kết
+  linker: {
+    title: 'Liên kết',
+    start: 'Bắt đầu liên kết',
+    stop: 'Dừng liên kết',
+    confirm: 'Xác nhận và bắt đầu',
+    settings: 'Cài đặt',
+    settingsTitle: 'Cài đặt liên kết',
+    uploadScreenshot: 'Tải lên ảnh chụp màn hình',
+    recognizedFen: 'Vị trí nhận dạng',
+    forceMyTurn: 'Đến lượt tôi',
+    mode: {
+      auto: 'Tự động đi',
+      watch: 'Chỉ xem',
+    },
+    status: {
+      idle: 'Chưa kết nối',
+      selecting: 'Đang chọn bàn cờ...',
+      scanning: 'Đang quét...',
+      connected: 'Đã kết nối',
+      error: 'Lỗi',
+    },
+    instructions: {
+      idle: 'Nhấn "Bắt đầu liên kết" để kết nối với phần mềm cờ bên ngoài. Hỗ trợ đồng bộ vị trí và tự động đi thông qua nhận dạng hình ảnh.',
+      selecting:
+        'Vui lòng tải lên ảnh chụp màn hình có bàn cờ. Hệ thống sẽ tự động nhận dạng vị trí.',
+    },
+    error: {
+      modelInitFailed: 'Không thể khởi tạo mô hình nhận dạng hình ảnh',
+      noBoardDetected: 'Không phát hiện bàn cờ',
+      recognitionFailed: 'Nhận dạng thất bại',
+    },
+    settingsForm: {
+      mouseClickDelay: 'Độ trễ nhấp chuột',
+      mouseClickDelayHint: 'Độ trễ giữa nhấn và thả chuột (ms)',
+      mouseMoveDelay: 'Độ trễ di chuyển chuột',
+      mouseMoveDelayHint: 'Độ trễ giữa hai lần nhấp (ms)',
+      scanInterval: 'Khoảng cách quét',
+      scanIntervalHint: 'Khoảng cách giữa các lần quét (ms)',
+      animationConfirm: 'Chờ hoạt ảnh',
+      animationConfirmHint:
+        'Sau khi phát hiện nước đi có thể, chờ hoạt ảnh quân cờ hoàn thành trước khi xác nhận',
+      reset: 'Đặt lại mặc định',
+    },
+  },
 }
