@@ -1,4 +1,4 @@
-import { ref, readonly } from 'vue'
+import { ref, readonly, shallowRef } from 'vue'
 import type { DetectionBox } from './types'
 
 // This is the stub implementation. It returns the same structure
@@ -13,10 +13,27 @@ export const useImageRecognition = () => {
     isProcessing: readonly(ref(false)),
     status,
     detectedBoxes: ref<DetectionBox[]>([]),
-    inputImage: readonly(ref<HTMLImageElement | null>(null)),
-    outputCanvas: readonly(ref<HTMLCanvasElement | null>(null)),
+    inputImage: readonly(shallowRef<HTMLImageElement | null>(null)),
+    outputCanvas: readonly(shallowRef<HTMLCanvasElement | null>(null)),
     showBoundingBoxes: ref(false), // Can still be toggled, won't do anything
+    // Board locking (stub)
+    isBoardLocked: readonly(ref(false)),
+    lockBoard: (_shouldLock: boolean): void => {
+      /* Do nothing */
+    },
     processImage: async (_file: File): Promise<void> => {
+      console.warn('Image recognition is disabled in this build.')
+      return Promise.resolve()
+    },
+    processImageDirect: async (_img: HTMLImageElement): Promise<void> => {
+      console.warn('Image recognition is disabled in this build.')
+      return Promise.resolve()
+    },
+    processRawData: async (
+      _data: Uint8Array,
+      _width: number,
+      _height: number
+    ): Promise<void> => {
       console.warn('Image recognition is disabled in this build.')
       return Promise.resolve()
     },

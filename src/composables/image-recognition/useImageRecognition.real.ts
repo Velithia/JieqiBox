@@ -1,8 +1,27 @@
-import { ref } from 'vue'
+// src/composables/image-recognition.ts
+import { ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as ort from 'onnxruntime-web'
 // Import types from the new file
 import { LABELS, type DetectionBox, type ProcessedImage } from './types'
+
+// 导出必要的常量给外部使用
+export { LABELS, type DetectionBox }
+
+// ========== Reusable Buffer Pool (Module-level Singleton) ==========
+// Pre-allocate buffers to avoid GC during high-FPS processing
+const MODEL_SIZE = 640
+const BUFFER_SIZE = 3 * MODEL_SIZE * MODEL_SIZE // 1,228,800 floats
+
+// Singleton Float32Array buffer for inference input
+let sharedInputBuffer: Float32Array | null = null
+
+const getSharedInputBuffer = (): Float32Array => {
+  if (!sharedInputBuffer) {
+    sharedInputBuffer = new Float32Array(BUFFER_SIZE)
+  }
+  return sharedInputBuffer
+}
 
 export const useImageRecognition = () => {
   const { t } = useI18n()
@@ -11,9 +30,14 @@ export const useImageRecognition = () => {
   const isProcessing = ref(false)
   const status = ref('')
   const detectedBoxes = ref<DetectionBox[]>([])
-  const inputImage = ref<HTMLImageElement | null>(null)
-  const outputCanvas = ref<HTMLCanvasElement | null>(null)
+  // Use shallowRef for DOM elements since we don't need deep reactivity
+  const inputImage = shallowRef<HTMLImageElement | null>(null)
+  const outputCanvas = shallowRef<HTMLCanvasElement | null>(null)
   const showBoundingBoxes = ref(true)
+
+  // ========== Board Locking Feature ==========
+  const isBoardLocked = ref(false)
+  let cachedBoardBox: DetectionBox | null = null
 
   // Initialize model
   const initializeModel = async (): Promise<void> => {
@@ -22,14 +46,12 @@ export const useImageRecognition = () => {
     try {
       isModelLoading.value = true
       status.value = t('positionEditor.imageRecognitionStatus.loadingModel')
-      // Set the "directory path" for WASM/JSEP runtime code to /ort/ (accessible by both vite dev and build)
-      // ORT will load *.jsep.mjs / *.jsep.wasm etc. under this directory using default filenames
       const base = (import.meta as any).env?.BASE_URL || '/'
       ort.env.wasm.wasmPaths = base + 'ort/'
       session.value = await ort.InferenceSession.create(
         base + 'models/best.onnx',
         {
-          executionProviders: ['wasm'],
+          executionProviders: ['webgpu', 'webgl', 'wasm'],
           graphOptimizationLevel: 'all',
         }
       )
@@ -53,7 +75,8 @@ export const useImageRecognition = () => {
     }
   }
 
-  // Utility functions
+  // --- 原有 Utility Functions (Letterbox, Sigmoid, IOU, NMS, Overlap) ---
+
   const letterbox = (
     image: HTMLImageElement,
     newShape = [640, 640],
@@ -96,8 +119,6 @@ export const useImageRecognition = () => {
     }
   }
 
-  const sigmoid = (x: number): number => 1 / (1 + Math.exp(-x))
-
   const iou = (boxA: DetectionBox, boxB: DetectionBox): number => {
     const [x1A, y1A, wA, hA] = boxA.box
     const [x1B, y1B, wB, hB] = boxB.box
@@ -105,16 +126,13 @@ export const useImageRecognition = () => {
       y2A = y1A + hA
     const x2B = x1B + wB,
       y2B = y1B + hB
-
     const intersectX1 = Math.max(x1A, x1B)
     const intersectY1 = Math.max(y1A, y1B)
     const intersectX2 = Math.min(x2A, x2B)
     const intersectY2 = Math.min(y2A, y2B)
-
     const iw = Math.max(0, intersectX2 - intersectX1)
     const ih = Math.max(0, intersectY2 - intersectY1)
     const inter = iw * ih
-
     const union = wA * hA + wB * hB - inter
     return union > 0 ? inter / union : 0
   }
@@ -127,7 +145,6 @@ export const useImageRecognition = () => {
     boxes.sort((a, b) => b.score - a.score)
     const result: DetectionBox[] = []
     const removed = new Array(boxes.length).fill(false)
-
     for (let i = 0; i < boxes.length; i++) {
       if (removed[i]) continue
       const a = boxes[i]
@@ -152,442 +169,253 @@ export const useImageRecognition = () => {
       y2A = y1A + hA
     const x2B = x1B + wB,
       y2B = y1B + hB
-
     return !(x2A < x1B || x1A > x2B || y2A < y1B || y1A > y2B)
   }
 
-  // Image preprocessing
+  // --- 原有 Image Preprocessing (保留给 processImage/processImageDirect) ---
+  // Optimized to use shared buffer to minimize GC during high-FPS processing
   const preprocess = async (
     image: HTMLImageElement
   ): Promise<{ tensor: ort.Tensor; meta: ProcessedImage['meta'] }> => {
-    const modelW = 640
-    const modelH = 640
-
+    const modelW = MODEL_SIZE
+    const modelH = MODEL_SIZE
     const { canvas, meta } = letterbox(image, [modelH, modelW], 114)
-
     const context = canvas.getContext('2d')!
     const imageData = context.getImageData(0, 0, modelW, modelH)
     const { data } = imageData
 
-    const red = new Float32Array(modelW * modelH)
-    const green = new Float32Array(modelW * modelH)
-    const blue = new Float32Array(modelW * modelH)
+    // Use shared buffer to avoid GC
+    const input = getSharedInputBuffer()
+    const pixelCount = modelW * modelH
 
+    // Direct write to planar NCHW format (R plane, G plane, B plane)
     for (let i = 0, p = 0; i < data.length; i += 4, p++) {
-      red[p] = data[i] / 255
-      green[p] = data[i + 1] / 255
-      blue[p] = data[i + 2] / 255
+      input[p] = data[i] / 255 // R channel
+      input[pixelCount + p] = data[i + 1] / 255 // G channel
+      input[2 * pixelCount + p] = data[i + 2] / 255 // B channel
     }
-
-    const input = new Float32Array(modelW * modelH * 3)
-    input.set(red, 0)
-    input.set(green, modelW * modelH)
-    input.set(blue, modelW * modelH * 2)
 
     const tensor = new ort.Tensor('float32', input, [1, 3, modelH, modelW])
     return { tensor, meta }
   }
 
-  // Post-processing results (Compatible with YOLOv11: supports CxN and NxC layouts, automatically detects normalized coordinates)
+  // --- Post-processing for standard YOLOv8/v11 output ---
+  // Assumes output shape: [1, 4 + num_classes, 8400] (channel-first format)
+  // Directly iterates over Float32Array without conversion to JS arrays
   const postprocess = (
-    outputDataRaw: any,
-    outShape: number[],
+    outputDataRaw: ort.Tensor['data'],
+    outShape: readonly number[],
     meta: ProcessedImage['meta']
   ): DetectionBox[] => {
-    // Unify TypedArray/number[] for Float32Array access
-    const outputData =
-      outputDataRaw instanceof Float32Array
-        ? outputDataRaw
-        : Float32Array.from(outputDataRaw as number[])
+    // ONNX Runtime returns Float32Array for float tensors
+    // This is safe because we only use float32 models
+    const outputData = outputDataRaw as Float32Array
 
     const num_classes = 34
     const num_coords = 4
+    const expectedChannels = num_coords + num_classes // 38
 
-    const { r, dw, dh, imgW, imgH, newW, newH } = meta
-
+    const { r, dw, dh, imgW, imgH } = meta
     const confThresh = 0.25
     const iouThresh = 0.7
-    const classAgnostic = false
 
-    // ---------- Branch 3: xyxy+score+classIdx ----------
-    // Format like [1, N, 6] or [N, 6], where each row is [x1,y1,x2,y2,score,cls]
-    const handleXYXYFormat = (
-      data: Float32Array,
-      shape: number[]
-    ): DetectionBox[] => {
-      let N: number
-      let stride: number
-      let offset = 0
-      if (shape.length === 3 && shape[2] === 6) {
-        N = shape[1]
-        stride = 6
-      } else if (shape.length === 2 && shape[1] === 6) {
-        N = shape[0]
-        stride = 6
-      } else {
-        return []
-      }
-
-      // Sample to determine if coordinates are normalized
-      let maxAbsCoord = 0
-      const sample = Math.min(N, 64)
-      for (let i = 0; i < sample; i++) {
-        const base = offset + i * stride
-        const x1 = Math.abs(data[base + 0])
-        const y1 = Math.abs(data[base + 1])
-        const x2 = Math.abs(data[base + 2])
-        const y2 = Math.abs(data[base + 3])
-        maxAbsCoord = Math.max(maxAbsCoord, x1, y1, x2, y2)
-      }
-      const coordsAreNormalized = maxAbsCoord <= 1.5
-
-      const boxes: DetectionBox[] = []
-      for (let i = 0; i < N; i++) {
-        const base = offset + i * stride
-        let x1 = data[base + 0]
-        let y1 = data[base + 1]
-        let x2 = data[base + 2]
-        let y2 = data[base + 3]
-        const score = data[base + 4]
-        const clsIdx = Math.round(data[base + 5])
-
-        if (score < confThresh) continue
-
-        if (coordsAreNormalized) {
-          x1 *= newW
-          y1 *= newH
-          x2 *= newW
-          y2 *= newH
-        }
-
-        // Convert back to xywh
-        let cx = (x1 + x2) / 2
-        let cy = (y1 + y2) / 2
-        let w = Math.max(0, x2 - x1)
-        let h = Math.max(0, y2 - y1)
-
-        // Remove letterbox padding (restore to original image)
-        let bx = (cx - w / 2 - dw) / r
-        let by = (cy - h / 2 - dh) / r
-        let bw = w / r
-        let bh = h / r
-
-        // Clip to original image bounds
-        bx = Math.max(0, Math.min(bx, imgW - 1))
-        by = Math.max(0, Math.min(by, imgH - 1))
-        bw = Math.max(0, Math.min(bw, imgW - bx))
-        bh = Math.max(0, Math.min(bh, imgH - by))
-
-        boxes.push({ box: [bx, by, bw, bh], score, labelIndex: clsIdx })
-      }
-      return boxes
+    // Validate output shape matches expected YOLOv8/v11 format
+    // Shape should be [1, 38, num_predictions] for 34 classes
+    if (outShape.length !== 3 || outShape[0] !== 1) {
+      console.warn('Unexpected output shape:', outShape)
+      return []
     }
 
-    // First try to identify xyxy+score+classIdx output
-    if (
-      (outShape.length === 3 && outShape[2] === 6) ||
-      (outShape.length === 2 && outShape[1] === 6)
-    ) {
-      return nms(
-        handleXYXYFormat(outputData, outShape),
-        iouThresh,
-        classAgnostic
-      )
+    const num_channels = outShape[1]
+    const num_predictions = outShape[2]
+
+    // Validate channel count matches expected classes
+    if (num_channels !== expectedChannels) {
+      console.warn(`Expected ${expectedChannels} channels, got ${num_channels}`)
+      return []
     }
-
-    // ---------- Branch 1/2: YOLO style (xywh [+obj] + classes) ----------
-    // Automatically identify [1,C,N] or [1,N,C]
-    const channelsCandidate1 = outShape[1] // C?
-    const predsCandidate1 = outShape[2] // N?
-    const channelsCandidate2 = outShape[2] // C?
-    const predsCandidate2 = outShape[1] // N?
-
-    const matchesChannels = (c: number) =>
-      c === num_coords + num_classes || c === num_coords + num_classes + 1
-
-    let layout: 'cf' | 'cl' = 'cf' // 'cf': [1, C, N]；'cl': [1, N, C]
-    let num_channels = channelsCandidate1
-    let num_predictions = predsCandidate1
-
-    if (matchesChannels(channelsCandidate1)) {
-      layout = 'cf'
-      num_channels = channelsCandidate1
-      num_predictions = predsCandidate1
-    } else if (matchesChannels(channelsCandidate2)) {
-      layout = 'cl'
-      num_channels = channelsCandidate2
-      num_predictions = predsCandidate2
-    } else {
-      // Fallback: treat the larger one as C
-      if (channelsCandidate1 >= channelsCandidate2) {
-        layout = 'cf'
-        num_channels = channelsCandidate1
-        num_predictions = predsCandidate1
-      } else {
-        layout = 'cl'
-        num_channels = channelsCandidate2
-        num_predictions = predsCandidate2
-      }
-      console.warn(
-        'Unexpected YOLO-like output shape, guessing layout:',
-        outShape
-      )
-    }
-
-    const hasObjectness = num_channels === num_coords + num_classes + 1
-
-    const getVal = (ch: number, i: number): number =>
-      layout === 'cf'
-        ? outputData[ch * num_predictions + i]
-        : outputData[i * num_channels + ch]
-
-    // Sample to determine if classes need sigmoid
-    let needSigmoid = false
-    {
-      const startCh = num_coords + (hasObjectness ? 1 : 0)
-      let sampled = 0
-      for (
-        let ch = startCh;
-        ch < num_channels && sampled < 64;
-        ch += Math.max(1, Math.floor(num_classes / 8))
-      ) {
-        const v = getVal(ch, 0)
-        if (v < 0 || v > 1) {
-          needSigmoid = true
-          break
-        }
-        sampled++
-      }
-    }
-
-    // Sample to determine if coordinates are normalized
-    let maxAbsCoord = 0
-    const sampleCount = Math.min(num_predictions, 64)
-    const step = Math.max(1, Math.floor(num_predictions / sampleCount))
-    for (let i = 0; i < num_predictions && i < sampleCount * step; i += step) {
-      const sx = Math.abs(getVal(0, i))
-      const sy = Math.abs(getVal(1, i))
-      const sw = Math.abs(getVal(2, i))
-      const sh = Math.abs(getVal(3, i))
-      maxAbsCoord = Math.max(maxAbsCoord, sx, sy, sw, sh)
-    }
-    const coordsAreNormalized = maxAbsCoord <= 1.5
 
     const boxes: DetectionBox[] = []
+
+    // Iterate over each prediction
     for (let i = 0; i < num_predictions; i++) {
-      let x = getVal(0, i)
-      let y = getVal(1, i)
-      let w = getVal(2, i)
-      let h = getVal(3, i)
+      // Read coordinates (center x, center y, width, height)
+      const x = outputData[0 * num_predictions + i]
+      const y = outputData[1 * num_predictions + i]
+      const w = outputData[2 * num_predictions + i]
+      const h = outputData[3 * num_predictions + i]
 
-      if (coordsAreNormalized) {
-        x *= newW
-        y *= newH
-        w *= newW
-        h *= newH
-      }
-
-      let obj = 1.0
-      let clsStart = 4
-      if (hasObjectness) {
-        obj = getVal(4, i)
-        if (needSigmoid) obj = sigmoid(obj)
-        clsStart = 5
-      }
-
+      // Find the best class score directly from Float32Array
       let maxScore = -Infinity
       let maxIndex = -1
       for (let c = 0; c < num_classes; c++) {
-        let s = getVal(clsStart + c, i)
-        if (needSigmoid) s = sigmoid(s)
-        const clsConf = hasObjectness ? obj * s : s
-        if (clsConf > maxScore) {
-          maxScore = clsConf
+        const score = outputData[(num_coords + c) * num_predictions + i]
+        if (score > maxScore) {
+          maxScore = score
           maxIndex = c
         }
       }
 
-      if (maxScore >= confThresh) {
-        // cxcywh -> xywh
-        let bx = x - w / 2
-        let by = y - h / 2
-        let bw = w
-        let bh = h
+      // Skip low confidence detections
+      if (maxScore < confThresh) continue
 
-        // Remove padding & restore to original image
-        bx = (bx - dw) / r
-        by = (by - dh) / r
-        bw = bw / r
-        bh = bh / r
+      // Convert from letterbox coordinates back to original image coordinates
+      let bx = (x - w / 2 - dw) / r
+      let by = (y - h / 2 - dh) / r
+      let bw = w / r
+      let bh = h / r
 
-        // Clip
-        bx = Math.max(0, Math.min(bx, imgW - 1))
-        by = Math.max(0, Math.min(by, imgH - 1))
-        bw = Math.max(0, Math.min(bw, imgW - bx))
-        bh = Math.max(0, Math.min(bh, imgH - by))
+      // Clamp to image bounds
+      bx = Math.max(0, Math.min(bx, imgW - 1))
+      by = Math.max(0, Math.min(by, imgH - 1))
+      bw = Math.max(0, Math.min(bw, imgW - bx))
+      bh = Math.max(0, Math.min(bh, imgH - by))
 
-        boxes.push({
-          box: [bx, by, bw, bh],
-          score: maxScore,
-          labelIndex: maxIndex,
-        })
-      }
+      boxes.push({
+        box: [bx, by, bw, bh],
+        score: maxScore,
+        labelIndex: maxIndex,
+      })
     }
 
-    return nms(boxes, iouThresh, classAgnostic)
+    return nms(boxes, iouThresh, false)
   }
 
-  // Sync canvas with image display size
+  // --- Visualization (syncCanvasToImage, drawBoundingBoxes) ---
   const syncCanvasToImage = (
     imgElement: HTMLImageElement,
     canvasElement: HTMLCanvasElement
   ) => {
     const dispW = imgElement.clientWidth
     const dispH = imgElement.clientHeight
-
-    canvasElement.style.position = 'absolute'
-    canvasElement.style.left = '0'
-    canvasElement.style.top = '0'
     canvasElement.style.width = dispW + 'px'
     canvasElement.style.height = dispH + 'px'
-    canvasElement.style.pointerEvents = 'none'
-
     const dpr = window.devicePixelRatio || 1
     canvasElement.width = Math.round(dispW * dpr)
     canvasElement.height = Math.round(dispH * dpr)
-
     const ctx = canvasElement.getContext('2d')!
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, dispW, dispH)
-
     const natW = imgElement.naturalWidth || imgElement.width
     const natH = imgElement.naturalHeight || imgElement.height
-
-    const scaleX = dispW / natW
-    const scaleY = dispH / natH
-
-    return { dispW, dispH, natW, natH, scaleX, scaleY }
+    return {
+      dispW,
+      dispH,
+      natW,
+      natH,
+      scaleX: dispW / natW,
+      scaleY: dispH / natH,
+    }
   }
 
-  // Draw bounding boxes
   const drawBoundingBoxes = (
     boxes: DetectionBox[],
     imgElement: HTMLImageElement,
     canvasElement: HTMLCanvasElement
   ) => {
-    const { scaleX, scaleY } = syncCanvasToImage(imgElement, canvasElement)
+    const { scaleX, scaleY, dispW, dispH } = syncCanvasToImage(
+      imgElement,
+      canvasElement
+    )
     const ctx = canvasElement.getContext('2d')!
-
-    // Clear canvas first
-    const { dispW, dispH } = syncCanvasToImage(imgElement, canvasElement)
     ctx.clearRect(0, 0, dispW, dispH)
-
-    // Only draw if showBoundingBoxes is enabled
-    if (!showBoundingBoxes.value) {
-      return
-    }
-
+    if (!showBoundingBoxes.value) return
     ctx.font = '14px Arial'
-
     boxes.forEach(({ box, score, labelIndex }) => {
       const label = LABELS[labelIndex]
       if (!label) return
-
-      const x = box[0] * scaleX
-      const y = box[1] * scaleY
-      const w = box[2] * scaleX
-      const h = box[3] * scaleY
-
+      const x = box[0] * scaleX,
+        y = box[1] * scaleY,
+        w = box[2] * scaleX,
+        h = box[3] * scaleY
       ctx.strokeStyle = label.color
       ctx.lineWidth = 2
       ctx.strokeRect(x, y, w, h)
-
       const text = `${label.name}: ${score.toFixed(2)}`
       const textWidth = ctx.measureText(text).width
-
       ctx.fillStyle = label.color
       ctx.fillRect(x - 1, y - 18, textWidth + 8, 18)
-
       ctx.fillStyle = 'white'
       ctx.fillText(text, x + 3, y - 4)
     })
   }
 
-  // Process image recognition
+  // --- Inference Logic ---
+  const runInference = async (
+    img: HTMLImageElement
+  ): Promise<DetectionBox[]> => {
+    const prep = await preprocess(img)
+    const inputName = session.value!.inputNames.includes('images')
+      ? 'images'
+      : session.value!.inputNames[0]
+    const results = await session.value!.run({ [inputName]: prep.tensor })
+    const firstOut = results.output0 || results[Object.keys(results)[0]]
+    return postprocess(firstOut.data, firstOut.dims, prep.meta)
+  }
+
+  // --- Public Methods (processImage, updateBoardGrid) ---
   const processImage = async (file: File): Promise<void> => {
     try {
       isProcessing.value = true
       status.value = t('positionEditor.imageRecognitionStatus.loadingImage')
-
-      // Initialize model
       await initializeModel()
-
-      // Create image element
       const img = new Image()
       const imageUrl = URL.createObjectURL(file)
-
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve()
         img.onerror = reject
         img.src = imageUrl
       })
-
       inputImage.value = img
-
-      status.value = t(
-        'positionEditor.imageRecognitionStatus.preprocessingImage'
-      )
-      const prep = await preprocess(img)
-
       status.value = t(
         'positionEditor.imageRecognitionStatus.runningModelInference'
       )
-      // More robust selection of input name (many exported YOLO models use 'images' as input name)
-      const inputName = session.value!.inputNames.includes('images')
-        ? 'images'
-        : session.value!.inputNames[0]
-      const feeds = { [inputName]: prep.tensor }
-      const results = await session.value!.run(feeds)
-
-      const firstOut = results.output0 || results[Object.keys(results)[0]]
-      const outputData = firstOut.data as unknown as number[]
-      const outShape = firstOut.dims as number[]
-
-      status.value = t(
-        'positionEditor.imageRecognitionStatus.postProcessingResults'
-      )
-      const boxes = postprocess(outputData, outShape, prep.meta)
+      const boxes = await runInference(img)
       detectedBoxes.value = boxes
-
       status.value = t(
         'positionEditor.imageRecognitionStatus.recognitionCompleted'
       )
-
-      // Do not revoke immediately; keep the blob URL while the image is displayed
     } catch (error) {
-      console.error('Image processing failed:', error)
-      status.value = t(
-        'positionEditor.imageRecognitionStatus.processingFailed',
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : t('positionEditor.imageRecognitionStatus.unknownError'),
-        }
-      )
+      console.error(error)
       throw error
     } finally {
       isProcessing.value = false
     }
   }
 
-  // Update board grid
+  // ========== Board Locking Methods ==========
+  /**
+   * Lock or unlock the board detection.
+   * When locked, the cached board bounding box is reused instead of searching for it.
+   * Useful for processing sequences where camera and board position never change.
+   */
+  const lockBoard = (shouldLock: boolean): void => {
+    isBoardLocked.value = shouldLock
+    if (!shouldLock) {
+      // Clear cache when unlocking
+      cachedBoardBox = null
+    }
+  }
+
   const updateBoardGrid = (
     boxes: DetectionBox[]
   ): (DetectionBox | null)[][] => {
-    const boardBox = boxes
-      .filter(b => LABELS[b.labelIndex]?.name === 'Board')
-      .sort((a, b) => b.score - a.score)[0]
+    let boardBox: DetectionBox | undefined
+
+    if (isBoardLocked.value && cachedBoardBox) {
+      // Use cached board when locked
+      boardBox = cachedBoardBox
+    } else {
+      // Find board from detection results
+      boardBox = boxes
+        .filter(b => LABELS[b.labelIndex]?.name === 'Board')
+        .sort((a, b) => b.score - a.score)[0]
+
+      // Cache the board box if found (for potential future locking)
+      if (boardBox) {
+        cachedBoardBox = boardBox
+      }
+    }
 
     if (!boardBox)
       return Array(10)
@@ -596,38 +424,36 @@ export const useImageRecognition = () => {
 
     const piecesOnBoard = boxes.filter(p => {
       if (LABELS[p.labelIndex]?.name === 'Board') return false
-      return doBoxesOverlap(p.box, boardBox.box)
+      return doBoxesOverlap(p.box, boardBox!.box)
     })
 
     const [bx, by, bw, bh] = boardBox.box
-    const p_tl = { x: bx, y: by }
-    const p_tr = { x: bx + bw, y: by }
-    const p_bl = { x: bx, y: by + bh }
-    const p_br = { x: bx + bw, y: by + bh }
-
     const grid: Array<Array<DetectionBox | null>> = Array(10)
       .fill(null)
       .map(() => Array(9).fill(null))
 
+    // Linear mapping for flat 2D images (no perspective transform needed)
+    // Note: This assumes flat/scanned images without perspective distortion.
+    // For camera images with perspective, bilinear interpolation would be more accurate.
     for (const piece of piecesOnBoard) {
       const [px, py, pw, ph] = piece.box
-      const pieceCenter = { x: px + pw / 2, y: py + ph / 2 }
-      let bestPos = { i: -1, j: -1, dist: Infinity }
+      const cx = px + pw / 2
+      const cy = py + ph / 2
 
+      let bestPos = { i: -1, j: -1, dist: Infinity }
       for (let j = 0; j < 10; j++) {
         for (let i = 0; i < 9; i++) {
           const u = i / 8
           const v = j / 9
 
-          const topX = (1 - u) * p_tl.x + u * p_tr.x
-          const topY = (1 - u) * p_tl.y + u * p_tr.y
-          const botX = (1 - u) * p_bl.x + u * p_br.x
-          const botY = (1 - u) * p_bl.y + u * p_br.y
-          const gridX = (1 - v) * topX + v * botX
-          const gridY = (1 - v) * topY + v * botY
+          // Simple linear interpolation for rectangular board
+          const gx = bx + u * bw
+          const gy = by + v * bh
 
-          const dist = Math.hypot(pieceCenter.x - gridX, pieceCenter.y - gridY)
-          if (dist < bestPos.dist) bestPos = { i, j, dist }
+          const dist = Math.hypot(cx - gx, cy - gy)
+          if (dist < bestPos.dist) {
+            bestPos = { i, j, dist }
+          }
         }
       }
 
@@ -636,11 +462,74 @@ export const useImageRecognition = () => {
         grid[j][i] = piece
       }
     }
-
     return grid
   }
 
+  const processImageDirect = async (img: HTMLImageElement): Promise<void> => {
+    if (!session.value) await initializeModel()
+    try {
+      isProcessing.value = true
+      detectedBoxes.value = await runInference(img)
+    } finally {
+      isProcessing.value = false
+    }
+  }
+
+  // ========== High-performance Raw Data Processing ==========
+  // Optimized for high-FPS processing with reusable buffer to minimize GC
+  // Expects pre-resized 640x640 RGB data from Rust/native code
+  const processRawData = async (
+    data: Uint8Array,
+    width: number,
+    height: number
+  ) => {
+    if (!session.value) await initializeModel()
+
+    // Validate input dimensions match expected model size
+    const pixelCount = width * height
+    if (width !== MODEL_SIZE || height !== MODEL_SIZE) {
+      throw new Error(
+        `processRawData expects ${MODEL_SIZE}x${MODEL_SIZE} images, got ${width}x${height}`
+      )
+    }
+
+    // Use shared buffer to avoid GC during high-FPS processing
+    const float32Data = getSharedInputBuffer()
+
+    // Convert Uint8 [0-255] to Float32 [0-1] in NCHW format
+    // Direct write to planar format (R plane, G plane, B plane)
+    for (let i = 0; i < pixelCount; i++) {
+      float32Data[i] = data[i * 3] / 255.0 // R channel
+      float32Data[pixelCount + i] = data[i * 3 + 1] / 255.0 // G channel
+      float32Data[2 * pixelCount + i] = data[i * 3 + 2] / 255.0 // B channel
+    }
+
+    // Run inference
+    const inputName = session.value!.inputNames.includes('images')
+      ? 'images'
+      : session.value!.inputNames[0]
+    const tensor = new ort.Tensor('float32', float32Data, [1, 3, height, width])
+    const results = await session.value!.run({ [inputName]: tensor })
+
+    // Postprocess with identity transform (no letterbox padding)
+    const meta = {
+      r: 1,
+      dw: 0,
+      dh: 0,
+      newW: width,
+      newH: height,
+      imgW: width,
+      imgH: height,
+    }
+
+    const firstOut = results.output0 || results[Object.keys(results)[0]]
+    const boxes = postprocess(firstOut.data, firstOut.dims, meta)
+
+    detectedBoxes.value = boxes
+  }
+
   return {
+    // State
     session,
     isModelLoading,
     isProcessing,
@@ -649,7 +538,14 @@ export const useImageRecognition = () => {
     inputImage,
     outputCanvas,
     showBoundingBoxes,
+    // Board locking
+    isBoardLocked,
+    lockBoard,
+    // Processing methods
     processImage,
+    processImageDirect,
+    processRawData,
+    // Visualization and grid
     drawBoundingBoxes,
     updateBoardGrid,
     initializeModel,

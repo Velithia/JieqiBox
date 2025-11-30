@@ -62,6 +62,14 @@
         @click="showOpeningBookDialog = true"
         :title="$t('toolbar.openingBook')"
       />
+      <v-btn
+        icon="mdi-link"
+        size="small"
+        color="pink"
+        variant="text"
+        @click="showLinkerDialog = true"
+        :title="$t('linker.title')"
+      />
     </div>
 
     <div class="toolbar-center">
@@ -147,6 +155,7 @@
 
     <ReviewAnalysisDialog v-model="showReviewDialog" />
     <OpeningBookDialog v-model="showOpeningBookDialog" />
+    <LinkerDialog v-model="showLinkerDialog" />
   </div>
 </template>
 
@@ -161,6 +170,7 @@
   import NotationTextDialog from './NotationTextDialog.vue'
   import ReviewAnalysisDialog from './ReviewAnalysisDialog.vue'
   import OpeningBookDialog from './OpeningBookDialog.vue'
+  import LinkerDialog from './LinkerDialog.vue'
   import { useInterfaceSettings } from '../composables/useInterfaceSettings'
 
   const { t } = useI18n()
@@ -181,6 +191,7 @@
   const showNotationTextDialog = ref(false)
   const showReviewDialog = ref(false)
   const showOpeningBookDialog = ref(false)
+  const showLinkerDialog = ref(false)
 
   // State for variation restart logic
   const isWaitingToRestartForVariation = ref(false)
