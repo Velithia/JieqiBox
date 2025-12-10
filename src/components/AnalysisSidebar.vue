@@ -432,12 +432,130 @@
       </div>
 
       <!-- Regular UCI Analysis Mode Display -->
-      <div v-else class="analysis-output">
-        <div
-          v-for="(ln, idx) in parsedAnalysisLines"
-          :key="`an-${idx}`"
-          v-html="ln"
-        ></div>
+      <div v-else>
+        <div v-if="parseUciInfo && latestParsedInfo" class="analysis-modern">
+          <div class="analysis-card">
+            <div class="analysis-core">
+              <div class="score-badge" :class="scoreDisplay.className">
+                {{ scoreDisplay.text }}
+              </div>
+              <div class="best-move-box">
+                <div class="best-move-label">{{ $t('analysis.bestMove') }}</div>
+                <div class="best-move-value">{{ bestMoveDisplay }}</div>
+              </div>
+            </div>
+
+            <div class="analysis-hud">
+              <div class="hud-item">
+                <v-icon size="16" class="hud-icon" icon="mdi-timer-outline" />
+                <span>{{ hudDisplay.time }}</span>
+              </div>
+              <div class="hud-item">
+                <v-icon size="16" class="hud-icon" icon="mdi-flash" />
+                <span>{{ hudDisplay.nps }}</span>
+              </div>
+              <div class="hud-item">
+                <v-icon size="16" class="hud-icon" icon="mdi-stairs" />
+                <span>{{ hudDisplay.depth }}</span>
+              </div>
+            </div>
+
+            <div v-if="wdlBar" class="wdl-bar">
+              <div
+                class="wdl-segment win"
+                :style="{ width: wdlBar.win + '%' }"
+                :title="`${wdlBar.win.toFixed(1)}%`"
+              ></div>
+              <div
+                class="wdl-segment draw"
+                :style="{ width: wdlBar.draw + '%' }"
+                :title="`${wdlBar.draw.toFixed(1)}%`"
+              ></div>
+              <div
+                class="wdl-segment loss"
+                :style="{ width: wdlBar.loss + '%' }"
+                :title="`${wdlBar.loss.toFixed(1)}%`"
+              ></div>
+
+              <div class="wdl-labels">
+                <div
+                  v-for="item in wdlBar.labels"
+                  :key="item.key"
+                  class="wdl-label"
+                  :style="{ left: item.left + '%' }"
+                >
+                  <div class="wdl-label-text">
+                    {{ item.value.toFixed(1) }}%
+                  </div>
+                  <div class="wdl-label-line"></div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="multiPvInfos.length > 1" class="multipv-list">
+              <div class="multipv-title">{{ $t('analysis.multiPv') }}</div>
+              <div class="multipv-rows">
+                <div
+                  class="multipv-row"
+                  v-for="item in multiPvInfos"
+                  :key="`mpv-${item.multipv}`"
+                  :class="{ active: selectedMultipv === item.multipv }"
+                  @click="handleSelectMultipv(item)"
+                >
+                  <div class="multipv-col multipv-idx">#{{ item.multipv }}</div>
+                  <div
+                    class="multipv-col multipv-score"
+                    :class="item.scoreClass"
+                  >
+                    {{ item.scoreText }}
+                  </div>
+                  <div class="multipv-col multipv-move">{{ item.bestMove }}</div>
+                  <div class="multipv-col multipv-mini">
+                    {{ item.depthText }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="analysis-pv-block">
+              <div class="pv-header">
+                <div class="pv-title">{{ $t('analysis.fullLine') }}</div>
+                <v-btn
+                  class="pv-toggle-btn"
+                  size="x-small"
+                  variant="text"
+                  icon
+                  :title="
+                    isFullLineCollapsed
+                      ? $t('openingBook.showMore')
+                      : $t('openingBook.showLess')
+                  "
+                  @click="isFullLineCollapsed = !isFullLineCollapsed"
+                >
+                  <v-icon
+                    size="18"
+                    :icon="
+                      isFullLineCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'
+                    "
+                  />
+                </v-btn>
+              </div>
+              <div v-show="!isFullLineCollapsed" class="pv-body">
+                <div class="pv-text">{{ pvDisplay }}</div>
+                <div v-if="extraInfoDisplay" class="extra-info">
+                  {{ extraInfoDisplay }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="analysis-output">
+          <div
+            v-for="(ln, idx) in parsedAnalysisLines"
+            :key="`an-${idx}`"
+            v-html="ln"
+          ></div>
+        </div>
       </div>
     </DraggablePanel>
 
@@ -2533,10 +2651,8 @@
     return result
   }
 
-  // Format UCI info object for user-friendly display, with i18n support and color coding
-  function formatUciInfo(info: Record<string, any>) {
-    if (!info) return ''
-
+  // Normalize engine score so the same perspective is used everywhere
+  function normalizeScoreForDisplay(info: Record<string, any>) {
     let scoreValue = 0
     let isMate = false
     if (info.scoreType && info.scoreValue) {
@@ -2548,22 +2664,61 @@
       }
     }
 
-    // 1. Handle pondering mode adjustment
     if (isPondering.value && !isInfinitePondering.value) {
       scoreValue = -scoreValue
     }
 
-    // 2. Normalize to Red's perspective based on current side to move
-    // Check last analysis FEN for side to move indicator
     if (engineState.analysisUiFen.value.includes(' b ')) {
       scoreValue = -scoreValue
     }
 
-    // 3. Adjust display perspective based on board flip state
-    // If board is flipped, show from black perspective (invert the red-normalized score)
     if (isBoardFlipped.value) {
       scoreValue = -scoreValue
     }
+
+    return { scoreValue, isMate }
+  }
+
+  // Normalize WDL so it matches the same perspective as score display
+  function normalizeWdlForDisplay(info: Record<string, any>) {
+    if (
+      info.wdlWin === undefined ||
+      info.wdlDraw === undefined ||
+      info.wdlLoss === undefined
+    ) {
+      return null
+    }
+
+    let win = info.wdlWin
+    let draw = info.wdlDraw
+    let loss = info.wdlLoss
+
+    const flip = () => {
+      const tmp = win
+      win = loss
+      loss = tmp
+    }
+
+    // Apply the same flip rules as score
+    if (isPondering.value && !isInfinitePondering.value) flip()
+    if (engineState.analysisUiFen.value.includes(' b ')) flip()
+    if (isBoardFlipped.value) flip()
+
+    const total = win + draw + loss
+    if (total <= 0) return null
+
+    return {
+      winPct: (win / total) * 100,
+      drawPct: (draw / total) * 100,
+      lossPct: (loss / total) * 100,
+    }
+  }
+
+  // Format UCI info object for user-friendly display, with i18n support and color coding
+  function formatUciInfo(info: Record<string, any>) {
+    if (!info) return ''
+
+    const { scoreValue, isMate } = normalizeScoreForDisplay(info)
 
     const getScoreColorClass = () => {
       if (isMate) {
@@ -2685,6 +2840,286 @@
       return line // Non-info lines are returned as is
     })
   })
+
+  const selectedMultipv = ref<number | null>(null)
+  const isFullLineCollapsed = ref(false)
+
+  const latestParsedInfo = computed(() => {
+    return activeMultipvInfo.value?.info || null
+  })
+
+  const latestParsedMultiPv = computed(() => {
+    if (!parseUciInfo.value) return []
+    const map = new Map<number, Record<string, any>>()
+
+    for (let i = analysisLines.value.length - 1; i >= 0; i--) {
+      const line = analysisLines.value[i]
+      if (!line.startsWith('info ')) continue
+      const info = parseUciInfoLine(line)
+      if (!info) continue
+      const pvIndex = info.multipv ? parseInt(info.multipv, 10) : 1
+      if (!map.has(pvIndex)) {
+        map.set(pvIndex, info)
+      }
+    }
+
+    return Array.from(map.entries())
+      .map(([multipv, info]) => ({ multipv, info }))
+      .sort((a, b) => a.multipv - b.multipv)
+  })
+
+  const activeMultipvInfo = computed(() => {
+    const list = latestParsedMultiPv.value
+    if (!list.length) return null
+    if (selectedMultipv.value) {
+      return list.find(item => item.multipv === selectedMultipv.value) || list[0]
+    }
+    return list[0]
+  })
+
+  const scoreDisplay = computed(() => {
+    const info = latestParsedInfo.value
+    if (!info) return { text: '--', className: 'score-neutral' }
+    const { scoreValue, isMate } = normalizeScoreForDisplay(info)
+
+    if (isMate) {
+      const sign = scoreValue > 0 ? '+' : '-'
+      return {
+        text: `${sign}M${Math.abs(scoreValue)}`,
+        className: scoreValue > 0 ? 'score-mate-positive' : 'score-mate-negative',
+      }
+    }
+
+    const className =
+      scoreValue > 50
+        ? 'score-positive'
+        : scoreValue < -50
+          ? 'score-negative'
+          : 'score-neutral'
+
+    return {
+      text: scoreValue === 0 ? '0' : scoreValue > 0 ? `+${scoreValue}` : `${scoreValue}`,
+      className,
+    }
+  })
+
+  const wdlBar = computed(() => {
+    const info = latestParsedInfo.value
+    if (!info) return null
+    const normalized = normalizeWdlForDisplay(info)
+    if (!normalized) return null
+    const { winPct, drawPct, lossPct } = normalized
+    const clampPct = (v: number) => Math.max(0, Math.min(100, v))
+    const win = clampPct(winPct)
+    const draw = clampPct(drawPct)
+    const loss = clampPct(lossPct)
+
+    // Centers for label positioning
+    const winCenter = win / 2
+    const drawCenter = win + draw / 2
+    const lossCenter = win + draw + loss / 2
+
+    return {
+      win,
+      draw,
+      loss,
+      labels: [
+        { key: 'win', value: win, left: winCenter },
+        { key: 'draw', value: draw, left: drawCenter },
+        { key: 'loss', value: loss, left: lossCenter },
+      ],
+    }
+  })
+
+  const hudDisplay = computed(() => {
+    const info = latestParsedInfo.value
+    const time = info?.time
+      ? `${(parseInt(info.time, 10) / 1000).toFixed(1)}s`
+      : '--'
+    const nps = info?.nps
+      ? `${(parseInt(info.nps, 10) / 1_000_000).toFixed(1)}M`
+      : info?.nodes
+        ? `${(parseInt(info.nodes, 10) / 1_000_000).toFixed(1)}M`
+        : '--'
+    const depth = info?.depth
+      ? `${info.depth}${info.seldepth ? `/${info.seldepth}` : ''}`
+      : '--'
+    return { time, nps, depth }
+  })
+
+  function getRootFenForConversion() {
+    let rootFen = isMatchMode.value
+      ? gameState.generateFen()
+      : engineState.analysisUiFen.value || gameState.generateFen()
+
+    if (!useNewFenFormat.value && gameState.convertFenFormat) {
+      rootFen = gameState.convertFenFormat(rootFen, 'new')
+    }
+    return rootFen
+  }
+
+  function buildPvText(info: Record<string, any> | null) {
+    if (!info || !info.pv) return ''
+    if (showChineseNotation.value) {
+      try {
+        const rootFen = getRootFenForConversion()
+
+        let pvToConvert: string = info.pv
+        if (
+          isPondering.value &&
+          !isInfinitePondering.value &&
+          ponderMove.value &&
+          !pvToConvert.startsWith(ponderMove.value)
+        ) {
+          pvToConvert = `${ponderMove.value} ${pvToConvert}`
+        }
+
+        const chineseMoves = uciToChineseMoves(rootFen, pvToConvert)
+        return chineseMoves.join(' ')
+      } catch (error) {
+        console.warn('Failed to convert PV to Chinese notation:', error)
+      }
+    }
+    return info.pv
+  }
+
+  const pvDisplay = computed(() => buildPvText(latestParsedInfo.value) || '--')
+
+  const extraInfoDisplay = computed(() => {
+    const info = latestParsedInfo.value
+    if (!info) return ''
+    const parts = [
+      info.multipv && `${t('uci.multipv')}: ${info.multipv}`,
+      info.wdlWin !== undefined &&
+        info.wdlDraw !== undefined &&
+        info.wdlLoss !== undefined &&
+        (() => {
+          const total = info.wdlWin + info.wdlDraw + info.wdlLoss
+          if (total > 0) {
+            const winPercent = ((info.wdlWin / total) * 100).toFixed(1)
+            const drawPercent = ((info.wdlDraw / total) * 100).toFixed(1)
+            const lossPercent = ((info.wdlLoss / total) * 100).toFixed(1)
+            return `${t('uci.wdl')}: ${winPercent}%/${drawPercent}%/${lossPercent}%`
+          }
+          return null
+        })(),
+      info.nodes && `${t('uci.nodes')}: ${info.nodes}`,
+      info.nps &&
+        `${t('uci.nps')}: ${(parseInt(info.nps, 10) / 1000).toFixed(1)}K`,
+      info.hashfull && `${t('uci.hashfull')}: ${info.hashfull}‰`,
+      info.tbhits && `${t('uci.tbhits')}: ${info.tbhits}`,
+    ].filter(Boolean)
+
+    return parts.join(' | ')
+  })
+
+  function formatMoveForDisplay(uciMove: string) {
+    if (!uciMove) return '--'
+    if (showChineseNotation.value) {
+      try {
+        const rootFen = getRootFenForConversion()
+        const moves = uciToChineseMoves(rootFen, uciMove)
+        return moves[0] || uciMove
+      } catch (error) {
+        console.warn('Failed to convert best move to Chinese notation:', error)
+      }
+    }
+    return uciMove
+  }
+
+  const bestMoveDisplay = computed(() => {
+    const move = bestMove.value?.trim()
+    if (move) return formatMoveForDisplay(move)
+
+    const primaryInfo = latestParsedInfo.value
+    if (!primaryInfo?.pv) return '--'
+    const pvMoves = primaryInfo.pv.split(' ').filter(Boolean)
+    const firstPvMove = pvMoves.length > 0 ? pvMoves[0] : ''
+    return firstPvMove ? formatMoveForDisplay(firstPvMove) : '--'
+  })
+
+  const multiPvInfos = computed(() => {
+    return latestParsedMultiPv.value.map(({ multipv, info }) => {
+      const { scoreValue, isMate } = normalizeScoreForDisplay(info)
+      const scoreClass =
+        scoreValue > 50
+          ? 'score-positive'
+          : scoreValue < -50
+            ? 'score-negative'
+            : 'score-neutral'
+
+      const scoreText = isMate
+        ? `${scoreValue > 0 ? '+' : '-'}M${Math.abs(scoreValue)}`
+        : scoreValue === 0
+          ? '0'
+          : scoreValue > 0
+            ? `+${scoreValue}`
+            : `${scoreValue}`
+
+      const pvMoves = info.pv ? info.pv.split(' ').filter(Boolean) : []
+      const bestMove = pvMoves[0] ? formatMoveForDisplay(pvMoves[0]) : '--'
+
+      const depthText = info.depth
+        ? `${info.depth}${info.seldepth ? `/${info.seldepth}` : ''}`
+        : '--'
+
+      return {
+        multipv,
+        scoreClass,
+        scoreText,
+        bestMove,
+        depthText,
+        pvMoves,
+      }
+    })
+  })
+
+  const activePvInfo = computed(() => {
+    const active = activeMultipvInfo.value
+    return active || null
+  })
+
+  function highlightMultipvMove(uciMove?: string) {
+    if (!uciMove || uciMove.length < 4) return
+    window.dispatchEvent(
+      new CustomEvent('highlight-multipv', { detail: { uci: uciMove } })
+    )
+  }
+
+  function handleSelectMultipv(item: { multipv: number; pvMoves: string[] }) {
+    selectedMultipv.value = item.multipv
+    if (item.pvMoves?.length) {
+      highlightMultipvMove(item.pvMoves[0])
+    }
+  }
+
+  watch(
+    latestParsedMultiPv,
+    list => {
+      if (!list.length) {
+        selectedMultipv.value = null
+        return
+      }
+      if (!selectedMultipv.value) {
+        selectedMultipv.value = list[0].multipv
+      } else {
+        const exists = list.some(item => item.multipv === selectedMultipv.value)
+        if (!exists) {
+          selectedMultipv.value = list[0].multipv
+        }
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
+    activePvInfo,
+    info => {
+      const mv = info?.info?.pv?.split(' ').filter(Boolean)?.[0]
+      if (mv) highlightMultipvMove(mv)
+    },
+    { immediate: true }
+  )
 
   // Parse JAI analysis info similar to UCI engine output
   function parseJaiAnalysisInfo(analysisInfo: string): string {
@@ -3099,6 +3534,250 @@
   .undocked-panel-content .engine-log {
     height: 100% !important;
     max-height: none;
+  }
+
+  .analysis-modern {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .analysis-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    background: rgba(var(--v-theme-surface), 0.6);
+  }
+
+  .analysis-core {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .score-badge {
+    min-width: 80px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    background: rgba(var(--v-theme-surface), 0.8);
+  }
+
+  .best-move-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .best-move-label {
+    font-size: 12px;
+    color: rgba(var(--v-theme-on-surface), 0.75);
+  }
+
+  .best-move-value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .analysis-hud {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px dashed rgba(var(--v-border-color), var(--v-border-opacity));
+    background: rgba(var(--v-theme-surface), 0.5);
+    font-weight: 600;
+  }
+
+  .hud-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .hud-icon {
+    font-size: 14px;
+  }
+
+  .wdl-bar {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 16px;
+    border-radius: 8px;
+    overflow: visible;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    background: rgba(var(--v-theme-surface), 0.5);
+    margin-top: 8px;
+  }
+
+  .wdl-segment {
+    height: 100%;
+  }
+
+  .wdl-segment.win {
+    background: #e53935;
+  }
+
+  .wdl-segment.draw {
+    background: rgba(var(--v-theme-on-surface), 0.35);
+  }
+
+  .wdl-segment.loss {
+    background: #333;
+  }
+
+  .wdl-label {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
+    bottom: 100%;
+    gap: 2px;
+    z-index: 2;
+  }
+
+  .wdl-label-text {
+    background: rgba(var(--v-theme-surface), 0.9);
+    color: rgba(var(--v-theme-on-surface), 0.9);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .wdl-label-line {
+    width: 1px;
+    height: 8px;
+    background: rgba(var(--v-theme-on-surface), 0.55);
+  }
+
+  .analysis-pv-block {
+    border-radius: 8px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    padding: 8px;
+    background: rgba(var(--v-theme-surface), 0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pv-title {
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .pv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .pv-toggle-btn {
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .pv-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pv-text {
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+
+  .extra-info {
+    font-size: 11px;
+    color: rgba(var(--v-theme-on-surface), 0.8);
+    white-space: pre-wrap;
+  }
+
+  .multipv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .multipv-title {
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .multipv-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+
+  .multipv-row {
+    display: grid;
+    grid-template-columns: 48px 70px 1fr 0.6fr;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 6px;
+    background: rgba(var(--v-theme-surface), 0.5);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .multipv-col {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .multipv-row.active {
+    border-color: rgba(var(--v-theme-primary), 0.6);
+    background: rgba(var(--v-theme-primary), 0.08);
+  }
+
+  .multipv-row:hover {
+    border-color: rgba(var(--v-theme-primary), 0.45);
+    background: rgba(var(--v-theme-primary), 0.06);
+  }
+
+  .multipv-idx {
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .multipv-score {
+    font-weight: 700;
+  }
+
+  .multipv-move {
+    font-weight: 600;
+  }
+
+  .multipv-mini {
+    font-size: 11px;
+    color: rgba(var(--v-theme-on-surface), 0.8);
+    text-align: right;
   }
 
   .score-positive {

@@ -193,6 +193,16 @@
           >
             <polygon points="0 0, 2.5 1.25, 0 2.5" :fill="color" />
           </marker>
+          <marker
+            id="ah-selected"
+            markerWidth="2.5"
+            markerHeight="2.5"
+            refX="1.5"
+            refY="1.25"
+            orient="auto"
+          >
+            <polygon points="0 0, 2.5 1.25, 0 2.5" fill="#e53935" />
+          </marker>
         </defs>
         <template v-for="(a, idx) in arrs" :key="`arrow-${idx}`">
           <line
@@ -213,6 +223,24 @@
           >
             {{ a.pv }}
           </text>
+        </template>
+        <template v-if="selectedPvArrow">
+          <line
+            :x1="selectedPvArrow.x1"
+            :y1="selectedPvArrow.y1"
+            :x2="selectedPvArrow.x2"
+            :y2="selectedPvArrow.y2"
+            marker-end="url(#ah-selected)"
+            class="al selected-arrow-shadow"
+          />
+          <line
+            :x1="selectedPvArrow.x1"
+            :y1="selectedPvArrow.y1"
+            :x2="selectedPvArrow.x2"
+            :y2="selectedPvArrow.y2"
+            marker-end="url(#ah-selected)"
+            class="al selected-arrow"
+          />
         </template>
       </svg>
 
@@ -683,16 +711,35 @@
       const reason = (e as any)?.detail?.reason
       if (reason === 'new-game') {
         clearUserDrawings()
+        selectedPvMove.value = null
       }
     } catch {}
   }
+
+  const handleHighlightMultipv = (e: CustomEvent) => {
+    try {
+      const uci = (e as any)?.detail?.uci as string
+      if (!uci || uci.length < 4) return
+      selectedPvMove.value = uci
+    } catch (error) {
+      console.warn('Failed to highlight multipv move:', error)
+    }
+  }
   onMounted(() => {
     window.addEventListener('force-stop-ai', handleForceStopAi as EventListener)
+    window.addEventListener(
+      'highlight-multipv',
+      handleHighlightMultipv as EventListener
+    )
   })
   onUnmounted(() => {
     window.removeEventListener(
       'force-stop-ai',
       handleForceStopAi as EventListener
+    )
+    window.removeEventListener(
+      'highlight-multipv',
+      handleHighlightMultipv as EventListener
     )
   })
 
@@ -740,6 +787,7 @@
     pv: number
   }
   const arrs = ref<Arrow[]>([])
+  const selectedPvMove = ref<string | null>(null)
 
   // Convert UCI coordinates to display coordinates for arrow positioning
   // This function converts UCI coordinates to row/col coordinates that match the display
@@ -901,6 +949,7 @@
   // Register arrow clearing callback
   registerArrowClearCallback(() => {
     arrs.value = []
+    selectedPvMove.value = null
   })
 
   // Wrap original methods (now just call the original method, arrow clearing is triggered automatically)
@@ -973,6 +1022,29 @@
     '#00897b',
   ]
   const arrowColor = (idx: number) => arrowColors[idx % arrowColors.length]
+
+  const selectedPvArrow = computed(() => {
+    if (!selectedPvMove.value) return null
+    const coords = uciToDisplayRC(selectedPvMove.value)
+    const f = percentToSvgCoords(coords.from.row, coords.from.col)
+    const t = percentToSvgCoords(coords.to.row, coords.to.col)
+
+    const exists = arrs.value.some(
+      a =>
+        Math.abs(a.x1 - f.x) < 0.0001 &&
+        Math.abs(a.y1 - f.y) < 0.0001 &&
+        Math.abs(a.x2 - t.x) < 0.0001 &&
+        Math.abs(a.y2 - t.y) < 0.0001
+    )
+    return exists
+      ? {
+          x1: f.x,
+          y1: f.y,
+          x2: t.x,
+          y2: t.y,
+        }
+      : null
+  })
 
   // Helper to convert stored row to display row based on flip state
   const displayRow = (r: number) => (gs.isBoardFlipped.value ? 9 - r : r)
@@ -1315,6 +1387,20 @@
   .al {
     stroke-width: 1;
     stroke-opacity: 0.9;
+  }
+
+  .selected-arrow-shadow {
+    stroke: #e53935;
+    stroke-width: 1.6;
+    stroke-opacity: 0.22;
+    filter: drop-shadow(0 0 4px #ff2222) drop-shadow(0 0 8px #ff2222);
+  }
+
+  .selected-arrow {
+    stroke: #e53935;
+    stroke-width: 1;
+    stroke-opacity: 0.95;
+    filter: drop-shadow(0 0 4px #ff2222) drop-shadow(0 0 8px #ff2222);
   }
 
   .panel {
