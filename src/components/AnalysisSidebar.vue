@@ -484,9 +484,7 @@
                   class="wdl-label"
                   :style="{ left: item.left + '%' }"
                 >
-                  <div class="wdl-label-text">
-                    {{ item.value.toFixed(1) }}%
-                  </div>
+                  <div class="wdl-label-text">{{ item.value.toFixed(1) }}%</div>
                   <div class="wdl-label-line"></div>
                 </div>
               </div>
@@ -509,7 +507,9 @@
                   >
                     {{ item.scoreText }}
                   </div>
-                  <div class="multipv-col multipv-move">{{ item.bestMove }}</div>
+                  <div class="multipv-col multipv-move">
+                    {{ item.bestMove }}
+                  </div>
                   <div class="multipv-col multipv-mini">
                     {{ item.depthText }}
                   </div>
@@ -535,7 +535,9 @@
                   <v-icon
                     size="18"
                     :icon="
-                      isFullLineCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'
+                      isFullLineCollapsed
+                        ? 'mdi-chevron-down'
+                        : 'mdi-chevron-up'
                     "
                   />
                 </v-btn>
@@ -2872,7 +2874,9 @@
     const list = latestParsedMultiPv.value
     if (!list.length) return null
     if (selectedMultipv.value) {
-      return list.find(item => item.multipv === selectedMultipv.value) || list[0]
+      return (
+        list.find(item => item.multipv === selectedMultipv.value) || list[0]
+      )
     }
     return list[0]
   })
@@ -2886,7 +2890,8 @@
       const sign = scoreValue > 0 ? '+' : '-'
       return {
         text: `${sign}M${Math.abs(scoreValue)}`,
-        className: scoreValue > 0 ? 'score-mate-positive' : 'score-mate-negative',
+        className:
+          scoreValue > 0 ? 'score-mate-positive' : 'score-mate-negative',
       }
     }
 
@@ -2898,7 +2903,12 @@
           : 'score-neutral'
 
     return {
-      text: scoreValue === 0 ? '0' : scoreValue > 0 ? `+${scoreValue}` : `${scoreValue}`,
+      text:
+        scoreValue === 0
+          ? '0'
+          : scoreValue > 0
+            ? `+${scoreValue}`
+            : `${scoreValue}`,
       className,
     }
   })
@@ -3742,7 +3752,9 @@
     background: rgba(var(--v-theme-surface), 0.5);
     font-size: 12px;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
   }
 
   .multipv-col {
