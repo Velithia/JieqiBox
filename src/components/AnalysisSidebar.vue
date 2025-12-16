@@ -1057,6 +1057,7 @@
     formatEloRating,
     formatErrorMargin,
   } from '@/utils/eloCalculator'
+  import { resolvePieceImage } from '@/utils/pieceImages'
   import { marked } from 'marked'
   import DOMPurify from 'dompurify'
   import {
@@ -1081,6 +1082,7 @@
     showLuckIndex,
     showBookMoves,
     useNewFenFormat,
+    pieceStyle,
   } = useInterfaceSettings()
 
   // Get persistent game settings
@@ -1432,7 +1434,11 @@
     ])
   })
   function getPieceImageUrl(pieceName: string): string {
-    return new URL(`../assets/${pieceName}.svg`, import.meta.url).href
+    const style =
+      pieceStyle?.value === 'internationalized'
+        ? 'internationalized'
+        : 'default'
+    return resolvePieceImage(pieceName, style)
   }
   function getMoveNumber(historyIndex: number): string {
     const moveCount = history.value

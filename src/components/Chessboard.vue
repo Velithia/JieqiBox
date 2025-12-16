@@ -329,6 +329,7 @@
   import { MATE_SCORE_BASE } from '@/utils/constants'
   import { isAndroidPlatform } from '@/utils/platform'
   import { validateJieqiFen } from '@/utils/fenValidator'
+  import { resolvePieceImage } from '@/utils/pieceImages'
 
   // Seek handler for EvaluationChart
   const handleChartSeek = (idx: number) => {
@@ -491,17 +492,12 @@
 
   /* ===== Pieces ===== */
   const getPieceImage = (p: Piece) => {
-    const style = pieceStyle?.value || 'default'
-    let folder = style === 'internationalized' ? 'internationalized/' : ''
+    const style =
+      pieceStyle?.value === 'internationalized'
+        ? 'internationalized'
+        : 'default'
     const fileName = p.isKnown && p.name ? p.name : 'dark_piece'
-
-    // Fallback: dark_piece only exists in the root assets folder
-    if (fileName === 'dark_piece') {
-      folder = ''
-    }
-
-    const relativePath = `../assets/${folder}${fileName}.svg`
-    return new URL(relativePath, import.meta.url).href
+    return resolvePieceImage(fileName, style)
   }
   // rcStyle: calculate the style for each piece, including zIndex
   // zIndex priority: moving piece (2000) > checked king/general (1100) > lower row pieces > others

@@ -391,6 +391,7 @@
     type DetectionBox,
     LABELS,
   } from '@/composables/image-recognition'
+  import { resolveDefaultPieceImage } from '@/utils/pieceImages'
 
   // Create a global instance of Mersenne Twister for this component
   const mt = new MersenneTwister()
@@ -1087,7 +1088,7 @@
       pieceName === 'unknown'
         ? 'dark_piece'
         : pieceName
-    return new URL(`../assets/${imageName}.svg`, import.meta.url).href
+    return resolveDefaultPieceImage(imageName)
   }
 
   // Get piece display name

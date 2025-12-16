@@ -57,6 +57,7 @@
 <script setup lang="ts">
   import { computed, inject } from 'vue'
   import { useHumanVsAiSettings } from '@/composables/useHumanVsAiSettings'
+  import { resolveDefaultPieceImage } from '@/utils/pieceImages'
   import DraggablePanel from './DraggablePanel.vue'
   const { isHumanVsAiMode, aiSide } = useHumanVsAiSettings()
 
@@ -67,7 +68,7 @@
   // Get piece image URL function (consistent with other components)
   const getPieceImageUrl = (pieceName: string): string => {
     const imageName = pieceName === 'unknown' ? 'dark_piece' : pieceName
-    return new URL(`../assets/${imageName}.svg`, import.meta.url).href
+    return resolveDefaultPieceImage(imageName)
   }
 
   interface CapturedPiece {

@@ -54,6 +54,7 @@
 <script setup lang="ts">
   import { computed, inject, ref, onMounted, onUnmounted } from 'vue'
   import MersenneTwister from 'mersenne-twister'
+  import { resolveDefaultPieceImage } from '@/utils/pieceImages'
 
   // Create a global instance of Mersenne Twister for this component
   const mt = new MersenneTwister()
@@ -247,7 +248,7 @@
 
   function getPieceImageUrl(pieceName: string): string {
     const imageName = pieceName || 'dark_piece'
-    return new URL(`../assets/${imageName}.svg`, import.meta.url).href
+    return resolveDefaultPieceImage(imageName)
   }
 </script>
 
