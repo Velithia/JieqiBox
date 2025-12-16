@@ -32,6 +32,7 @@ interface ConfigData {
     openingBookPreferHighPriority: boolean
     enableSoundEffects: boolean
     soundVolume: number
+    pieceStyle: string
   }
   windowSettings: {
     width: number
@@ -106,6 +107,7 @@ const defaultConfig: ConfigData = {
     openingBookPreferHighPriority: true,
     enableSoundEffects: true,
     soundVolume: 70,
+    pieceStyle: 'default',
   },
   windowSettings: {
     width: 800,

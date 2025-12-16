@@ -45,6 +45,13 @@
     en: t('languages.en'),
     vi: t('languages.vi'),
     ja: t('languages.ja'),
+    ko: t('languages.ko'),
+    ru: t('languages.ru'),
+    de: t('languages.de'),
+    fr: t('languages.fr'),
+    es: t('languages.es'),
+    th: t('languages.th'),
+    ms: t('languages.ms'),
   }))
 
   // Change language
@@ -90,6 +97,41 @@
   }
 
   .language-option-vi {
+    font-family:
+      'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .language-option-ko {
+    font-family:
+      'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Dotum',
+      sans-serif;
+  }
+
+  .language-option-ru {
+    font-family:
+      'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .language-option-de {
+    font-family:
+      'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .language-option-fr {
+    font-family:
+      'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .language-option-es {
+    font-family:
+      'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .language-option-th {
+    font-family: 'Sarabun', 'Noto Sans Thai', 'Thonburi', 'Tahoma', sans-serif;
+  }
+
+  .language-option-ms {
     font-family:
       'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }

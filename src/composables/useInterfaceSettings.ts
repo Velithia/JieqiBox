@@ -30,6 +30,7 @@ const getInitialSettings = () => {
       validationTimeout: 5000,
       enableSoundEffects: true,
       soundVolume: 70,
+      pieceStyle: 'default',
     }
   }
 
@@ -55,6 +56,7 @@ const getInitialSettings = () => {
       validationTimeout: settings.validationTimeout || 5000, // Default to 5000
       enableSoundEffects: settings.enableSoundEffects !== false, // Default to true
       soundVolume: settings.soundVolume ?? 70, // Default to 70%
+      pieceStyle: settings.pieceStyle || 'default', // Default to 'default'
     }
   } catch (e) {
     console.error('Failed to get interface settings:', e)
@@ -78,6 +80,7 @@ const getInitialSettings = () => {
       validationTimeout: 5000,
       enableSoundEffects: true,
       soundVolume: 70,
+      pieceStyle: 'default',
     }
   }
 }
@@ -102,6 +105,7 @@ const {
   validationTimeout: initialValidationTimeout,
   enableSoundEffects: initialEnableSoundEffects,
   soundVolume: initialSoundVolume,
+  pieceStyle: initialPieceStyle,
 } = getInitialSettings()
 
 const showCoordinates = ref<boolean>(initialShowCoordinates)
@@ -124,6 +128,7 @@ const openingBookPreferHighPriority = ref<boolean>(
 const validationTimeout = ref<number>(initialValidationTimeout)
 const enableSoundEffects = ref<boolean>(initialEnableSoundEffects)
 const soundVolume = ref<number>(initialSoundVolume)
+const pieceStyle = ref<string>(initialPieceStyle)
 
 // Flag to track if config is loaded
 const isConfigLoaded = ref(false)
@@ -149,6 +154,7 @@ watch(
     validationTimeout,
     enableSoundEffects,
     soundVolume,
+    pieceStyle,
   ],
   async ([
     newShowCoordinates,
@@ -169,6 +175,7 @@ watch(
     newValidationTimeout,
     newEnableSoundEffects,
     newSoundVolume,
+    newPieceStyle,
   ]) => {
     // Only save if config is already loaded to avoid overwriting during initialization
     if (!isConfigLoaded.value) return
@@ -192,6 +199,7 @@ watch(
       validationTimeout: newValidationTimeout,
       enableSoundEffects: newEnableSoundEffects,
       soundVolume: newSoundVolume,
+      pieceStyle: newPieceStyle,
     }
 
     try {
@@ -230,6 +238,7 @@ export function useInterfaceSettings() {
       validationTimeout.value = settings.validationTimeout || 5000 // Default to 5000
       enableSoundEffects.value = settings.enableSoundEffects !== false // Default to true
       soundVolume.value = settings.soundVolume ?? 70 // Default to 70%
+      pieceStyle.value = settings.pieceStyle || 'default' // Default to 'default'
 
       isConfigLoaded.value = true
     } catch (error) {
@@ -262,6 +271,7 @@ export function useInterfaceSettings() {
     validationTimeout,
     enableSoundEffects,
     soundVolume,
+    pieceStyle,
     loadSettings,
   }
 }

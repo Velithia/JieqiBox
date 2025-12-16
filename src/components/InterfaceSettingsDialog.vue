@@ -80,6 +80,24 @@
           :label="$t('interfaceSettings.showArrows')"
           color="primary"
         ></v-switch>
+        <v-select
+          v-model="pieceStyle"
+          :label="$t('interfaceSettings.pieceStyle')"
+          :items="[
+            {
+              title: $t('interfaceSettings.pieceStyles.default'),
+              value: 'default',
+            },
+            {
+              title: $t('interfaceSettings.pieceStyles.internationalized'),
+              value: 'internationalized',
+            },
+          ]"
+          color="primary"
+          variant="outlined"
+          density="compact"
+          class="mt-2"
+        ></v-select>
         <v-divider class="my-2"></v-divider>
         <v-switch
           v-model="enableSoundEffects"
@@ -134,6 +152,7 @@
     showArrows,
     enableSoundEffects,
     soundVolume,
+    pieceStyle,
   } = useInterfaceSettings()
 
   const closeDialog = () => {

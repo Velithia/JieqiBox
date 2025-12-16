@@ -4,6 +4,13 @@ import zh_tw from './locales/zh_tw'
 import en from './locales/en'
 import vi from './locales/vi'
 import ja from './locales/ja'
+import ko from './locales/ko'
+import ru from './locales/ru'
+import de from './locales/de'
+import fr from './locales/fr'
+import es from './locales/es'
+import th from './locales/th'
+import ms from './locales/ms'
 import { useConfigManager } from '../composables/useConfigManager'
 
 // Get user's preferred language
@@ -14,7 +21,20 @@ const getDefaultLocale = () => {
     const savedLocale = configManager.getLocale()
     if (
       savedLocale &&
-      ['zh_cn', 'zh_tw', 'en', 'vi', 'ja'].includes(savedLocale)
+      [
+        'zh_cn',
+        'zh_tw',
+        'en',
+        'vi',
+        'ja',
+        'ko',
+        'ru',
+        'de',
+        'fr',
+        'es',
+        'th',
+        'ms',
+      ].includes(savedLocale)
     ) {
       return savedLocale
     }
@@ -33,6 +53,13 @@ const getDefaultLocale = () => {
     return 'zh_tw'
   if (browserLang.startsWith('vi')) return 'vi'
   if (browserLang.startsWith('ja')) return 'ja'
+  if (browserLang.startsWith('ko')) return 'ko'
+  if (browserLang.startsWith('ru')) return 'ru'
+  if (browserLang.startsWith('de')) return 'de'
+  if (browserLang.startsWith('fr')) return 'fr'
+  if (browserLang.startsWith('es')) return 'es'
+  if (browserLang.startsWith('th')) return 'th'
+  if (browserLang.startsWith('ms')) return 'ms'
   if (browserLang.startsWith('en')) return 'en'
 
   // Default to Simplified Chinese
@@ -49,6 +76,13 @@ const i18n = createI18n({
     en,
     vi,
     ja,
+    ko,
+    ru,
+    de,
+    fr,
+    es,
+    th,
+    ms,
   },
 })
 

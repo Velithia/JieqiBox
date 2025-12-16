@@ -2,9 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + Vue + Typescript App</title>
+    <title>JieqiBox</title>
     <style>
       /* Multi-language font settings using system fonts */
       :root {
@@ -20,6 +19,21 @@
         --font-en:
           'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
         --font-vi:
+          'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --font-ko:
+          'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Dotum',
+          sans-serif;
+        --font-ru:
+          'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --font-de:
+          'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --font-fr:
+          'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --font-es:
+          'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --font-th:
+          'Sarabun', 'Noto Sans Thai', 'Thonburi', 'Tahoma', sans-serif;
+        --font-ms:
           'Noto Sans', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
       }
 
@@ -49,6 +63,41 @@
       [lang='vi'],
       [lang='vi-VN'] {
         font-family: var(--font-vi);
+      }
+
+      [lang='ko'],
+      [lang='ko-KR'] {
+        font-family: var(--font-ko);
+      }
+
+      [lang='ru'],
+      [lang='ru-RU'] {
+        font-family: var(--font-ru);
+      }
+
+      [lang='de'],
+      [lang='de-DE'] {
+        font-family: var(--font-de);
+      }
+
+      [lang='fr'],
+      [lang='fr-FR'] {
+        font-family: var(--font-fr);
+      }
+
+      [lang='es'],
+      [lang='es-ES'] {
+        font-family: var(--font-es);
+      }
+
+      [lang='th'],
+      [lang='th-TH'] {
+        font-family: var(--font-th);
+      }
+
+      [lang='ms'],
+      [lang='ms-MY'] {
+        font-family: var(--font-ms);
       }
 
       /* Default font */

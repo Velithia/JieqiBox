@@ -40,7 +40,7 @@
         <img
           v-for="p in pieces"
           :key="p.id"
-          :src="img(p)"
+          :src="getPieceImage(p)"
           class="piece"
           :class="{
             selected: p.id === selectedPieceId,
@@ -365,6 +365,7 @@
     showPositionChart,
     showEvaluationBar,
     showArrows,
+    pieceStyle,
   } = useInterfaceSettings()
 
   /* ===== Injections ===== */
@@ -489,11 +490,19 @@
   })
 
   /* ===== Pieces ===== */
-  const img = (p: Piece) =>
-    new URL(
-      `../assets/${p.isKnown ? p.name : 'dark_piece'}.svg`,
-      import.meta.url
-    ).href
+  const getPieceImage = (p: Piece) => {
+    const style = pieceStyle?.value || 'default'
+    let folder = style === 'internationalized' ? 'internationalized/' : ''
+    const fileName = p.isKnown && p.name ? p.name : 'dark_piece'
+
+    // Fallback: dark_piece only exists in the root assets folder
+    if (fileName === 'dark_piece') {
+      folder = ''
+    }
+
+    const relativePath = `../assets/${folder}${fileName}.svg`
+    return new URL(relativePath, import.meta.url).href
+  }
   // rcStyle: calculate the style for each piece, including zIndex
   // zIndex priority: moving piece (2000) > checked king/general (1100) > lower row pieces > others
   const rcStyle = (r: number, c: number, zIndex?: number) => {
