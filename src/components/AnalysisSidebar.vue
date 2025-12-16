@@ -543,7 +543,18 @@
                 </v-btn>
               </div>
               <div v-show="!isFullLineCollapsed" class="pv-body">
-                <div class="pv-text">{{ pvDisplay }}</div>
+                <div class="pv-text">
+                  <template v-if="pvMoves.length">
+                    <template v-for="(move, index) in pvMoves" :key="index">
+                      <span class="pv-move-item">{{ move }}</span>
+                      <!-- Use non-breaking space as requested to ensure it is copied -->
+                      <span v-if="index < pvMoves.length - 1" class="pv-space"
+                        >&nbsp;</span
+                      >
+                    </template>
+                  </template>
+                  <span v-else>{{ pvDisplay }}</span>
+                </div>
                 <div v-if="extraInfoDisplay" class="extra-info">
                   {{ extraInfoDisplay }}
                 </div>
@@ -2995,6 +3006,12 @@
 
   const pvDisplay = computed(() => buildPvText(latestParsedInfo.value) || '--')
 
+  const pvMoves = computed(() => {
+    const text = buildPvText(latestParsedInfo.value)
+    if (!text) return []
+    return text.split(' ')
+  })
+
   const extraInfoDisplay = computed(() => {
     const info = latestParsedInfo.value
     if (!info) return ''
@@ -3714,6 +3731,33 @@
     word-break: break-word;
     max-height: 140px;
     overflow-y: auto;
+  }
+
+  .pv-move-item {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 12px;
+    background-color: rgba(var(--v-theme-surface), 0.6);
+    font-size: 12px;
+    transition: background-color 0.2s;
+  }
+
+  .pv-space {
+    display: inline-block;
+    width: 1px;
+    height: 1px;
+    margin-left: -1px;
+    opacity: 0;
+    overflow: hidden;
+    vertical-align: middle;
+    pointer-events: none;
+  }
+
+  .pv-move-item:hover {
+    background-color: rgba(var(--v-theme-primary), 0.1);
+    border-color: rgba(var(--v-theme-primary), 0.5);
   }
 
   .extra-info {
