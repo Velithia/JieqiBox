@@ -546,7 +546,11 @@
                 <div class="pv-text">
                   <template v-if="pvMoves.length">
                     <template v-for="(move, index) in pvMoves" :key="index">
-                      <span class="pv-move-item">{{ move }}</span>
+                      <span
+                        class="pv-move-item"
+                        @click="openPvPreview(index + 1)"
+                        >{{ move }}</span
+                      >
                       <!-- Use non-breaking space as requested to ensure it is copied -->
                       <span v-if="index < pvMoves.length - 1" class="pv-space"
                         >&nbsp;</span
@@ -562,7 +566,7 @@
             </div>
           </div>
         </div>
-        <div v-else class="analysis-output">
+        <div v-else class="analysis-output" @click="handleAnalysisLineClick">
           <div
             v-for="(ln, idx) in parsedAnalysisLines"
             :key="`an-${idx}`"
@@ -1017,6 +1021,13 @@
       @confirm="handleHumanVsAiModeConfirm"
     />
     <OpeningBookDialog v-model="showOpeningBookDetail" />
+    <PvPreviewDialog
+      v-model="isPvPreviewVisible"
+      :root-fen="pvPreviewRootFen"
+      :moves="pvPreviewMoves"
+      :initial-step="pvPreviewTargetStep"
+      :title="$t('analysis.fullLine')"
+    />
   </div>
 </template>
 
@@ -1058,6 +1069,7 @@
     formatErrorMargin,
   } from '@/utils/eloCalculator'
   import { resolvePieceImage } from '@/utils/pieceImages'
+  import PvPreviewDialog from './PvPreviewDialog.vue'
   import { marked } from 'marked'
   import DOMPurify from 'dompurify'
   import {
@@ -1217,6 +1229,7 @@
   const editingCommentIndex = ref<number | null>(null)
   const editingCommentText = ref<string>('')
   const commentsListElement = ref<HTMLElement | null>(null)
+  void commentsListElement
   const commentTextareaRefs = ref<Record<number, any>>({})
 
   /* ---------- Notation Navigation State ---------- */
@@ -2771,16 +2784,15 @@
     const formatPv = () => {
       if (!info.pv) return null
 
+      const uciMoves = info.pv.split(' ').filter(Boolean)
+      let displayMoves = uciMoves
+
       if (showChineseNotation.value) {
         try {
-          // Use the recorded analysis-time root FEN and prefix moves so PV stays stable across navigation
-          // Use the analysis-start UI FEN and convert the PV. When pondering with a known expected move,
-          // prepend that move to the PV so conversion happens from the correct position.
           let rootFen = isMatchMode.value
             ? gameState.generateFen()
             : engineState.analysisUiFen.value || gameState.generateFen()
 
-          // Convert FEN to new format if necessary (Chinese notation parser requires new format)
           if (!useNewFenFormat.value && gameState.convertFenFormat) {
             rootFen = gameState.convertFenFormat(rootFen, 'new')
           }
@@ -2795,25 +2807,22 @@
             pvToConvert = `${ponderMove.value} ${pvToConvert}`
           }
 
-          console.log('[DEBUG] FORMAT_PV: Converting PV', {
-            rootFen,
-            pvOriginal: info.pv,
-            pvWithPonder: pvToConvert,
-            isPondering: isPondering.value,
-            isInfinitePondering: isInfinitePondering.value,
-            ponderMove: ponderMove.value,
-          })
-
           const chineseMoves = uciToChineseMoves(rootFen, pvToConvert)
-          const chinesePv = chineseMoves.join(' ')
-          return `<span class="pv-line">${t('uci.pv')}: ${chinesePv}</span>`
+          displayMoves = chineseMoves
         } catch (error) {
           console.warn('Failed to convert PV to Chinese notation:', error)
-          // Fallback to raw PV if conversion fails
-          return `<span class="pv-line">${t('uci.pv')}: ${info.pv}</span>`
+          displayMoves = uciMoves
         }
       }
-      return `<span class="pv-line">${t('uci.pv')}: ${info.pv}</span>`
+
+      const chips = displayMoves
+        .map(
+          (mv: string, idx: number) =>
+            `<span class="pv-chip" data-index="${idx}" data-uci="${uciMoves[idx] || ''}">${mv}</span>`
+        )
+        .join(' ')
+
+      return `<span class="pv-line">${t('uci.pv')}: ${chips}</span>`
     }
 
     // Use i18n for field names
@@ -2860,8 +2869,22 @@
     })
   })
 
+  const handleAnalysisLineClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (!target) return
+    const chip = target.closest('.pv-chip') as HTMLElement | null
+    if (chip) {
+      const idx = Number(chip.dataset.index || '0')
+      openPvPreview(idx + 1)
+    }
+  }
+
   const selectedMultipv = ref<number | null>(null)
   const isFullLineCollapsed = ref(false)
+  const isPvPreviewVisible = ref(false)
+  const pvPreviewRootFen = ref('')
+  const pvPreviewMoves = ref<string[]>([])
+  const pvPreviewTargetStep = ref<number | null>(null)
 
   const latestParsedInfo = computed(() => {
     return activeMultipvInfo.value?.info || null
@@ -3017,6 +3040,11 @@
     if (!text) return []
     return text.split(' ')
   })
+  const activePvUciMoves = computed(() => {
+    const info = latestParsedInfo.value
+    if (!info?.pv) return []
+    return info.pv.split(' ').filter(Boolean)
+  })
 
   const extraInfoDisplay = computed(() => {
     const info = latestParsedInfo.value
@@ -3124,6 +3152,18 @@
     if (item.pvMoves?.length) {
       highlightMultipvMove(item.pvMoves[0])
     }
+  }
+
+  const openPvPreview = (step?: number) => {
+    if (!activePvUciMoves.value.length) return
+    // Snapshot current PV to avoid being changed by later engine depth updates
+    pvPreviewMoves.value = [...activePvUciMoves.value]
+    pvPreviewRootFen.value = getRootFenForConversion()
+    pvPreviewTargetStep.value =
+      typeof step === 'number'
+        ? Math.max(0, Math.min(step, pvPreviewMoves.value.length))
+        : null
+    isPvPreviewVisible.value = true
   }
 
   watch(
@@ -3889,6 +3929,24 @@
       Roboto,
       Arial,
       sans-serif;
+  }
+
+  .pv-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 12px;
+    background-color: rgba(var(--v-theme-surface), 0.6);
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s;
+  }
+
+  .pv-chip:hover {
+    background-color: rgba(var(--v-theme-primary), 0.1);
+    border-color: rgba(var(--v-theme-primary), 0.5);
   }
 
   /* ---------- Luck Index Styles ---------- */

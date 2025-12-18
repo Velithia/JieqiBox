@@ -391,7 +391,8 @@
     type DetectionBox,
     LABELS,
   } from '@/composables/image-recognition'
-  import { resolveDefaultPieceImage } from '@/utils/pieceImages'
+  import { useInterfaceSettings } from '@/composables/useInterfaceSettings'
+  import { resolvePieceImage } from '@/utils/pieceImages'
 
   // Create a global instance of Mersenne Twister for this component
   const mt = new MersenneTwister()
@@ -418,6 +419,7 @@
 
   const { t } = useI18n()
   const gameState: any = inject('game-state')
+  const { pieceStyle } = useInterfaceSettings()
 
   // Layout constants similar to Chessboard.vue
   const PAD_X = 11,
@@ -1088,7 +1090,11 @@
       pieceName === 'unknown'
         ? 'dark_piece'
         : pieceName
-    return resolveDefaultPieceImage(imageName)
+    const style =
+      pieceStyle?.value === 'internationalized'
+        ? 'internationalized'
+        : 'default'
+    return resolvePieceImage(imageName, style)
   }
 
   // Get piece display name

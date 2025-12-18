@@ -2362,7 +2362,10 @@ export function useChessGame() {
     // For UCI engine moves, we should NOT skip flip logic since engine UCI moves are always 4 characters
     // Only skip flip logic if there's explicit flip information (which engine never provides)
     const isMatchMode = (window as any).__MATCH_MODE__ || false
-    const skipFlipLogic = hasExplicitFlip || isMatchMode
+    const skipFlipLogic =
+      hasExplicitFlip ||
+      isMatchMode ||
+      (window as any).__PV_PREVIEW_MODE__ === true
 
     // For AI moves, play sounds in a unified way: lift sound first, then place sound
     // Set a flag to skip sound in recordAndFinalize (we'll play it here instead)

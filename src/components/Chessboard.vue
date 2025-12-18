@@ -253,31 +253,33 @@
           color="button"
           >{{ $t('chessboard.copyFen') }}</v-btn
         >
-        <v-btn
-          @click="pasteFenFromClipboard"
-          size="small"
-          color="button"
-          :disabled="isMatchRunning"
-          >{{ $t('chessboard.pasteFen') }}</v-btn
-        >
-        <v-btn
-          @click="inputFenStringWithArrow"
-          size="small"
-          color="button"
-          :disabled="isMatchRunning"
-          >{{
-            isAndroid
-              ? $t('chessboard.inputCopyFen')
-              : $t('chessboard.inputFen')
-          }}</v-btn
-        >
-        <v-btn
-          @click="setupNewGameWithArrow"
-          size="small"
-          color="button"
-          :disabled="isMatchRunning"
-          >{{ $t('chessboard.newGame') }}</v-btn
-        >
+        <template v-if="!props.previewMode">
+          <v-btn
+            @click="pasteFenFromClipboard"
+            size="small"
+            color="button"
+            :disabled="isMatchRunning"
+            >{{ $t('chessboard.pasteFen') }}</v-btn
+          >
+          <v-btn
+            @click="inputFenStringWithArrow"
+            size="small"
+            color="button"
+            :disabled="isMatchRunning"
+            >{{
+              isAndroid
+                ? $t('chessboard.inputCopyFen')
+                : $t('chessboard.inputFen')
+            }}</v-btn
+          >
+          <v-btn
+            @click="setupNewGameWithArrow"
+            size="small"
+            color="button"
+            :disabled="isMatchRunning"
+            >{{ $t('chessboard.newGame') }}</v-btn
+          >
+        </template>
         <v-btn
           v-if="!isAndroid"
           @click="clearUserDrawings"
@@ -363,11 +365,20 @@
   const {
     showCoordinates,
     showAnimations,
-    showPositionChart,
+    showPositionChart: uiShowPositionChart,
     showEvaluationBar,
     showArrows,
     pieceStyle,
   } = useInterfaceSettings()
+
+  const props = defineProps<{
+    hidePositionChart?: boolean
+    previewMode?: boolean
+  }>()
+
+  const showPositionChart = computed(() =>
+    props.hidePositionChart ? false : uiShowPositionChart.value
+  )
 
   /* ===== Injections ===== */
   const gs: any = inject('game-state')
