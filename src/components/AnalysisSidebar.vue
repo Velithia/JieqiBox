@@ -1070,6 +1070,7 @@
   } from '@/utils/eloCalculator'
   import { resolvePieceImage } from '@/utils/pieceImages'
   import PvPreviewDialog from './PvPreviewDialog.vue'
+  import { useScoreFormatter } from '@/composables/useScoreFormatter'
   import { marked } from 'marked'
   import DOMPurify from 'dompurify'
   import {
@@ -1156,6 +1157,22 @@
 
   // Inject JAI engine state
   const jaiEngine = inject('jai-engine-state') as any
+
+  // Initialize score formatter
+  const {
+    shouldFlipScore,
+    normalizeScore,
+    getScoreClass: getScoreClassFromValue,
+    formatScoreText,
+    formatScoreHtml,
+    getScoreClassFromRaw,
+    formatScoreFromRaw,
+  } = useScoreFormatter(
+    isPondering,
+    isInfinitePondering,
+    computed(() => engineState.analysisUiFen.value),
+    isBoardFlipped
+  )
 
   /* ---------- Engine Management State ---------- */
   const configManager = useConfigManager()
@@ -2683,33 +2700,6 @@
     return result
   }
 
-  // Normalize engine score so the same perspective is used everywhere
-  function normalizeScoreForDisplay(info: Record<string, any>) {
-    let scoreValue = 0
-    let isMate = false
-    if (info.scoreType && info.scoreValue) {
-      if (info.scoreType === 'cp') {
-        scoreValue = parseInt(info.scoreValue, 10)
-      } else if (info.scoreType === 'mate') {
-        scoreValue = parseInt(info.scoreValue, 10)
-        isMate = true
-      }
-    }
-
-    if (isPondering.value && !isInfinitePondering.value) {
-      scoreValue = -scoreValue
-    }
-
-    if (engineState.analysisUiFen.value.includes(' b ')) {
-      scoreValue = -scoreValue
-    }
-
-    if (isBoardFlipped.value) {
-      scoreValue = -scoreValue
-    }
-
-    return { scoreValue, isMate }
-  }
 
   // Normalize WDL so it matches the same perspective as score display
   function normalizeWdlForDisplay(info: Record<string, any>) {
@@ -2732,9 +2722,7 @@
     }
 
     // Apply the same flip rules as score
-    if (isPondering.value && !isInfinitePondering.value) flip()
-    if (engineState.analysisUiFen.value.includes(' b ')) flip()
-    if (isBoardFlipped.value) flip()
+    if (shouldFlipScore.value) flip()
 
     const total = win + draw + loss
     if (total <= 0) return null
@@ -2749,18 +2737,6 @@
   // Format UCI info object for user-friendly display, with i18n support and color coding
   function formatUciInfo(info: Record<string, any>) {
     if (!info) return ''
-
-    const { scoreValue, isMate } = normalizeScoreForDisplay(info)
-
-    const getScoreColorClass = () => {
-      if (isMate) {
-        return scoreValue > 0 ? 'score-mate-positive' : 'score-mate-negative'
-      } else {
-        if (scoreValue > 50) return 'score-positive'
-        if (scoreValue < -50) return 'score-negative'
-        return 'score-neutral'
-      }
-    }
 
     // Format WDL percentages
     const formatWdl = () => {
@@ -2830,16 +2806,7 @@
       info.depth && `${t('uci.depth')}: ${info.depth}`,
       info.seldepth && `${t('uci.seldepth')}: ${info.seldepth}`,
       info.multipv && `${t('uci.multipv')}: ${info.multipv}`,
-      info.scoreType &&
-        info.scoreValue &&
-        (() => {
-          if (info.scoreType === 'cp') {
-            return `<span class="${getScoreColorClass()}">${t('uci.score')}: ${scoreValue}</span>`
-          }
-          const sign = scoreValue > 0 ? '+' : '-'
-          const ply = Math.abs(scoreValue)
-          return `<span class=\"${getScoreColorClass()}\">${t('uci.mate')}: ${sign}M${ply}</span>`
-        })(),
+      info.scoreType && info.scoreValue && formatScoreHtml(info),
       formatWdl(),
       info.nodes && `${t('uci.nodes')}: ${info.nodes}`,
       info.nps &&
@@ -2924,32 +2891,11 @@
   const scoreDisplay = computed(() => {
     const info = latestParsedInfo.value
     if (!info) return { text: '--', className: 'score-neutral' }
-    const { scoreValue, isMate } = normalizeScoreForDisplay(info)
-
-    if (isMate) {
-      const sign = scoreValue > 0 ? '+' : '-'
-      return {
-        text: `${sign}M${Math.abs(scoreValue)}`,
-        className:
-          scoreValue > 0 ? 'score-mate-positive' : 'score-mate-negative',
-      }
-    }
-
-    const className =
-      scoreValue > 50
-        ? 'score-positive'
-        : scoreValue < -50
-          ? 'score-negative'
-          : 'score-neutral'
+    const { scoreValue, isMate } = normalizeScore(info)
 
     return {
-      text:
-        scoreValue === 0
-          ? '0'
-          : scoreValue > 0
-            ? `+${scoreValue}`
-            : `${scoreValue}`,
-      className,
+      text: formatScoreText(scoreValue, isMate),
+      className: getScoreClassFromValue(scoreValue, isMate),
     }
   })
 
@@ -3101,21 +3047,9 @@
 
   const multiPvInfos = computed(() => {
     return latestParsedMultiPv.value.map(({ multipv, info }) => {
-      const { scoreValue, isMate } = normalizeScoreForDisplay(info)
-      const scoreClass =
-        scoreValue > 50
-          ? 'score-positive'
-          : scoreValue < -50
-            ? 'score-negative'
-            : 'score-neutral'
-
-      const scoreText = isMate
-        ? `${scoreValue > 0 ? '+' : '-'}M${Math.abs(scoreValue)}`
-        : scoreValue === 0
-          ? '0'
-          : scoreValue > 0
-            ? `+${scoreValue}`
-            : `${scoreValue}`
+      const { scoreValue, isMate } = normalizeScore(info)
+      const scoreClass = getScoreClassFromValue(scoreValue, isMate)
+      const scoreText = formatScoreText(scoreValue, isMate)
 
       const pvMoves = info.pv ? info.pv.split(' ').filter(Boolean) : []
       const bestMove = pvMoves[0] ? formatMoveForDisplay(pvMoves[0]) : '--'
@@ -3220,25 +3154,12 @@
   }
 
   // Helper functions for engine analysis display
-  import { MATE_SCORE_BASE } from '@/utils/constants'
   function getScoreClass(score: number): string {
-    if (score >= MATE_SCORE_BASE - 999) return 'score-mate-positive'
-    if (score <= -(MATE_SCORE_BASE - 999)) return 'score-mate-negative'
-    if (score > 50) return 'score-positive'
-    if (score < -50) return 'score-negative'
-    return 'score-neutral'
+    return getScoreClassFromRaw(score)
   }
 
   function formatScore(score: number): string {
-    if (Math.abs(score) >= MATE_SCORE_BASE - 999) {
-      const sign = score > 0 ? '+' : '-'
-      const ply = Math.max(
-        0,
-        MATE_SCORE_BASE - Math.min(MATE_SCORE_BASE - 1, Math.abs(score))
-      )
-      return `${sign}M${ply}`
-    }
-    return score.toString() // Display centipawns directly
+    return formatScoreFromRaw(score)
   }
 
   function formatTime(timeMs: number): string {
