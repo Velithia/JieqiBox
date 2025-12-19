@@ -1152,10 +1152,10 @@ export function useChessGame() {
         )
 
         const scoreMatch = lastValidScoreLine.match(
-          /score\s+(cp|mate)\s+(-?\d+)/
+          /score\s+(?:(cp|mate)\s+)?(-?\d+)/
         )
         if (scoreMatch) {
-          const scoreType = scoreMatch[1]
+          const scoreType = scoreMatch[1] || 'cp'
           const scoreValue = parseInt(scoreMatch[2])
           // Convert to centipawns (cp) or mate score
           if (scoreType === 'mate') {

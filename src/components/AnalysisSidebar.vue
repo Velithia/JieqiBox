@@ -2664,7 +2664,7 @@
       { key: 'depth', re: /depth (\d+)/ },
       { key: 'seldepth', re: /seldepth (\d+)/ },
       { key: 'multipv', re: /multipv (\d+)/ },
-      { key: 'score', re: /score (cp|mate) ([\-\d]+)/ },
+      { key: 'score', re: /score (?:(cp|mate)\s+)?([\-\d]+)/ },
       { key: 'wdl', re: /wdl (\d+) (\d+) (\d+)/ },
       { key: 'nodes', re: /nodes (\d+)/ },
       { key: 'nps', re: /nps (\d+)/ },
@@ -2678,7 +2678,7 @@
       const m = line.match(re)
       if (m) {
         if (key === 'score') {
-          result['scoreType'] = m[1]
+          result['scoreType'] = m[1] || 'cp'
           result['scoreValue'] = m[2]
         } else if (key === 'wdl') {
           result['wdlWin'] = parseInt(m[1], 10)
@@ -2699,7 +2699,6 @@
 
     return result
   }
-
 
   // Normalize WDL so it matches the same perspective as score display
   function normalizeWdlForDisplay(info: Record<string, any>) {
@@ -2806,7 +2805,9 @@
       info.depth && `${t('uci.depth')}: ${info.depth}`,
       info.seldepth && `${t('uci.seldepth')}: ${info.seldepth}`,
       info.multipv && `${t('uci.multipv')}: ${info.multipv}`,
-      info.scoreType && info.scoreValue && formatScoreHtml(info),
+      info.scoreValue !== undefined
+        ? formatScoreHtml(info)
+        : `<span class="score-neutral">${t('uci.score')}: ?</span>`,
       formatWdl(),
       info.nodes && `${t('uci.nodes')}: ${info.nodes}`,
       info.nps &&
@@ -2891,6 +2892,9 @@
   const scoreDisplay = computed(() => {
     const info = latestParsedInfo.value
     if (!info) return { text: '--', className: 'score-neutral' }
+    if (info.scoreValue === undefined) {
+      return { text: '?', className: 'score-neutral' }
+    }
     const { scoreValue, isMate } = normalizeScore(info)
 
     return {
@@ -3047,9 +3051,12 @@
 
   const multiPvInfos = computed(() => {
     return latestParsedMultiPv.value.map(({ multipv, info }) => {
+      const hasScore = info.scoreValue !== undefined
       const { scoreValue, isMate } = normalizeScore(info)
-      const scoreClass = getScoreClassFromValue(scoreValue, isMate)
-      const scoreText = formatScoreText(scoreValue, isMate)
+      const scoreClass = hasScore
+        ? getScoreClassFromValue(scoreValue, isMate)
+        : 'score-neutral'
+      const scoreText = hasScore ? formatScoreText(scoreValue, isMate) : '?'
 
       const pvMoves = info.pv ? info.pv.split(' ').filter(Boolean) : []
       const bestMove = pvMoves[0] ? formatMoveForDisplay(pvMoves[0]) : '--'

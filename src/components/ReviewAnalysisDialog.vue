@@ -114,13 +114,13 @@
         return { score: null }
       }
 
-      const m = lastLine.match(/score\s+(cp|mate)\s+(-?\d+)/)
+      const m = lastLine.match(/score\s+(?:(cp|mate)\s+)?(-?\d+)/)
       if (!m) {
         console.log('[EXTRACT DEBUG] No score match in line:', lastLine)
         return { score: null }
       }
 
-      const type = m[1]
+      const type = m[1] || 'cp'
       const val = parseInt(m[2])
       let cp: number
       if (type === 'mate') {

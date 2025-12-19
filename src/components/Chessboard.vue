@@ -1110,9 +1110,9 @@
   /* ===== Evaluation Bar (cp -> percent) ===== */
   const extractCpFromInfoLine = (line: string): number | null => {
     if (!line) return null
-    const m = line.match(/score\s+(cp|mate)\s+(-?\d+)/)
+    const m = line.match(/score\s+(?:(cp|mate)\s+)?(-?\d+)/)
     if (!m) return null
-    const type = m[1]
+    const type = m[1] || 'cp'
     const val = parseInt(m[2])
     if (Number.isNaN(val)) return null
     if (type === 'mate') {

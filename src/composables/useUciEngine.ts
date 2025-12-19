@@ -183,7 +183,10 @@ export function useUciEngine(generateFen: () => string, gameState: any) {
         }
       }
       // ------ Aggregate analysis lines (show all PVs) ------
-      if (ln.startsWith('info') && ln.includes('score')) {
+      if (
+        ln.startsWith('info') &&
+        (ln.includes('score') || ln.includes(' pv '))
+      ) {
         analysisLines[mpvIndex] = ln
         // Join available lines by newline
         analysis.value = analysisLines.filter(Boolean).join('\n')
